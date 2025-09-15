@@ -1,0 +1,107 @@
+#!/bin/bash
+
+# Judge0 Spring Boot Development Setup Script
+
+set -e
+
+echo "Judge0 Spring Boot Development Setup"
+echo "==================================="
+
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Check prerequisites
+echo "Checking prerequisites..."
+
+if ! command_exists java; then
+    echo "❌ Java is not installed. Please install Java 17 or higher."
+    exit 1
+fi
+
+JAVA_VERSION=$(java -version 2>&1 | head -1 | cut -d'"' -f2 | sed '/^1\./s///' | cut -d'.' -f1)
+if [ "$JAVA_VERSION" -lt 17 ]; then
+    echo "❌ Java 17 or higher is required. Current version: $JAVA_VERSION"
+    exit 1
+fi
+echo "✅ Java $JAVA_VERSION"
+
+if ! command_exists docker; then
+    echo "❌ Docker is not installed. Please install Docker."
+    exit 1
+fi
+echo "✅ Docker"
+
+if ! command_exists docker-compose; then
+    echo "❌ Docker Compose is not installed. Please install Docker Compose."
+    exit 1
+fi
+echo "✅ Docker Compose"
+
+# Check if Docker daemon is running
+if ! docker info >/dev/null 2>&1; then
+    echo "❌ Docker daemon is not running. Please start Docker."
+    exit 1
+fi
+echo "✅ Docker daemon"
+
+# Setup development environment
+echo ""
+echo "Setting up development environment..."
+
+# Create necessary directories
+mkdir -p logs
+mkdir -p tmp
+
+# Copy configuration
+if [ ! -f "judge0.conf" ]; then
+    echo "📋 Creating judge0.conf..."
+    cp judge0.conf.example judge0.conf 2>/dev/null || true
+fi
+
+# Start dependencies
+echo "🚀 Starting dependencies (PostgreSQL, Redis)..."
+docker-compose up -d db redis
+
+# Wait for services
+echo "⏳ Waiting for services to be ready..."
+sleep 10
+
+# Check database connection
+echo "🔍 Checking database connection..."
+while ! docker-compose exec -T db pg_isready -U judge0 -d judge0 >/dev/null 2>&1; do
+    echo "   Waiting for database..."
+    sleep 2
+done
+echo "✅ Database ready"
+
+# Check Redis connection
+echo "🔍 Checking Redis connection..."
+while ! docker-compose exec -T redis redis-cli ping >/dev/null 2>&1; do
+    echo "   Waiting for Redis..."
+    sleep 2
+done
+echo "✅ Redis ready"
+
+# Build application
+echo "🔨 Building application..."
+./gradlew build -x test
+
+echo ""
+echo "✅ Development setup complete!"
+echo ""
+echo "Next steps:"
+echo "  1. Start the application: ./scripts/server"
+echo "  2. Open browser: http://localhost:2358/health"
+echo "  3. JobRunr Dashboard: http://localhost:8081"
+echo "  4. View logs: tail -f logs/judge0-spring.log"
+echo ""
+echo "API Examples:"
+echo "  curl http://localhost:2358/languages"
+echo "  curl http://localhost:2358/statuses"
+echo ""
+echo "Create a submission:"
+echo '  curl -X POST http://localhost:2358/submissions \'
+echo '    -H "Content-Type: application/json" \'
+echo '    -d '"'"'{"source_code":"print(\"Hello World\")", "language_id":71}'"'"

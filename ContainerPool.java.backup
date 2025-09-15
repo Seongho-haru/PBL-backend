@@ -1,0 +1,296 @@
+package com.PBL.lab.judge0.docker;
+
+import com.PBL.lab.judge0.entity.Language;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Container Pool
+ * 
+ * Manages a pool of reusable containers for better performance.
+ * Pre-warms containers and provides container borrowing/returning.
+ */
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class ContainerPool {
+
+    private final ContainerManager containerManager;
+    
+    // Pool of available containers per language
+    private final ConcurrentHashMap<String, BlockingQueue<String>> availableContainers = new ConcurrentHashMap<>();
+    
+    // Track borrowed containers
+    private final ConcurrentHashMap<String, PooledContainerInfo> borrowedContainers = new ConcurrentHashMap<>();
+    
+    // Configuration
+    private static final int MAX_POOL_SIZE_PER_LANGUAGE = 5;
+    private static final int MIN_POOL_SIZE_PER_LANGUAGE = 2;
+    private static final long CONTAINER_MAX_IDLE_TIME = TimeUnit.MINUTES.toMillis(30);
+    private static final long CONTAINER_MAX_USAGE_TIME = TimeUnit.HOURS.toMillis(1);
+
+    /**
+     * Borrow a container from the pool
+     */
+    public String borrowContainer(Language language) {
+        String languageKey = getLanguageKey(language);
+        
+        try {
+            // Try to get from pool first
+            BlockingQueue<String> pool = getOrCreatePool(languageKey);
+            String containerId = pool.poll(5, TimeUnit.SECONDS);
+            
+            if (containerId != null && containerManager.isContainerRunning(containerId)) {
+                borrowedContainers.put(containerId, new PooledContainerInfo(languageKey, System.currentTimeMillis()));
+                log.debug("Borrowed container from pool: {} for language: {}", containerId, language.getName());
+                return containerId;
+            }
+            
+            // If no container available or container is not running, create new one
+            String newContainerId = createNewContainer(language);
+            borrowedContainers.put(newContainerId, new PooledContainerInfo(languageKey, System.currentTimeMillis()));
+            log.debug("Created new container: {} for language: {}", newContainerId, language.getName());
+            return newContainerId;
+            
+        } catch (Exception e) {
+            log.error("Failed to borrow container for language: {}", language.getName(), e);
+            // Fallback to direct creation
+            return createNewContainer(language);
+        }
+    }
+
+    /**
+     * Return a container to the pool
+     */
+    public void returnContainer(String containerId) {
+        try {
+            PooledContainerInfo info = borrowedContainers.remove(containerId);
+            if (info == null) {
+                log.warn("Attempted to return unknown container: {}", containerId);
+                containerManager.removeContainer(containerId);
+                return;
+            }
+            
+            // Check if container should be reused
+            long usageTime = System.currentTimeMillis() - info.getBorrowTime();
+            if (usageTime > CONTAINER_MAX_USAGE_TIME || !containerManager.isContainerRunning(containerId)) {
+                log.debug("Container {} exceeded usage time or not running, removing", containerId);
+                containerManager.removeContainer(containerId);
+                return;
+            }
+            
+            // Reset container state (clean up files, etc.)
+            if (resetContainer(containerId)) {
+                BlockingQueue<String> pool = getOrCreatePool(info.getLanguageKey());
+                if (pool.size() < MAX_POOL_SIZE_PER_LANGUAGE) {
+                    pool.offer(containerId);
+                    log.debug("Returned container to pool: {} for language: {}", containerId, info.getLanguageKey());
+                } else {
+                    // Pool is full, remove the container
+                    containerManager.removeContainer(containerId);
+                    log.debug("Pool full, removed container: {}", containerId);
+                }
+            } else {
+                // Reset failed, remove container
+                containerManager.removeContainer(containerId);
+                log.debug("Container reset failed, removed: {}", containerId);
+            }
+            
+        } catch (Exception e) {
+            log.error("Failed to return container: {}", containerId, e);
+            containerManager.removeContainer(containerId);
+        }
+    }
+
+    /**
+     * Pre-warm containers for a language
+     */
+    public void preWarmContainers(Language language, int count) {
+        String languageKey = getLanguageKey(language);
+        BlockingQueue<String> pool = getOrCreatePool(languageKey);
+        
+        int currentSize = pool.size();
+        int containersToCreate = Math.min(count - currentSize, MAX_POOL_SIZE_PER_LANGUAGE - currentSize);
+        
+        for (int i = 0; i < containersToCreate; i++) {
+            try {
+                String containerId = createNewContainer(language);
+                if (resetContainer(containerId)) {
+                    pool.offer(containerId);
+                    log.debug("Pre-warmed container: {} for language: {}", containerId, language.getName());
+                } else {
+                    containerManager.removeContainer(containerId);
+                }
+            } catch (Exception e) {
+                log.error("Failed to pre-warm container for language: {}", language.getName(), e);
+            }
+        }
+    }
+
+    /**
+     * Clean up idle containers periodically
+     */
+    @Scheduled(fixedRate = 300000) // Every 5 minutes
+    public void cleanupIdleContainers() {
+        log.debug("Starting cleanup of idle containers");
+        
+        for (var entry : availableContainers.entrySet()) {
+            String languageKey = entry.getKey();
+            BlockingQueue<String> pool = entry.getValue();
+            
+            // Keep minimum number of containers
+            while (pool.size() > MIN_POOL_SIZE_PER_LANGUAGE) {
+                String containerId = pool.poll();
+                if (containerId != null) {
+                    containerManager.removeContainer(containerId);
+                    log.debug("Cleaned up idle container: {} for language: {}", containerId, languageKey);
+                }
+            }
+        }
+        
+        // Clean up orphaned containers in manager
+        containerManager.cleanupOrphanedContainers();
+        
+        log.debug("Completed cleanup of idle containers");
+    }
+
+    /**
+     * Get pool statistics
+     */
+    public PoolStatistics getPoolStatistics() {
+        int totalAvailable = availableContainers.values().stream()
+                .mapToInt(BlockingQueue::size)
+                .sum();
+        
+        int totalBorrowed = borrowedContainers.size();
+        int totalActive = containerManager.getActiveContainerCount();
+        
+        return new PoolStatistics(totalAvailable, totalBorrowed, totalActive, availableContainers.size());
+    }
+
+    /**
+     * Force cleanup all containers
+     */
+    public void shutdown() {
+        log.info("Shutting down container pool");
+        
+        // Return all borrowed containers
+        for (String containerId : borrowedContainers.keySet()) {
+            containerManager.removeContainer(containerId);
+        }
+        borrowedContainers.clear();
+        
+        // Remove all pooled containers
+        for (BlockingQueue<String> pool : availableContainers.values()) {
+            String containerId;
+            while ((containerId = pool.poll()) != null) {
+                containerManager.removeContainer(containerId);
+            }
+        }
+        availableContainers.clear();
+        
+        log.info("Container pool shutdown complete");
+    }
+
+    /**
+     * Create new container for language
+     */
+    private String createNewContainer(Language language) {
+        ContainerManager.ContainerConfig config = new ContainerManager.ContainerConfig();
+        config.setImage(language.getEffectiveDockerImage());
+        config.setName("judge0-pooled-" + System.currentTimeMillis());
+        config.setWorkingDir("/tmp/judge");
+        config.setUser("nobody:nogroup");
+        config.setNetworkMode("none");
+        
+        // Set basic host config
+        com.github.dockerjava.api.model.HostConfig hostConfig = com.github.dockerjava.api.model.HostConfig.newHostConfig()
+                .withReadonlyRootfs(true)
+                .withMemory(256L * 1024 * 1024) // 256MB default
+                .withPidsLimit(60L);
+        config.setHostConfig(hostConfig);
+        
+        String containerId = containerManager.createContainer(config);
+        containerManager.startContainer(containerId);
+        
+        return containerId;
+    }
+
+    /**
+     * Reset container to clean state
+     */
+    private boolean resetContainer(String containerId) {
+        try {
+            // In a real implementation, you would:
+            // 1. Clear /tmp/judge directory
+            // 2. Reset any temporary files
+            // 3. Verify container is still healthy
+            
+            // For now, just check if container is running
+            return containerManager.isContainerRunning(containerId);
+        } catch (Exception e) {
+            log.error("Failed to reset container: {}", containerId, e);
+            return false;
+        }
+    }
+
+    /**
+     * Get or create pool for language
+     */
+    private BlockingQueue<String> getOrCreatePool(String languageKey) {
+        return availableContainers.computeIfAbsent(languageKey, k -> new LinkedBlockingQueue<>());
+    }
+
+    /**
+     * Generate language key for pooling
+     */
+    private String getLanguageKey(Language language) {
+        return language.getId() + ":" + language.getName();
+    }
+
+    /**
+     * Container info for tracking
+     */
+    private static class PooledContainerInfo {
+        private final String languageKey;
+        private final long borrowTime;
+
+        public PooledContainerInfo(String languageKey, long borrowTime) {
+            this.languageKey = languageKey;
+            this.borrowTime = borrowTime;
+        }
+
+        public String getLanguageKey() { return languageKey; }
+        public long getBorrowTime() { return borrowTime; }
+    }
+
+    /**
+     * Pool statistics
+     */
+    public static class PoolStatistics {
+        private final int availableContainers;
+        private final int borrowedContainers;
+        private final int totalActiveContainers;
+        private final int languagePools;
+
+        public PoolStatistics(int availableContainers, int borrowedContainers, 
+                            int totalActiveContainers, int languagePools) {
+            this.availableContainers = availableContainers;
+            this.borrowedContainers = borrowedContainers;
+            this.totalActiveContainers = totalActiveContainers;
+            this.languagePools = languagePools;
+        }
+
+        public int getAvailableContainers() { return availableContainers; }
+        public int getBorrowedContainers() { return borrowedContainers; }
+        public int getTotalActiveContainers() { return totalActiveContainers; }
+        public int getLanguagePools() { return languagePools; }
+    }
+}

@@ -1,0 +1,79 @@
+plugins {
+    id 'org.springframework.boot' version '3.2.0'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'java'
+    id 'org.flywaydb.flyway' version '9.22.3'
+}
+
+group = 'com.PBL.lab.judge0'
+version = '1.13.1'
+sourceCompatibility = '17'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+flyway {
+    url = 'jdbc:postgresql://localhost:5432/judge0'
+    user = 'judge0'
+    password = 'secret'
+    cleanDisabled = false
+    // 필요시 schemas = ['public']
+}
+
+
+dependencies {
+    // Spring Boot Starters
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    
+    // Database - H2 for demo
+//    implementation 'com.h2database:h2:2.2.224'
+    runtimeOnly 'org.postgresql:postgresql'
+    
+    // Database - PostgreSQL for production (commented out for demo)
+    // implementation 'org.postgresql:postgresql'
+    implementation 'org.flywaydb:flyway-core'
+    
+    // Docker Java API
+    implementation 'com.github.docker-java:docker-java-core:3.3.4'
+    implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.3.4'
+    
+    // Background Jobs (simplified without Redis)
+    implementation 'org.jobrunr:jobrunr-spring-boot-3-starter:6.3.4'
+    
+    // Monitoring
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    
+    // JSON Processing
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    
+    // Utilities
+    implementation 'org.apache.commons:commons-lang3'
+    implementation 'commons-codec:commons-codec'
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.1'
+    
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:junit-jupiter'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

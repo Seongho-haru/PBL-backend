@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Judge0 Spring Boot Workers Script
+# This script is maintained for compatibility with original Judge0
+# In Spring Boot version, workers are managed by JobRunr automatically
+
+set -e
+
+echo "Judge0 Spring Boot Workers"
+echo "=========================="
+echo "In Judge0 Spring Boot, workers are automatically managed by JobRunr."
+echo "Worker configuration can be set via environment variables:"
+echo ""
+echo "  WORKER_COUNT=${WORKER_COUNT:-4}"
+echo "  POLLING_INTERVAL=${POLLING_INTERVAL:-1}"
+echo "  MAX_QUEUE_SIZE=${MAX_QUEUE_SIZE:-100}"
+echo ""
+echo "JobRunr Dashboard is available at: http://localhost:8081"
+echo "To view worker status, use: curl http://localhost:2358/workers"
+echo ""
+
+# If the main application is not running, show instructions
+if ! curl -s http://localhost:2358/health > /dev/null 2>&1; then
+    echo "Judge0 Spring Boot application is not running."
+    echo "Start the application first with: ./scripts/server"
+    exit 1
+fi
+
+echo "Current worker status:"
+curl -s http://localhost:2358/workers | jq . 2>/dev/null || curl -s http://localhost:2358/workers
+
+echo ""
+echo "Workers are running as part of the main application."
+echo "Use 'docker-compose logs -f judge0-api' to view worker logs."

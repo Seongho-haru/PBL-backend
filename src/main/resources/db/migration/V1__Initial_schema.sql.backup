@@ -1,0 +1,117 @@
+-- H2 Compatible Schema for Judge0
+-- Create languages table
+CREATE TABLE IF NOT EXISTS languages (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    compile_cmd TEXT,
+    run_cmd TEXT NOT NULL,
+    time_limit NUMERIC(10,6) NOT NULL DEFAULT 5.000000,
+    source_file VARCHAR(255) NOT NULL,
+    docker_image VARCHAR(255),
+    docker_compile_command TEXT,
+    docker_run_command TEXT,
+    is_archived BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    memory_limit INTEGER NOT NULL DEFAULT 256
+    );
+
+-- Create submissions table
+CREATE TABLE IF NOT EXISTS submissions (
+                                           id BIGSERIAL PRIMARY KEY,
+                                           token VARCHAR(255) UNIQUE,
+    source_code TEXT NOT NULL,
+    language_id INTEGER NOT NULL,
+    stdin TEXT,
+    expected_output TEXT,
+    stdout TEXT,
+    stderr TEXT,
+    compile_output TEXT,
+    message TEXT,
+    status_id INTEGER,
+
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    finished_at TIMESTAMP,
+    started_at TIMESTAMP,
+    queued_at TIMESTAMPTZ,
+    updated_at TIMESTAMP,
+
+    -- Execution metrics
+    time DECIMAL(10,6),
+    wall_time DECIMAL(10,6),
+    memory INTEGER,
+
+    -- Resource limits
+    number_of_runs INTEGER DEFAULT 1,
+    cpu_time_limit DECIMAL(10,6) DEFAULT 0,
+    cpu_extra_time DECIMAL(10,6) DEFAULT 0,
+    wall_time_limit DECIMAL(10,6),
+    memory_limit INTEGER,
+    stack_limit INTEGER,
+    max_processes_and_or_threads INTEGER,
+    max_file_size INTEGER,
+
+    -- Flags
+    enable_per_process_and_thread_time_limit BOOLEAN DEFAULT FALSE,
+    enable_per_process_and_thread_memory_limit BOOLEAN DEFAULT FALSE,
+    redirect_stderr_to_stdout BOOLEAN DEFAULT FALSE,
+    enable_network BOOLEAN DEFAULT FALSE,
+
+    -- Execution details
+    callback_url VARCHAR(512),
+    compiler_options VARCHAR(512),
+    command_line_arguments VARCHAR(512),
+    additional_files OID,
+    execution_host TEXT,
+    queue_host TEXT,
+
+    -- Exit info
+    exit_code INTEGER,
+    exit_signal INTEGER,
+    exit_description TEXT,
+    exit_message TEXT,
+
+    -- Results
+    result JSONB,
+
+    FOREIGN KEY (language_id) REFERENCES languages(id)
+    );
+
+-- Create statuses table
+CREATE TABLE IF NOT EXISTS statuses (
+    id INTEGER PRIMARY KEY,
+    description VARCHAR(255) NOT NULL
+);
+
+-- Create configuration table
+CREATE TABLE IF NOT EXISTS configuration (
+    id INTEGER PRIMARY KEY,
+    key_name VARCHAR(255) NOT NULL UNIQUE,
+    value TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes
+CREATE INDEX idx_submissions_token ON submissions(token);
+CREATE INDEX idx_submissions_created_at ON submissions(created_at);
+CREATE INDEX idx_submissions_language_id ON submissions(language_id);
+CREATE INDEX idx_submissions_status_id ON submissions(status_id);
+
+-- Insert statuses
+INSERT INTO statuses (id, description) VALUES
+(1, 'In Queue'),
+(2, 'Processing'),
+(3, 'Accepted'),
+(4, 'Wrong Answer'),
+(5, 'Time Limit Exceeded'),
+(6, 'Compilation Error'),
+(7, 'Runtime Error (SIGSEGV)'),
+(8, 'Runtime Error (SIGXFSZ)'),
+(9, 'Runtime Error (SIGFPE)'),
+(10, 'Runtime Error (SIGABRT)'),
+(11, 'Runtime Error (NZEC)'),
+(12, 'Runtime Error (Other)'),
+(13, 'Internal Error'),
+(14, 'Exec Format Error');

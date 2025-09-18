@@ -1,0 +1,28 @@
+# <type>(<scope>)<!>: <한 줄 요약>
+
+# 본문(선택): 변경 이유(Why), 구현 개요(What), 영향(Impact), 대안(Alternative)
+
+# 푸터(선택): 이슈/브레이킹 변경/Co-authored-by 등
+
+# 작성 가이드
+# - type: feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert
+# - scope 예: api|controller|service|repository|entity|config|docker|infra|db|migration|security|logging|docs|build|deps|test
+# - 한 줄 요약은 평서형, 마침표 없이, 한국어 권장
+# - BREAKING CHANGE는 ! 또는 푸터로 명시
+
+# 예시 1
+# feat(api): 제출 재시도 파라미터 추가
+#
+# 요청 실패에 대비해 재시도 횟수를 서버에서 제한적으로 허용합니다.
+# 기본값은 0이며, 상한은 3으로 설정했습니다.
+#
+# Resolves: #123
+
+# 예시 2 (BREAKING)
+# feat(api)!: 채점 결과 상태코드 구조 변경
+#
+# 상태코드를 세분화하여 클라이언트 처리 분기를 단순화합니다.
+#
+# BREAKING CHANGE: 기존 status 단일 필드를 status.code/status.detail로 분리했습니다.
+
+

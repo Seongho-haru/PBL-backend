@@ -19,9 +19,9 @@ repositories {
     mavenCentral()
 }
 flyway {
-    url = 'jdbc:postgresql://localhost:5432/judge0'
-    user = 'judge0'
-    password = 'secret'
+    url = System.getenv('DB_URL') ?: 'jdbc:postgresql://localhost:5432/judge0'
+    user = System.getenv('DB_USERNAME') ?: 'judge0'
+    password = System.getenv('DB_PASSWORD') ?: 'secret'
     cleanDisabled = false
     // 필요시 schemas = ['public']
 }

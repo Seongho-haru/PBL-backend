@@ -10,12 +10,12 @@ Judge0는 온라인 코드 실행을 위한 강력한 API입니다. 이 프로�
 
 ### 원본 Judge0 (Ruby on Rails) vs Judge0 Spring Boot
 
-| 기능 | 원본 Judge0 | Judge0 Spring Boot |
-|------|-------------|-------------------|
-| **프레임워크** | Ruby on Rails | Java Spring Boot |
-| **데이터베이스** | PostgreSQL + Redis | PostgreSQL + Redis |
-| **컨테이너 관리** | Docker Compose | Docker Compose + Kubernetes 지원 |
-| **API 스타일** | RESTful API | RESTful API |
+| 기능              | 원본 Judge0        | Judge0 Spring Boot               |
+| ----------------- | ------------------ | -------------------------------- |
+| **프레임워크**    | Ruby on Rails      | Java Spring Boot                 |
+| **데이터베이스**  | PostgreSQL + Redis | PostgreSQL + Redis               |
+| **컨테이너 관리** | Docker Compose     | Docker Compose + Kubernetes 지원 |
+| **API 스타일**    | RESTful API        | RESTful API                      |
 
 ### 주요 개선사항
 
@@ -49,10 +49,38 @@ Judge0는 온라인 코드 실행을 위한 강력한 API입니다. 이 프로�
 git clone [repository-url]
 cd judge0-spring
 
+# 환경 설정 파일 생성
+cp .env.example .env
+# .env 파일을 열어서 데이터베이스 비밀번호 등 필요한 값들을 설정하세요
+
 # Quick Start 스크립트 실행
 ./quick-start.sh
 ```
 
+### 환경 설정
+
+프로젝트를 시작하기 전에 다음 단계를 따라주세요:
+
+1. **환경 변수 설정**
+
+   ```bash
+   # .env.example 파일을 복사하여 .env 파일 생성
+   cp .env.example .env
+
+   # .env 파일을 열어서 다음 값들을 설정:
+   # - DB_PASSWORD: PostgreSQL 데이터베이스 비밀번호
+   # - 기타 필요한 환경 변수들
+   ```
+
+2. **데이터베이스 설정**
+
+   - PostgreSQL 15+ 설치 및 실행
+   - `judge0` 데이터베이스 생성
+   - `.env` 파일에 올바른 데이터베이스 연결 정보 입력
+
+3. **Docker 설정**
+   - Docker가 실행 중인지 확인
+   - Docker 소켓 권한 확인 (Linux/Mac)
 
 ## 📖 API 문서
 
@@ -74,6 +102,7 @@ GET  /system_info          # 시스템 정보
 ## 🧪 테스트
 
 ### API 테스트
+
 ```bash
 # 간단한 Hello World 테스트
 curl -X POST http://localhost:2358/submissions \
@@ -93,4 +122,3 @@ curl -X POST http://localhost:2358/submissions \
 - 원본 [Judge0](https://github.com/judge0/judge0) 프로젝트와 커뮤니티
 - Spring Boot 및 Java 생태계
 - Docker 커뮤니티
-

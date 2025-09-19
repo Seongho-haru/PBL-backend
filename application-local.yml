@@ -1,0 +1,44 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:judge0}
+    username: ${DB_USERNAME:judge0}
+    password: ${DB_PASSWORD:secret}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+server:
+  port: ${SERVER_PORT:2358}
+
+judge0:
+  maintenance:
+    mode: ${JUDGE0_MAINTENANCE_MODE:false}
+
+  queue:
+    max-size: ${JUDGE0_MAX_QUEUE_SIZE:100}
+
+  container-pool:
+    min-size: ${JUDGE0_CONTAINER_POOL_MIN_SIZE:5}
+    max-size: ${JUDGE0_CONTAINER_POOL_MAX_SIZE:20}
+
+  docker:
+    host: ${DOCKER_HOST:unix:///var/run/docker.sock}
+    registry-url: ${DOCKER_REGISTRY_URL:docker.io}
+    max-concurrent-containers: ${DOCKER_MAX_CONCURRENT_CONTAINERS:10}
+
+logging:
+  level:
+    com.judge0: DEBUG
+    org.springframework.web: DEBUG
+  file:
+    name: ${LOG_FILE_PATH:logs/judge0-spring.log}
+
+org:
+  jobrunr:
+    background-job-server:
+      worker-count: ${JOBRUNR_WORKER_COUNT:4}
+    dashboard:
+      port: ${JOBRUNR_DASHBOARD_PORT:8081}

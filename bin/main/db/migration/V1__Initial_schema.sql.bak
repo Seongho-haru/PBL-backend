@@ -1,0 +1,135 @@
+-- Create languages table
+CREATE TABLE IF NOT EXISTS languages (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    compile_cmd TEXT,
+    run_cmd TEXT,
+    source_file VARCHAR(255),
+    is_archived BOOLEAN DEFAULT FALSE,
+    time_limit DECIMAL(10,6) DEFAULT 5.0,
+    memory_limit INTEGER DEFAULT 128000,
+    docker_image VARCHAR(255),
+    docker_compile_command TEXT,
+    docker_run_command TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create index on languages
+CREATE INDEX IF NOT EXISTS idx_languages_name ON languages(name);
+CREATE INDEX IF NOT EXISTS idx_languages_archived ON languages(is_archived);
+
+-- Insert default languages (subset of Judge0 languages)
+INSERT INTO languages (id, name, compile_cmd, run_cmd, source_file, is_archived) VALUES
+(45, 'Assembly (NASM 2.14.02)', 'nasm -f elf64 -o main.o main.asm && ld main.o -o main', './main', 'main.asm', false),
+(46, 'Bash (5.0.0)', NULL, 'bash main.sh', 'main.sh', false),
+(47, 'Basic (FBC 1.07.1)', 'fbc main.bas', './main', 'main.bas', false),
+(75, 'C (Clang 7.0.1)', 'clang -o main main.c', './main', 'main.c', false),
+(76, 'C++ (Clang 7.0.1)', 'clang++ -o main main.cpp', './main', 'main.cpp', false),
+(48, 'C (GCC 7.4.0)', 'gcc -o main main.c', './main', 'main.c', false),
+(52, 'C++ (GCC 7.4.0)', 'g++ -o main main.cpp', './main', 'main.cpp', false),
+(49, 'C (GCC 8.3.0)', 'gcc -o main main.c', './main', 'main.c', false),
+(53, 'C++ (GCC 8.3.0)', 'g++ -o main main.cpp', './main', 'main.cpp', false),
+(50, 'C (GCC 9.2.0)', 'gcc -o main main.c', './main', 'main.c', false),
+(54, 'C++ (GCC 9.2.0)', 'g++ -o main main.cpp', './main', 'main.cpp', false),
+(51, 'C# (Mono 6.6.0.161)', 'mcs main.cs', 'mono main.exe', 'main.cs', false),
+(55, 'Common Lisp (SBCL 2.0.0)', NULL, 'sbcl --script main.lisp', 'main.lisp', false),
+(56, 'D (DMD 2.089.1)', 'dmd main.d', './main', 'main.d', false),
+(57, 'Elixir (1.9.4)', NULL, 'elixir main.exs', 'main.exs', false),
+(58, 'Erlang (OTP 22.2)', 'erlc main.erl', 'erl -noshell -pa . -eval "main:main()." -s init stop', 'main.erl', false),
+(44, 'Executable', NULL, './main', 'main', false),
+(59, 'Fortran (GFortran 9.2.0)', 'gfortran -o main main.f90', './main', 'main.f90', false),
+(60, 'Go (1.13.5)', 'go build main.go', './main', 'main.go', false),
+(61, 'Haskell (GHC 8.8.1)', 'ghc -o main main.hs', './main', 'main.hs', false),
+(62, 'Java (OpenJDK 13.0.1)', 'javac Main.java', 'java Main', 'Main.java', false),
+(63, 'JavaScript (Node.js 12.14.0)', NULL, 'node main.js', 'main.js', false),
+(78, 'Kotlin (1.3.70)', 'kotlinc main.kt -include-runtime -d main.jar', 'java -jar main.jar', 'main.kt', false),
+(64, 'Lua (5.3.5)', NULL, 'lua main.lua', 'main.lua', false),
+(79, 'Objective-C (Clang 7.0.1)', 'clang -framework Cocoa main.m -o main', './main', 'main.m', false),
+(65, 'OCaml (4.09.0)', 'ocamlc -o main main.ml', './main', 'main.ml', false),
+(66, 'Octave (5.1.0)', NULL, 'octave-cli main.m', 'main.m', false),
+(67, 'Pascal (FPC 3.0.4)', 'fpc main.pas', './main', 'main.pas', false),
+(85, 'Perl (5.28.1)', NULL, 'perl main.pl', 'main.pl', false),
+(68, 'PHP (7.4.1)', NULL, 'php main.php', 'main.php', false),
+(43, 'Plain Text', NULL, 'cat main.txt', 'main.txt', false),
+(69, 'Prolog (GNU Prolog 1.4.5)', 'gplc --consult-file main.pro', './main', 'main.pro', false),
+(70, 'Python (2.7.17)', NULL, 'python2 main.py', 'main.py', false),
+(71, 'Python (3.8.1)', NULL, 'python3 main.py', 'main.py', false),
+(80, 'R (4.0.0)', NULL, 'Rscript main.r', 'main.r', false),
+(72, 'Ruby (2.7.0)', NULL, 'ruby main.rb', 'main.rb', false),
+(73, 'Rust (1.40.0)', 'rustc main.rs', './main', 'main.rs', false),
+(81, 'Scala (2.13.2)', 'scalac Main.scala', 'scala Main', 'Main.scala', false),
+(82, 'SQL (SQLite 3.27.2)', NULL, 'sqlite3 < main.sql', 'main.sql', false),
+(83, 'Swift (5.2.3)', 'swiftc main.swift', './main', 'main.swift', false),
+(74, 'TypeScript (3.7.4)', 'tsc main.ts', 'node main.js', 'main.ts', false),
+(84, 'Visual Basic.Net (vbnc 0.0.0.5943)', 'vbnc main.vb', 'mono main.exe', 'main.vb', false);
+
+-- Create submissions table
+CREATE TABLE IF NOT EXISTS submissions (
+    id BIGSERIAL PRIMARY KEY,
+    token VARCHAR(36) UNIQUE NOT NULL,
+    source_code TEXT,
+    language_id INTEGER NOT NULL REFERENCES languages(id),
+    stdin TEXT,
+    expected_output TEXT,
+    stdout TEXT,
+    stderr TEXT,
+    status_id INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    finished_at TIMESTAMP,
+    time DECIMAL(10,6),
+    memory INTEGER,
+    compile_output TEXT,
+    exit_code INTEGER,
+    exit_signal INTEGER,
+    message TEXT,
+    wall_time DECIMAL(10,6),
+    number_of_runs INTEGER DEFAULT 1,
+    cpu_time_limit DECIMAL(10,6) DEFAULT 5.0,
+    cpu_extra_time DECIMAL(10,6) DEFAULT 1.0,
+    wall_time_limit DECIMAL(10,6) DEFAULT 10.0,
+    memory_limit INTEGER DEFAULT 128000,
+    stack_limit INTEGER DEFAULT 64000,
+    max_processes_and_or_threads INTEGER DEFAULT 60,
+    enable_per_process_and_thread_time_limit BOOLEAN DEFAULT FALSE,
+    enable_per_process_and_thread_memory_limit BOOLEAN DEFAULT FALSE,
+    max_file_size INTEGER DEFAULT 1024,
+    compiler_options VARCHAR(512),
+    command_line_arguments VARCHAR(512),
+    redirect_stderr_to_stdout BOOLEAN DEFAULT FALSE,
+    callback_url TEXT,
+    additional_files BYTEA,
+    enable_network BOOLEAN DEFAULT FALSE,
+    started_at TIMESTAMP,
+    queued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    queue_host VARCHAR(255),
+    execution_host VARCHAR(255)
+);
+
+-- Create indexes on submissions
+CREATE INDEX IF NOT EXISTS idx_submissions_token ON submissions(token);
+CREATE INDEX IF NOT EXISTS idx_submissions_status ON submissions(status_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_created_at ON submissions(created_at);
+CREATE INDEX IF NOT EXISTS idx_submissions_language_id ON submissions(language_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_finished_at ON submissions(finished_at);
+
+-- Create function to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Create triggers for updated_at
+CREATE TRIGGER update_languages_updated_at 
+    BEFORE UPDATE ON languages 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_submissions_updated_at 
+    BEFORE UPDATE ON submissions 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();

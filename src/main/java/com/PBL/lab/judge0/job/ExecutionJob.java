@@ -189,7 +189,7 @@ public class ExecutionJob {
      */
     private void sendCallback(Submission submission) {
         // 콜백 URL이 설정되어 있는지 확인
-        if (submission.getCallbackUrl() != null && !submission.getCallbackUrl().trim().isEmpty()) {
+        if (submission.getConstraints().getCallbackUrl() != null && !submission.getConstraints().getCallbackUrl().trim().isEmpty()) {
             try {
                 // 최신 실행 결과를 데이터베이스에서 다시 로드
                 // 실행 완료 후 업데이트된 결과 정보를 확실히 전송하기 위함

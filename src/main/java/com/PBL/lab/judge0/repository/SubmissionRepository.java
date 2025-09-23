@@ -27,6 +27,17 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     Optional<Submission> findByToken(String token);
 
     /**
+     * Find submission by token with all related entities (constraints and inputOutput)
+     * This method uses JOIN FETCH to avoid LazyInitializationException
+     */
+    @Query("SELECT s FROM Submission s " +
+           "LEFT JOIN FETCH s.constraints " +
+           "LEFT JOIN FETCH s.inputOutput " +
+           "LEFT JOIN FETCH s.language " +
+           "WHERE s.token = :token")
+    Optional<Submission> findByTokenWithRelations(@Param("token") String token);
+
+    /**
      * Find submissions by status ID
      */
     List<Submission> findByStatusId(Integer statusId);
@@ -105,7 +116,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     /**
      * Find submissions with callback URL that failed
      */
-    @Query("SELECT s FROM Submission s WHERE s.callbackUrl IS NOT NULL AND s.statusId NOT IN (1, 2)")
+    @Query("SELECT s FROM Submission s JOIN s.constraints c WHERE c.callbackUrl IS NOT NULL AND s.statusId NOT IN (1, 2)")
     List<Submission> findSubmissionsWithCallback();
 
     /**

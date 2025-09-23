@@ -5,6 +5,8 @@ import com.PBL.lab.judge0.entity.Language;
 import com.PBL.lab.judge0.entity.Submission;
 import com.PBL.lab.judge0.enums.Status;
 import com.PBL.lab.judge0.repository.SubmissionRepository;
+import com.PBL.lab.common.repository.SubmissionConstraintsRepository;
+import com.PBL.lab.common.entity.SubmissionConstraints;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -51,6 +53,7 @@ import java.util.*;
  * - 읽기 전용 메서드는 readOnly=true 로 지정 (스냅샷/플러시 최소화)
  * - 캐시 키는 token 기반이며 null 결과는 캐시하지 않음(unless=#result == null)
  */
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -58,6 +61,7 @@ import java.util.*;
 public class SubmissionService {
 
     private final SubmissionRepository submissionRepository;
+    private final SubmissionConstraintsRepository constraintsRepository;
     private final LanguageService languageService;
     private final Base64Service base64Service;
     private final ConfigService configService;
@@ -77,6 +81,7 @@ public class SubmissionService {
      * @return 저장된 Submission 엔터티
      * @throws IllegalArgumentException 잘못된 언어 ID, 상호배타성 위반, 제약 위반 시
      */
+    @Transactional
     public Submission createSubmission(SubmissionRequest request) {
         log.debug("Creating submission for language ID: {}", request.getLanguageId());
 
@@ -104,54 +109,32 @@ public class SubmissionService {
             if (request.getAdditionalFiles() == null || request.getAdditionalFiles().trim().isEmpty()) {
                 throw new IllegalArgumentException("Additional files are required for project submissions");
             }
-            // Base64 디코딩 후 raw 바이트 저장
-            submission.setAdditionalFiles(base64Service.decodeToBytes(request.getAdditionalFiles()));
         } else {
-            // 단일 소스코드 제출: sourceCode 필수, 추가파일은 선택
+            // 단일 소스코드 제출: sourceCode 필수
             if (request.getSourceCode() == null || request.getSourceCode().trim().isEmpty()) {
                 throw new IllegalArgumentException("Source code is required for non-project submissions");
             }
             submission.setSourceCode(request.getSourceCode());
-            if (request.getAdditionalFiles() != null && !request.getAdditionalFiles().trim().isEmpty()) {
-                submission.setAdditionalFiles(base64Service.decodeToBytes(request.getAdditionalFiles()));
-            }
         }
 
-        // 4) 표준입력/기대출력 설정
-        submission.setStdin(request.getStdin());
-        submission.setExpectedOutput(request.getExpectedOutput());
+        // 4) 표준입력/기대출력 설정 (SubmissionInputOutput 엔티티 사용)
+        if (submission.getInputOutput() == null) {
+            submission.setInputOutput(new com.PBL.lab.common.entity.SubmissionInputOutput());
+        }
+        submission.getInputOutput().setStdin(request.getStdin());
+        submission.getInputOutput().setExpectedOutput(request.getExpectedOutput());
 
-        // 5) 실행 리밋 파라미터: null 이면 ConfigService 기본값 주입
-        submission.setNumberOfRuns(getValueOrDefault(request.getNumberOfRuns(), configService.getNumberOfRuns()));
-        submission.setCpuTimeLimit(getValueOrDefault(request.getCpuTimeLimit(), configService.getCpuTimeLimit()));
-        submission.setCpuExtraTime(getValueOrDefault(request.getCpuExtraTime(), configService.getCpuExtraTime()));
-        submission.setWallTimeLimit(getValueOrDefault(request.getWallTimeLimit(), configService.getWallTimeLimit()));
-        submission.setMemoryLimit(getValueOrDefault(request.getMemoryLimit(), configService.getMemoryLimit()));
-        submission.setStackLimit(getValueOrDefault(request.getStackLimit(), configService.getStackLimit()));
-        submission.setMaxProcessesAndOrThreads(getValueOrDefault(request.getMaxProcessesAndOrThreads(), configService.getMaxProcessesAndOrThreads()));
-        submission.setMaxFileSize(getValueOrDefault(request.getMaxFileSize(), configService.getMaxFileSize()));
-
-        // 6) 불리언 플래그 기본값 주입
-        submission.setEnablePerProcessAndThreadTimeLimit(
-                getValueOrDefault(request.getEnablePerProcessAndThreadTimeLimit(), configService.getEnablePerProcessAndThreadTimeLimit()));
-        submission.setEnablePerProcessAndThreadMemoryLimit(
-                getValueOrDefault(request.getEnablePerProcessAndThreadMemoryLimit(), configService.getEnablePerProcessAndThreadMemoryLimit()));
-        submission.setRedirectStderrToStdout(
-                getValueOrDefault(request.getRedirectStderrToStdout(), configService.getRedirectStderrToStdout()));
-        submission.setEnableNetwork(
-                getValueOrDefault(request.getEnableNetwork(), configService.getEnableNetwork()));
-
-        // 7) 컴파일/실행 옵션 및 콜백 URL 설정 (제약은 validateSubmission 에서 검사)
-        submission.setCompilerOptions(request.getCompilerOptions());
-        submission.setCommandLineArguments(request.getCommandLineArguments());
-        submission.setCallbackUrl(request.getCallbackUrl());
+        // 5) 제약조건 처리: constraintsId 우선, 없으면 개별 값으로 새로 생성
+        SubmissionConstraints constraints = resolveConstraints(request);
+        submission.setConstraints(constraints);
 
         // 8) 설정/보안 제약 일괄 검증
         validateSubmission(submission);
 
         // 9) 초기 상태 지정: 큐 진입 + 큐잉 시간 기록
         submission.setStatus(Status.QUEUE);
-        submission.setQueuedAt(LocalDateTime.now());
+        
+        // queuedAt 설정 (이미 @PrePersist에서 자동 설정됨)
 
         // 10) 영속화
         submission = submissionRepository.save(submission);
@@ -167,15 +150,16 @@ public class SubmissionService {
      * - 캐시 이름 "submissions"
      * - 키는 token
      * - 결과가 null 인 경우는 캐시하지 않음
+     * - JOIN FETCH를 사용하여 LazyInitializationException 방지
      *
      * @param token 제출 고유 토큰(UUID 문자열)
-     * @return Submission 엔터티
+     * @return Submission 엔터티 (constraints, inputOutput, language 포함)
      * @throws IllegalArgumentException 토큰 미존재 시
      */
     @Transactional(readOnly = true)
     @Cacheable(value = "submissions", key = "#token", unless = "#result == null")
     public Submission findByToken(String token) {
-        return submissionRepository.findByToken(token)
+        return submissionRepository.findByTokenWithRelations(token)
                 .orElseThrow(() -> new IllegalArgumentException("Submission with token " + token + " not found"));
     }
 
@@ -238,18 +222,25 @@ public class SubmissionService {
     public void updateResult(String token, ExecutionResult result) {
         Submission submission = findByToken(token);
 
-        // 실행 결과 필드 매핑
-        submission.setStdout(result.getStdout());
-        submission.setStderr(result.getStderr());
-        submission.setCompileOutput(result.getCompileOutput());
+        // SubmissionInputOutput 설정
+        if (submission.getInputOutput() == null) {
+            submission.setInputOutput(new com.PBL.lab.common.entity.SubmissionInputOutput());
+        }
+        submission.getInputOutput().setStdout(result.getStdout());
+        submission.getInputOutput().setStderr(result.getStderr());
+        submission.getInputOutput().setCompileOutput(result.getCompileOutput());
+        submission.getInputOutput().setMessage(result.getMessage());
+
+        // 실행 결과 정보 설정
         submission.setTime(result.getTime());
         submission.setWallTime(result.getWallTime());
         submission.setMemory(result.getMemory());
         submission.setExitCode(result.getExitCode());
         submission.setExitSignal(result.getExitSignal());
-        submission.setMessage(result.getMessage());
-        submission.setStatus(result.getStatus());
         submission.setFinishedAt(LocalDateTime.now());
+
+        // 상태 설정
+        submission.setStatus(result.getStatus());
 
         submissionRepository.save(submission);
         log.info("Updated submission {} with execution result: {}", token, result.getStatus().getName());
@@ -357,8 +348,12 @@ public class SubmissionService {
      * @throws IllegalArgumentException 제약 위반 시
      */
     private void validateSubmission(Submission submission) {
+        if (submission.getConstraints() == null) {
+            throw new IllegalArgumentException("Submission constraints must be set");
+        }
+
         // 1) 컴파일러 옵션 검증
-        if (submission.getCompilerOptions() != null && !submission.getCompilerOptions().trim().isEmpty()) {
+        if (submission.getConstraints().getCompilerOptions() != null && !submission.getConstraints().getCompilerOptions().trim().isEmpty()) {
             if (!configService.isCompilerOptionsEnabled()) {
                 throw new IllegalArgumentException("Setting compiler options is not allowed");
             }
@@ -377,14 +372,14 @@ public class SubmissionService {
         }
 
         // 2) 명령행 인자 허용 여부
-        if (submission.getCommandLineArguments() != null && !submission.getCommandLineArguments().trim().isEmpty()) {
+        if (submission.getConstraints().getCommandLineArguments() != null && !submission.getConstraints().getCommandLineArguments().trim().isEmpty()) {
             if (!configService.isCommandLineArgumentsEnabled()) {
                 throw new IllegalArgumentException("Setting command line arguments is not allowed");
             }
         }
 
         // 3) 콜백 URL 허용 여부
-        if (submission.getCallbackUrl() != null && !submission.getCallbackUrl().trim().isEmpty()) {
+        if (submission.getConstraints().getCallbackUrl() != null && !submission.getConstraints().getCallbackUrl().trim().isEmpty()) {
             if (!configService.isCallbacksEnabled()) {
                 throw new IllegalArgumentException("Setting callback is not allowed");
             }
@@ -398,7 +393,7 @@ public class SubmissionService {
         }
 
         // 5) 네트워크 사용 허용 여부
-        if (Boolean.TRUE.equals(submission.getEnableNetwork())) {
+        if (Boolean.TRUE.equals(submission.getConstraints().getEnableNetwork())) {
             if (!configService.isNetworkAllowed()) {
                 throw new IllegalArgumentException("Enabling network is not allowed");
             }
@@ -414,6 +409,94 @@ public class SubmissionService {
      * @param <T>          타입 파라미터
      * @return value != null ? value : defaultValue
      */
+    /**
+     * 제약조건 해결 메서드
+     * 
+     * 처리 우선순위:
+     * 1. constraintsId가 있으면 → 해당 ID의 제약조건 사용
+     * 2. constraintsId가 없고 개별 제약조건 값들이 있으면 → 새로 생성 (기본값으로 채움)
+     * 3. 둘 다 없으면 → 기본 제약조건(id=1) 사용
+     * 
+     * @param request 제출 요청 DTO
+     * @return 해결된 SubmissionConstraints 객체
+     */
+    private SubmissionConstraints resolveConstraints(SubmissionRequest request) {
+        // 1. constraintsId가 있으면 해당 제약조건 사용
+        if (request.getConstraintsId() != null) {
+            return constraintsRepository.findById(request.getConstraintsId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Constraints with id " + request.getConstraintsId() + " not found"));
+        }
+        
+        // 2. 개별 제약조건 값들이 있는지 확인
+        if (hasCustomConstraints(request)) {
+            // 새로운 제약조건 생성 (기본값으로 채움)
+            return createAndSaveConstraints(request);
+        }
+        
+        // 3. 기본 제약조건(id=1) 사용
+        return constraintsRepository.findDefaultConstraints()
+                .orElseThrow(() -> new IllegalStateException("Default constraints (id=1) not found"));
+    }
+    
+    /**
+     * 요청에 개별 제약조건 값들이 있는지 확인
+     */
+    private boolean hasCustomConstraints(SubmissionRequest request) {
+        return request.getNumberOfRuns() != null ||
+               request.getCpuTimeLimit() != null ||
+               request.getCpuExtraTime() != null ||
+               request.getWallTimeLimit() != null ||
+               request.getMemoryLimit() != null ||
+               request.getStackLimit() != null ||
+               request.getMaxProcessesAndOrThreads() != null ||
+               request.getEnablePerProcessAndThreadTimeLimit() != null ||
+               request.getEnablePerProcessAndThreadMemoryLimit() != null ||
+               request.getMaxFileSize() != null ||
+               request.getCompilerOptions() != null ||
+               request.getCommandLineArguments() != null ||
+               request.getRedirectStderrToStdout() != null ||
+               request.getCallbackUrl() != null ||
+               request.getEnableNetwork() != null;
+    }
+    
+    /**
+     * 새로운 제약조건 생성 및 저장
+     * 사용자가 설정하지 않은 부분은 기본 제약조건에서 가져옴
+     */
+    private SubmissionConstraints createAndSaveConstraints(SubmissionRequest request) {
+        // 기본 제약조건 가져오기
+        SubmissionConstraints defaultConstraints = constraintsRepository.findDefaultConstraints()
+                .orElseThrow(() -> new IllegalStateException("Default constraints (id=1) not found"));
+        
+        // 새로운 제약조건 생성
+        SubmissionConstraints newConstraints = new SubmissionConstraints();
+        
+        // 사용자가 설정한 값이 있으면 사용, 없으면 기본값 사용
+        newConstraints.setNumberOfRuns(getValueOrDefault(request.getNumberOfRuns(), defaultConstraints.getNumberOfRuns()));
+        newConstraints.setCpuTimeLimit(getValueOrDefault(request.getCpuTimeLimit(), defaultConstraints.getCpuTimeLimit()));
+        newConstraints.setCpuExtraTime(getValueOrDefault(request.getCpuExtraTime(), defaultConstraints.getCpuExtraTime()));
+        newConstraints.setWallTimeLimit(getValueOrDefault(request.getWallTimeLimit(), defaultConstraints.getWallTimeLimit()));
+        newConstraints.setMemoryLimit(getValueOrDefault(request.getMemoryLimit(), defaultConstraints.getMemoryLimit()));
+        newConstraints.setStackLimit(getValueOrDefault(request.getStackLimit(), defaultConstraints.getStackLimit()));
+        newConstraints.setMaxProcessesAndOrThreads(getValueOrDefault(request.getMaxProcessesAndOrThreads(), defaultConstraints.getMaxProcessesAndOrThreads()));
+        newConstraints.setEnablePerProcessAndThreadTimeLimit(getValueOrDefault(request.getEnablePerProcessAndThreadTimeLimit(), defaultConstraints.getEnablePerProcessAndThreadTimeLimit()));
+        newConstraints.setEnablePerProcessAndThreadMemoryLimit(getValueOrDefault(request.getEnablePerProcessAndThreadMemoryLimit(), defaultConstraints.getEnablePerProcessAndThreadMemoryLimit()));
+        newConstraints.setMaxFileSize(getValueOrDefault(request.getMaxFileSize(), defaultConstraints.getMaxFileSize()));
+        newConstraints.setCompilerOptions(getValueOrDefault(request.getCompilerOptions(), defaultConstraints.getCompilerOptions()));
+        newConstraints.setCommandLineArguments(getValueOrDefault(request.getCommandLineArguments(), defaultConstraints.getCommandLineArguments()));
+        newConstraints.setRedirectStderrToStdout(getValueOrDefault(request.getRedirectStderrToStdout(), defaultConstraints.getRedirectStderrToStdout()));
+        newConstraints.setCallbackUrl(getValueOrDefault(request.getCallbackUrl(), defaultConstraints.getCallbackUrl()));
+        newConstraints.setEnableNetwork(getValueOrDefault(request.getEnableNetwork(), defaultConstraints.getEnableNetwork()));
+        
+        // 추가 파일 처리
+        if (request.getAdditionalFiles() != null && !request.getAdditionalFiles().trim().isEmpty()) {
+            newConstraints.setAdditionalFiles(base64Service.decodeToBytes(request.getAdditionalFiles()));
+        }
+        
+        return constraintsRepository.save(newConstraints);
+    }
+
     private <T> T getValueOrDefault(T value, T defaultValue) {
         return value != null ? value : defaultValue;
     }

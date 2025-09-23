@@ -31,7 +31,7 @@ public class WebhookService {
      * Send callback notification for submission
      */
     public void sendCallback(Submission submission) {
-        if (submission.getCallbackUrl() == null || submission.getCallbackUrl().trim().isEmpty()) {
+        if (submission.getConstraints().getCallbackUrl() == null || submission.getConstraints().getCallbackUrl().trim().isEmpty()) {
             return;
         }
 
@@ -42,7 +42,7 @@ public class WebhookService {
 
         try {
             log.info("Sending callback for submission: {} to URL: {}", 
-                    submission.getToken(), submission.getCallbackUrl());
+                    submission.getToken(), submission.getConstraints().getCallbackUrl());
 
             // Send callback asynchronously
             CompletableFuture.runAsync(() -> sendCallbackWithRetry(submission));
@@ -78,7 +78,7 @@ public class WebhookService {
                 
                 // Send HTTP PUT request (as per Judge0 specification)
                 ResponseEntity<String> responseEntity = restTemplate.exchange(
-                    submission.getCallbackUrl(),
+                    submission.getConstraints().getCallbackUrl(),
                     HttpMethod.PUT,
                     requestEntity,
                     String.class
@@ -86,7 +86,7 @@ public class WebhookService {
                 
                 if (responseEntity.getStatusCode().is2xxSuccessful()) {
                     log.info("Successfully sent callback for submission: {} to URL: {}", 
-                            submission.getToken(), submission.getCallbackUrl());
+                            submission.getToken(), submission.getConstraints().getCallbackUrl());
                     return; // Success, exit retry loop
                 } else {
                     log.warn("Callback returned non-2xx status for submission: {} - Status: {}", 
@@ -96,7 +96,7 @@ public class WebhookService {
             } catch (Exception e) {
                 attempt++;
                 log.error("Callback failed for submission: {} to URL: {} (attempt {}/{}) - {}", 
-                        submission.getToken(), submission.getCallbackUrl(), attempt, maxAttempts, e.getMessage());
+                        submission.getToken(), submission.getConstraints().getCallbackUrl(), attempt, maxAttempts, e.getMessage());
                 
                 if (attempt >= maxAttempts) {
                     log.error("All callback attempts failed for submission: {}", submission.getToken());

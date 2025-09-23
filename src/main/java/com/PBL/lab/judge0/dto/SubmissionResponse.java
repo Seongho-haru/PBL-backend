@@ -162,45 +162,45 @@ public class SubmissionResponse {
                 .memory(submission.getMemory())
                 .exitCode(submission.getExitCode())
                 .exitSignal(submission.getExitSignal())
-                .message(submission.getMessage())
-                .numberOfRuns(submission.getNumberOfRuns())
-                .cpuTimeLimit(submission.getCpuTimeLimit())
-                .cpuExtraTime(submission.getCpuExtraTime())
-                .wallTimeLimit(submission.getWallTimeLimit())
-                .memoryLimit(submission.getMemoryLimit())
-                .stackLimit(submission.getStackLimit())
-                .maxProcessesAndOrThreads(submission.getMaxProcessesAndOrThreads())
-                .enablePerProcessAndThreadTimeLimit(submission.getEnablePerProcessAndThreadTimeLimit())
-                .enablePerProcessAndThreadMemoryLimit(submission.getEnablePerProcessAndThreadMemoryLimit())
-                .maxFileSize(submission.getMaxFileSize())
-                .compilerOptions(submission.getCompilerOptions())
-                .commandLineArguments(submission.getCommandLineArguments())
-                .redirectStderrToStdout(submission.getRedirectStderrToStdout())
-                .callbackUrl(submission.getCallbackUrl())
-                .enableNetwork(submission.getEnableNetwork());
+                .message(submission.getInputOutput() != null ? submission.getInputOutput().getMessage() : null)
+                .numberOfRuns(submission.getConstraints().getNumberOfRuns())
+                .cpuTimeLimit(submission.getConstraints().getCpuTimeLimit())
+                .cpuExtraTime(submission.getConstraints().getCpuExtraTime())
+                .wallTimeLimit(submission.getConstraints().getWallTimeLimit())
+                .memoryLimit(submission.getConstraints().getMemoryLimit())
+                .stackLimit(submission.getConstraints().getStackLimit())
+                .maxProcessesAndOrThreads(submission.getConstraints().getMaxProcessesAndOrThreads())
+                .enablePerProcessAndThreadTimeLimit(submission.getConstraints().getEnablePerProcessAndThreadTimeLimit())
+                .enablePerProcessAndThreadMemoryLimit(submission.getConstraints().getEnablePerProcessAndThreadMemoryLimit())
+                .maxFileSize(submission.getConstraints().getMaxFileSize())
+                .compilerOptions(submission.getConstraints().getCompilerOptions())
+                .commandLineArguments(submission.getConstraints().getCommandLineArguments())
+                .redirectStderrToStdout(submission.getConstraints().getRedirectStderrToStdout())
+                .callbackUrl(submission.getConstraints().getCallbackUrl())
+                .enableNetwork(submission.getConstraints().getEnableNetwork());
 
         // Handle text fields with base64 encoding
         if (base64Encoded) {
             builder.sourceCode(submission.getSourceCode())
-                    .stdin(submission.getStdin())
-                    .expectedOutput(submission.getExpectedOutput())
-                    .stdout(submission.getStdout())
-                    .stderr(submission.getStderr())
-                    .compileOutput(submission.getCompileOutput());
+                    .stdin(submission.getInputOutput() != null ? submission.getInputOutput().getStdin() : null)
+                    .expectedOutput(submission.getInputOutput() != null ? submission.getInputOutput().getExpectedOutput() : null)
+                    .stdout(submission.getInputOutput() != null ? submission.getInputOutput().getStdout() : null)
+                    .stderr(submission.getInputOutput() != null ? submission.getInputOutput().getStderr() : null)
+                    .compileOutput(submission.getInputOutput() != null ? submission.getInputOutput().getCompileOutput() : null);
         } else {
             // For non-base64, we need to decode if stored as base64
             builder.sourceCode(submission.getSourceCode())
-                    .stdin(submission.getStdin())
-                    .expectedOutput(submission.getExpectedOutput())
-                    .stdout(submission.getStdout())
-                    .stderr(submission.getStderr())
-                    .compileOutput(submission.getCompileOutput());
+                    .stdin(submission.getInputOutput() != null ? submission.getInputOutput().getStdin() : null)
+                    .expectedOutput(submission.getInputOutput() != null ? submission.getInputOutput().getExpectedOutput() : null)
+                    .stdout(submission.getInputOutput() != null ? submission.getInputOutput().getStdout() : null)
+                    .stderr(submission.getInputOutput() != null ? submission.getInputOutput().getStderr() : null)
+                    .compileOutput(submission.getInputOutput() != null ? submission.getInputOutput().getCompileOutput() : null);
         }
 
         // Handle additional files
-        if (submission.getAdditionalFiles() != null) {
+        if (submission.getConstraints().getAdditionalFiles() != null) {
             // Convert byte array to base64 string
-            builder.additionalFiles(java.util.Base64.getEncoder().encodeToString(submission.getAdditionalFiles()));
+            builder.additionalFiles(java.util.Base64.getEncoder().encodeToString(submission.getConstraints().getAdditionalFiles()));
         }
 
         return builder.build();

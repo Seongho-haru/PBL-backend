@@ -184,7 +184,6 @@ public class LanguageService {
      * Get language statistics
      */
     public Map<String, Object> getLanguageStatistics() {
-        List<Object[]> stats = languageRepository.getLanguageStatistics();
         long totalLanguages = languageRepository.countTotalLanguages();
         long enabledLanguages = languageRepository.countEnabledLanguages();
         
@@ -259,6 +258,8 @@ public class LanguageService {
     /**
      * Resource limits data class
      */
+    @lombok.Data
+    @lombok.Builder
     public static class ResourceLimits {
         private final java.math.BigDecimal timeLimit;
         private final Integer memoryLimit;
@@ -268,34 +269,8 @@ public class LanguageService {
             this.memoryLimit = memoryLimit;
         }
 
-        public static ResourceLimits.ResourceLimitsBuilder builder() {
-            return new ResourceLimitsBuilder();
-        }
-
         public static ResourceLimits systemDefaults() {
             return new ResourceLimits(java.math.BigDecimal.valueOf(5.0), 128000);
-        }
-
-        public java.math.BigDecimal getTimeLimit() { return timeLimit; }
-        public Integer getMemoryLimit() { return memoryLimit; }
-
-        public static class ResourceLimitsBuilder {
-            private java.math.BigDecimal timeLimit;
-            private Integer memoryLimit;
-
-            public ResourceLimitsBuilder timeLimit(java.math.BigDecimal timeLimit) {
-                this.timeLimit = timeLimit;
-                return this;
-            }
-
-            public ResourceLimitsBuilder memoryLimit(Integer memoryLimit) {
-                this.memoryLimit = memoryLimit;
-                return this;
-            }
-
-            public ResourceLimits build() {
-                return new ResourceLimits(timeLimit, memoryLimit);
-            }
         }
     }
 }

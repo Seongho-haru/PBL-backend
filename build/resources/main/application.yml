@@ -4,7 +4,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/judge0
     username: judge0
-    password: secret
+    password: ${POSTGRES_PASSWORD:judge0pass}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -42,7 +42,7 @@ org:
       enabled: true
       worker-count: 4
     dashboard:
-      enabled: true
+      enabled: false
       port: 8081
     jobs:
       default-number-of-retries: 3
@@ -206,8 +206,8 @@ judge0:
     delete-succeeded-jobs-after: 72
     permanently-delete-jobs-after: 168
     dashboard:
-      enabled: true
-      port: 8081
+      enabled: false
+      port: 8082
 
 ---
 # Development Profile

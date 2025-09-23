@@ -5,7 +5,6 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Statistics;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -26,7 +25,6 @@ public class ContainerManager {
     // Track active containers for cleanup purposes only
     private final ConcurrentHashMap<String, ContainerInfo> activeContainers = new ConcurrentHashMap<>();
     
-    @Autowired
     public ContainerManager(DockerClient dockerClient) {
         this.dockerClient = dockerClient;
     }
@@ -47,7 +45,7 @@ public class ContainerManager {
                     .exec();
 
             String containerId = response.getId();
-            activeContainers.put(containerId, new ContainerInfo(containerId, config));
+            activeContainers.put(containerId, new ContainerInfo(containerId, config, 0, 0));
             
             log.debug("Created container: {} with image: {}", containerId, config.getImage());
             return containerId;
@@ -234,6 +232,7 @@ public class ContainerManager {
     /**
      * Container configuration class
      */
+    @lombok.Data
     public static class ContainerConfig {
         private String image;
         private String name;
@@ -243,48 +242,18 @@ public class ContainerManager {
         private String[] environment;
         private com.github.dockerjava.api.model.HostConfig hostConfig;
         private String networkMode;
-
-        // Getters and setters
-        public String getImage() { return image; }
-        public void setImage(String image) { this.image = image; }
-        
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        
-        public String getWorkingDir() { return workingDir; }
-        public void setWorkingDir(String workingDir) { this.workingDir = workingDir; }
-        
-        public String getUser() { return user; }
-        public void setUser(String user) { this.user = user; }
-        
-        public String[] getCommand() { return command; }
-        public void setCommand(String[] command) { this.command = command; }
-        
-        public String[] getEnvironment() { return environment; }
-        public void setEnvironment(String[] environment) { this.environment = environment; }
-        
-        public com.github.dockerjava.api.model.HostConfig getHostConfig() { return hostConfig; }
-        public void setHostConfig(com.github.dockerjava.api.model.HostConfig hostConfig) { this.hostConfig = hostConfig; }
-        
-        public String getNetworkMode() { return networkMode; }
-        public void setNetworkMode(String networkMode) { this.networkMode = networkMode; }
     }
 
     /**
      * Container statistics class
      */
+    @lombok.Data
+    @lombok.AllArgsConstructor
     public static class ContainerStats {
         private final Long memoryUsage;
         private final Double cpuPercent;
         private final Long networkRx;
         private final Long networkTx;
-
-        private ContainerStats(Long memoryUsage, Double cpuPercent, Long networkRx, Long networkTx) {
-            this.memoryUsage = memoryUsage;
-            this.cpuPercent = cpuPercent;
-            this.networkRx = networkRx;
-            this.networkTx = networkTx;
-        }
 
         public static ContainerStats from(Statistics stats) {
             if (stats == null) {
@@ -302,29 +271,18 @@ public class ContainerManager {
             
             return new ContainerStats(memoryUsage, cpuPercent, networkRx, networkTx);
         }
-
-        public Long getMemoryUsage() { return memoryUsage; }
-        public Double getCpuPercent() { return cpuPercent; }
-        public Long getNetworkRx() { return networkRx; }
-        public Long getNetworkTx() { return networkTx; }
     }
 
     /**
      * Container information tracking
      */
+    @lombok.Data
+    @lombok.AllArgsConstructor
     private static class ContainerInfo {
         private final String containerId;
         private final ContainerConfig config;
         private long startTime;
         private long endTime;
-
-        public ContainerInfo(String containerId, ContainerConfig config) {
-            this.containerId = containerId;
-            this.config = config;
-        }
-
-        public void setStartTime(long startTime) { this.startTime = startTime; }
-        public void setEndTime(long endTime) { this.endTime = endTime; }
         
         public long getRunningTime() {
             return (endTime > 0 ? endTime : System.currentTimeMillis()) - startTime;
@@ -335,7 +293,7 @@ public class ContainerManager {
      * Log result callback
      */
     private static class LogContainerResultCallback extends com.github.dockerjava.api.async.ResultCallbackTemplate<LogContainerResultCallback, com.github.dockerjava.api.model.Frame> {
-        private StringBuilder logs = new StringBuilder();
+        private final StringBuilder logs = new StringBuilder();
 
         @Override
         public void onNext(com.github.dockerjava.api.model.Frame frame) {

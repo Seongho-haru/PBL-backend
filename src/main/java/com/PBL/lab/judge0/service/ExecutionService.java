@@ -3,7 +3,7 @@ package com.PBL.lab.judge0.service;
 import com.PBL.lab.judge0.entity.Language;
 import com.PBL.lab.judge0.entity.Submission;
 import com.PBL.lab.judge0.enums.Status;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -202,6 +202,11 @@ public class ExecutionService {
      * - redirectStderrToStdout: 에러 출력을 표준 출력으로 리다이렉션 여부
      * - enableNetwork: 네트워크 접근 허용 여부
      */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @ToString(exclude = {"sourceCode", "stdin", "expectedOutput", "additionalFiles"})
     public static class CodeExecutionRequest {
         private String sourceCode;
         private Language language;
@@ -213,37 +218,6 @@ public class ExecutionService {
         private String commandLineArguments;
         private Boolean redirectStderrToStdout;
         private Boolean enableNetwork;
-
-        // Getters and setters
-        public String getSourceCode() { return sourceCode; }
-        public void setSourceCode(String sourceCode) { this.sourceCode = sourceCode; }
-        
-        public Language getLanguage() { return language; }
-        public void setLanguage(Language language) { this.language = language; }
-        
-        public String getStdin() { return stdin; }
-        public void setStdin(String stdin) { this.stdin = stdin; }
-        
-        public String getExpectedOutput() { return expectedOutput; }
-        public void setExpectedOutput(String expectedOutput) { this.expectedOutput = expectedOutput; }
-        
-        public SecurityConstraints getConstraints() { return constraints; }
-        public void setConstraints(SecurityConstraints constraints) { this.constraints = constraints; }
-        
-        public byte[] getAdditionalFiles() { return additionalFiles; }
-        public void setAdditionalFiles(byte[] additionalFiles) { this.additionalFiles = additionalFiles; }
-        
-        public String getCompilerOptions() { return compilerOptions; }
-        public void setCompilerOptions(String compilerOptions) { this.compilerOptions = compilerOptions; }
-        
-        public String getCommandLineArguments() { return commandLineArguments; }
-        public void setCommandLineArguments(String commandLineArguments) { this.commandLineArguments = commandLineArguments; }
-        
-        public Boolean getRedirectStderrToStdout() { return redirectStderrToStdout; }
-        public void setRedirectStderrToStdout(Boolean redirectStderrToStdout) { this.redirectStderrToStdout = redirectStderrToStdout; }
-        
-        public Boolean getEnableNetwork() { return enableNetwork; }
-        public void setEnableNetwork(Boolean enableNetwork) { this.enableNetwork = enableNetwork; }
 
         /**
          * Submission 엔티티를 CodeExecutionRequest로 변환하는 팩토리 메서드
@@ -260,23 +234,23 @@ public class ExecutionService {
             // 기본 실행 정보 설정
             request.setSourceCode(submission.getSourceCode());           // 실행할 소스코드
             request.setLanguage(submission.getLanguage());               // 프로그래밍 언어 정보
-            request.setStdin(submission.getStdin());                     // 표준 입력
-            request.setExpectedOutput(submission.getExpectedOutput());   // 예상 출력
-            request.setAdditionalFiles(submission.getAdditionalFiles()); // 추가 파일들 (프로젝트용)
+            request.setStdin(submission.getInputOutput() != null ? submission.getInputOutput().getStdin() : null);                     // 표준 입력
+            request.setExpectedOutput(submission.getInputOutput() != null ? submission.getInputOutput().getExpectedOutput() : null);   // 예상 출력
+            request.setAdditionalFiles(submission.getConstraints().getAdditionalFiles()); // 추가 파일들 (프로젝트용)
             
             // 컴파일/실행 옵션 설정
-            request.setCompilerOptions(submission.getCompilerOptions());         // 컴파일러 옵션
-            request.setCommandLineArguments(submission.getCommandLineArguments()); // 명령행 인자
-            request.setRedirectStderrToStdout(submission.getRedirectStderrToStdout()); // 에러 출력 리다이렉션
-            request.setEnableNetwork(submission.getEnableNetwork());             // 네트워크 접근 허용
+            request.setCompilerOptions(submission.getConstraints().getCompilerOptions());         // 컴파일러 옵션
+            request.setCommandLineArguments(submission.getConstraints().getCommandLineArguments()); // 명령행 인자
+            request.setRedirectStderrToStdout(submission.getConstraints().getRedirectStderrToStdout()); // 에러 출력 리다이렉션
+            request.setEnableNetwork(submission.getConstraints().getEnableNetwork());             // 네트워크 접근 허용
 
             // 보안 제약조건 생성 및 설정
             // Docker 컨테이너에서 코드 실행 시 적용될 리소스 제한사항들
             SecurityConstraints constraints = SecurityConstraints.builder()
-                    .timeLimit(submission.getCpuTimeLimit())                    // CPU 시간 제한 (초)
-                    .memoryLimit(submission.getMemoryLimit())                   // 메모리 사용량 제한 (KB)
-                    .processLimit(submission.getMaxProcessesAndOrThreads())     // 최대 프로세스/스레드 수
-                    .networkAccess(Boolean.TRUE.equals(submission.getEnableNetwork())) // 네트워크 접근 허용 여부
+                    .timeLimit(submission.getConstraints().getCpuTimeLimit())                    // CPU 시간 제한 (초)
+                    .memoryLimit(submission.getConstraints().getMemoryLimit())                   // 메모리 사용량 제한 (KB)
+                    .processLimit(submission.getConstraints().getMaxProcessesAndOrThreads())     // 최대 프로세스/스레드 수
+                    .networkAccess(Boolean.TRUE.equals(submission.getConstraints().getEnableNetwork())) // 네트워크 접근 허용 여부
                     .fileSystemAccess(FileSystemAccess.READ_ONLY)              // 파일 시스템 접근 권한 (읽기 전용)
                     .build();
             request.setConstraints(constraints);
@@ -298,76 +272,16 @@ public class ExecutionService {
      * - networkAccess: 네트워크 접근 허용 여부
      * - fileSystemAccess: 파일 시스템 접근 권한 (읽기 전용/읽기 쓰기)
      */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class SecurityConstraints {
         private BigDecimal timeLimit;
         private Integer memoryLimit;
         private Integer processLimit;
         private Boolean networkAccess;
         private FileSystemAccess fileSystemAccess;
-
-        // Builder pattern
-        public static SecurityConstraintsBuilder builder() {
-            return new SecurityConstraintsBuilder();
-        }
-
-        // Getters and setters
-        public BigDecimal getTimeLimit() { return timeLimit; }
-        public void setTimeLimit(BigDecimal timeLimit) { this.timeLimit = timeLimit; }
-        
-        public Integer getMemoryLimit() { return memoryLimit; }
-        public void setMemoryLimit(Integer memoryLimit) { this.memoryLimit = memoryLimit; }
-        
-        public Integer getProcessLimit() { return processLimit; }
-        public void setProcessLimit(Integer processLimit) { this.processLimit = processLimit; }
-        
-        public Boolean getNetworkAccess() { return networkAccess; }
-        public void setNetworkAccess(Boolean networkAccess) { this.networkAccess = networkAccess; }
-        
-        public FileSystemAccess getFileSystemAccess() { return fileSystemAccess; }
-        public void setFileSystemAccess(FileSystemAccess fileSystemAccess) { this.fileSystemAccess = fileSystemAccess; }
-
-        public static class SecurityConstraintsBuilder {
-            private BigDecimal timeLimit;
-            private Integer memoryLimit;
-            private Integer processLimit;
-            private Boolean networkAccess;
-            private FileSystemAccess fileSystemAccess;
-
-            public SecurityConstraintsBuilder timeLimit(BigDecimal timeLimit) {
-                this.timeLimit = timeLimit;
-                return this;
-            }
-
-            public SecurityConstraintsBuilder memoryLimit(Integer memoryLimit) {
-                this.memoryLimit = memoryLimit;
-                return this;
-            }
-
-            public SecurityConstraintsBuilder processLimit(Integer processLimit) {
-                this.processLimit = processLimit;
-                return this;
-            }
-
-            public SecurityConstraintsBuilder networkAccess(Boolean networkAccess) {
-                this.networkAccess = networkAccess;
-                return this;
-            }
-
-            public SecurityConstraintsBuilder fileSystemAccess(FileSystemAccess fileSystemAccess) {
-                this.fileSystemAccess = fileSystemAccess;
-                return this;
-            }
-
-            public SecurityConstraints build() {
-                SecurityConstraints constraints = new SecurityConstraints();
-                constraints.setTimeLimit(timeLimit);
-                constraints.setMemoryLimit(memoryLimit);
-                constraints.setProcessLimit(processLimit);
-                constraints.setNetworkAccess(networkAccess);
-                constraints.setFileSystemAccess(fileSystemAccess);
-                return constraints;
-            }
-        }
     }
 
     /**
@@ -396,19 +310,11 @@ public class ExecutionService {
      * - 명확한 오류 메시지 제공으로 사용자 경험 개선
      * - 검증 로직의 결과를 일관된 형태로 반환
      */
+    @Getter
+    @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class ValidationResult {
         private final boolean valid;  // 검증 성공 여부
         private final String error;   // 검증 실패 시 오류 메시지
-
-        /**
-         * ValidationResult 생성자
-         * @param valid 검증 성공 여부
-         * @param error 오류 메시지 (성공 시 null)
-         */
-        private ValidationResult(boolean valid, String error) {
-            this.valid = valid;
-            this.error = error;
-        }
 
         /**
          * 검증 성공 결과 생성
@@ -426,17 +332,5 @@ public class ExecutionService {
         public static ValidationResult invalid(String error) {
             return new ValidationResult(false, error);
         }
-
-        /**
-         * 검증 성공 여부 확인
-         * @return boolean 검증 성공 시 true, 실패 시 false
-         */
-        public boolean isValid() { return valid; }
-        
-        /**
-         * 오류 메시지 조회
-         * @return String 오류 메시지 (성공 시 null)
-         */
-        public String getError() { return error; }
     }
 }

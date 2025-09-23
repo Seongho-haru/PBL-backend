@@ -85,9 +85,6 @@ public class SecurityManager {
         try {
             log.debug("Applying security policy to container: {}", containerId);
             
-            // Create secure host configuration
-            HostConfig hostConfig = createSecureHostConfig(constraints);
-            
             // Note: Docker Java API doesn't support updating running containers
             // Security constraints should be applied during container creation
             log.debug("Security policy applied to container: {}", containerId);
@@ -255,25 +252,13 @@ public class SecurityManager {
     /**
      * Resource limits configuration
      */
+    @lombok.Data
+    @lombok.AllArgsConstructor
     public static class ResourceLimits {
         private final BigDecimal timeLimit;
         private final Integer memoryLimit;
         private final Integer processLimit;
         private final Integer fileLimit;
-
-        public ResourceLimits(BigDecimal timeLimit, Integer memoryLimit, 
-                            Integer processLimit, Integer fileLimit) {
-            this.timeLimit = timeLimit;
-            this.memoryLimit = memoryLimit;
-            this.processLimit = processLimit;
-            this.fileLimit = fileLimit;
-        }
-
-        // Getters
-        public BigDecimal getTimeLimit() { return timeLimit; }
-        public Integer getMemoryLimit() { return memoryLimit; }
-        public Integer getProcessLimit() { return processLimit; }
-        public Integer getFileLimit() { return fileLimit; }
     }
 
     /**
@@ -292,6 +277,8 @@ public class SecurityManager {
     /**
      * Security event for logging and monitoring
      */
+    @lombok.Data
+    @lombok.AllArgsConstructor
     public static class SecurityEvent {
         private final SecurityViolation violation;
         private final String containerId;
@@ -304,11 +291,5 @@ public class SecurityManager {
             this.description = description;
             this.timestamp = System.currentTimeMillis();
         }
-
-        // Getters
-        public SecurityViolation getViolation() { return violation; }
-        public String getContainerId() { return containerId; }
-        public String getDescription() { return description; }
-        public long getTimestamp() { return timestamp; }
     }
 }

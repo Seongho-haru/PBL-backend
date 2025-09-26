@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 /**
@@ -46,6 +47,8 @@ public class GradingResponse {
     private String compileOutput;
 
     private String message;
+
+    // ProgressBar는 SSE 전용으로 별도 엔드포인트에서 처리
 
     private StatusResponse status;
 
@@ -225,4 +228,5 @@ public class GradingResponse {
                 .token(token)
                 .build();
     }
+
 }

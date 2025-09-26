@@ -57,6 +57,7 @@ public class GradingExecutionJob {
     private final GradingService gradingService;              // 채점 데이터 관리 서비스
     private final SubmissionService submissionService;      // 제출 데이터 관리 서비스
     private final DockerExecutionService dockerExecutionService;
+    private final GradingProgressService gradingProgressService; // SSE 진행상황 서비스
 
     /**
      * 코드 채점 실행 메서드
@@ -113,6 +114,7 @@ public class GradingExecutionJob {
             
             if (testCases.isEmpty()) {
                 log.warn("테스트케이스가 없음 - grading token: {}", gradingToken);
+                gradingProgressService.notifyGradingError(gradingToken, "테스트케이스가 없습니다");
                 // 테스트케이스가 없는 경우 기본 결과로 처리
                 ExecutionResult defaultResult = ExecutionResult.builder()
                         .status(Status.BOXERR)
@@ -130,10 +132,16 @@ public class GradingExecutionJob {
             
             log.info("총 {}개의 테스트케이스로 채점 시작 - grading token: {}", totalTestCases, gradingToken);
             
+            // SSE로 채점 시작 알림
+            gradingProgressService.notifyGradingStarted(gradingToken, grading.getProblemId(), totalTestCases);
+            
             // 각 테스트케이스에 대해 실행
             for (int i = 0; i < testCases.size(); i++) {
                 ProblemTestCase testCase = testCases.get(i);
                 log.info("테스트케이스 {}/{} 실행 중 - grading token: {}", i + 1, totalTestCases, gradingToken);
+                
+                // SSE로 현재 테스트케이스 진행상황 업데이트
+                gradingProgressService.updateTestCaseProgress(gradingToken, i, totalTestCases, "RUNNING");
                 
                 try {
                     // SubmissionRequest 생성 및 설정
@@ -199,6 +207,9 @@ public class GradingExecutionJob {
             // 채점 결과를 데이터베이스에 저장
             gradingService.updateResult(gradingToken, finalResult);
             
+            // SSE로 채점 완료 알림
+            gradingProgressService.notifyGradingCompleted(gradingToken);
+            
             log.info("코드 채점 작업 완료 - grading token: {}, 통과: {}/{}, 최종 상태: {}", 
                     gradingToken, passedTestCases, totalTestCases, finalResult.getStatus().getName());
             
@@ -247,6 +258,9 @@ public class GradingExecutionJob {
             // 오류 결과를 데이터베이스에 저장
             // 클라이언트가 결과를 조회할 때 오류 상황을 확인할 수 있도록 함
             gradingService.updateResult(gradingToken, errorResult);
+            
+            // SSE로 채점 에러 알림
+            gradingProgressService.notifyGradingError(gradingToken, exception.getMessage());
             
         } catch (Exception e) {
             // 오류 처리 중에도 예외가 발생한 경우 (매우 드문 상황)

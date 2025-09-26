@@ -21,7 +21,7 @@ repositories {
 flyway {
     url = System.getenv('DB_URL') ?: 'jdbc:postgresql://localhost:5432/judge0'
     user = System.getenv('DB_USERNAME') ?: 'judge0'
-    password = System.getenv('DB_PASSWORD') ?: 'secret'
+    password = System.getenv('DB_PASSWORD') ?: 'judge0pass'
     cleanDisabled = false
     // 필요시 schemas = ['public']
 }

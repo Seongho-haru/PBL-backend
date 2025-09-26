@@ -1,8 +1,8 @@
 package com.PBL.lab.judge0.entity;
 
-import com.PBL.lab.judge0.enums.Status;
-import com.PBL.lab.common.entity.SubmissionInputOutput;
-import com.PBL.lab.common.entity.SubmissionConstraints;
+import com.PBL.lab.core.entity.Language;
+import com.PBL.lab.core.entity.Constraints;
+import com.PBL.lab.core.enums.Status;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -158,7 +158,7 @@ public class Submission {
      */
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "constraints_id", nullable = false)
-    private SubmissionConstraints constraints;
+    private Constraints constraints;
 
     // ========== 시간 추적 정보 (Timing Information) ==========
     

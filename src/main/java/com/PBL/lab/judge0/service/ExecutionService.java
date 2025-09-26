@@ -1,8 +1,10 @@
 package com.PBL.lab.judge0.service;
 
-import com.PBL.lab.judge0.entity.Language;
+import com.PBL.lab.core.entity.Language;
+import com.PBL.lab.core.service.DockerExecutionService;
+import com.PBL.lab.core.service.ExecutionResult;
 import com.PBL.lab.judge0.entity.Submission;
-import com.PBL.lab.judge0.enums.Status;
+import com.PBL.lab.core.enums.Status;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -74,11 +76,11 @@ public class ExecutionService {
      */
     public CompletableFuture<ExecutionResult> executeAsync(Submission submission) {
         log.info("비동기 실행 예약 시작 - submission token: {}", submission.getToken());
-        
+
         // 백그라운드 작업 스케줄러에 실행 작업 예약
         // ExecutionJob.executeSubmission()이 나중에 호출됨
         executionJobScheduler.scheduleExecution(submission.getToken());
-        
+
         // 즉시 완료되는 Future 반환 (실제 실행은 백그라운드에서 진행)
         // 클라이언트는 이 결과를 받고 나중에 /submissions/{token}으로 결과 조회
         return CompletableFuture.completedFuture(
@@ -221,6 +223,7 @@ public class ExecutionService {
 
         /**
          * Submission 엔티티를 CodeExecutionRequest로 변환하는 팩토리 메서드
+         *
          * 
          * 데이터베이스에 저장된 Submission 정보를 Docker 실행에 필요한 형태로 변환합니다.
          * 이 과정에서 보안 제약조건도 함께 설정됩니다.

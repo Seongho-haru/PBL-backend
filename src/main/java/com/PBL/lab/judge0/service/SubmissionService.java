@@ -1,12 +1,17 @@
 package com.PBL.lab.judge0.service;
 
+import com.PBL.lab.core.service.Base64Service;
+import com.PBL.lab.core.service.ConfigService;
+import com.PBL.lab.core.service.ExecutionResult;
+import com.PBL.lab.core.service.LanguageService;
 import com.PBL.lab.judge0.dto.SubmissionRequest;
-import com.PBL.lab.judge0.entity.Language;
+import com.PBL.lab.core.entity.Language;
 import com.PBL.lab.judge0.entity.Submission;
-import com.PBL.lab.judge0.enums.Status;
+import com.PBL.lab.judge0.entity.SubmissionInputOutput;
+import com.PBL.lab.core.enums.Status;
 import com.PBL.lab.judge0.repository.SubmissionRepository;
-import com.PBL.lab.common.repository.SubmissionConstraintsRepository;
-import com.PBL.lab.common.entity.SubmissionConstraints;
+import com.PBL.lab.core.repository.ConstraintsRepository;
+import com.PBL.lab.core.entity.Constraints;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -61,7 +66,7 @@ import java.util.*;
 public class SubmissionService {
 
     private final SubmissionRepository submissionRepository;
-    private final SubmissionConstraintsRepository constraintsRepository;
+    private final ConstraintsRepository constraintsRepository;
     private final LanguageService languageService;
     private final Base64Service base64Service;
     private final ConfigService configService;
@@ -119,13 +124,13 @@ public class SubmissionService {
 
         // 4) 표준입력/기대출력 설정 (SubmissionInputOutput 엔티티 사용)
         if (submission.getInputOutput() == null) {
-            submission.setInputOutput(new com.PBL.lab.common.entity.SubmissionInputOutput());
+            submission.setInputOutput(new SubmissionInputOutput());
         }
         submission.getInputOutput().setStdin(request.getStdin());
         submission.getInputOutput().setExpectedOutput(request.getExpectedOutput());
 
         // 5) 제약조건 처리: constraintsId 우선, 없으면 개별 값으로 새로 생성
-        SubmissionConstraints constraints = resolveConstraints(request);
+        Constraints constraints = resolveConstraints(request);
         submission.setConstraints(constraints);
 
         // 8) 설정/보안 제약 일괄 검증
@@ -224,7 +229,7 @@ public class SubmissionService {
 
         // SubmissionInputOutput 설정
         if (submission.getInputOutput() == null) {
-            submission.setInputOutput(new com.PBL.lab.common.entity.SubmissionInputOutput());
+            submission.setInputOutput(new SubmissionInputOutput());
         }
         submission.getInputOutput().setStdout(result.getStdout());
         submission.getInputOutput().setStderr(result.getStderr());
@@ -420,7 +425,7 @@ public class SubmissionService {
      * @param request 제출 요청 DTO
      * @return 해결된 SubmissionConstraints 객체
      */
-    private SubmissionConstraints resolveConstraints(SubmissionRequest request) {
+    private Constraints resolveConstraints(SubmissionRequest request) {
         // 1. constraintsId가 있으면 해당 제약조건 사용
         if (request.getConstraintsId() != null) {
             return constraintsRepository.findById(request.getConstraintsId())
@@ -464,13 +469,13 @@ public class SubmissionService {
      * 새로운 제약조건 생성 및 저장
      * 사용자가 설정하지 않은 부분은 기본 제약조건에서 가져옴
      */
-    private SubmissionConstraints createAndSaveConstraints(SubmissionRequest request) {
+    private Constraints createAndSaveConstraints(SubmissionRequest request) {
         // 기본 제약조건 가져오기
-        SubmissionConstraints defaultConstraints = constraintsRepository.findDefaultConstraints()
+        Constraints defaultConstraints = constraintsRepository.findDefaultConstraints()
                 .orElseThrow(() -> new IllegalStateException("Default constraints (id=1) not found"));
         
         // 새로운 제약조건 생성
-        SubmissionConstraints newConstraints = new SubmissionConstraints();
+        Constraints newConstraints = new Constraints();
         
         // 사용자가 설정한 값이 있으면 사용, 없으면 기본값 사용
         newConstraints.setNumberOfRuns(getValueOrDefault(request.getNumberOfRuns(), defaultConstraints.getNumberOfRuns()));

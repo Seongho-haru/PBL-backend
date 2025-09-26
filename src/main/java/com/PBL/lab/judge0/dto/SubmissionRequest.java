@@ -1,6 +1,8 @@
 package com.PBL.lab.judge0.dto;
 
-import com.PBL.lab.judge0.validation.ValidSubmission;
+import com.PBL.lab.grading.entity.Grading;
+import com.PBL.lab.core.entity.Constraints;
+import com.PBL.lab.core.validation.ValidSubmission;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -114,5 +116,39 @@ public class SubmissionRequest {
         } else {
             return sourceCode != null && !sourceCode.trim().isEmpty();
         }
+    }
+
+    public SubmissionRequest build(Grading grading) {
+        // 핵심 정보 복사
+        this.sourceCode = grading.getSourceCode();
+        this.languageId = grading.getLanguageId();
+        
+        // constraints 정보가 있으면 모든 제약조건 정보를 복사
+        if (grading.getConstraints() != null) {
+            Constraints constraints = grading.getConstraints();
+            this.constraintsId = constraints.getId();
+            this.numberOfRuns = constraints.getNumberOfRuns();
+            this.cpuTimeLimit = constraints.getCpuTimeLimit();
+            this.cpuExtraTime = constraints.getCpuExtraTime();
+            this.wallTimeLimit = constraints.getWallTimeLimit();
+            this.memoryLimit = constraints.getMemoryLimit();
+            this.stackLimit = constraints.getStackLimit();
+            this.maxProcessesAndOrThreads = constraints.getMaxProcessesAndOrThreads();
+            this.enablePerProcessAndThreadTimeLimit = constraints.getEnablePerProcessAndThreadTimeLimit();
+            this.enablePerProcessAndThreadMemoryLimit = constraints.getEnablePerProcessAndThreadMemoryLimit();
+            this.maxFileSize = constraints.getMaxFileSize();
+            this.compilerOptions = constraints.getCompilerOptions();
+            this.commandLineArguments = constraints.getCommandLineArguments();
+            this.redirectStderrToStdout = constraints.getRedirectStderrToStdout();
+            this.callbackUrl = constraints.getCallbackUrl();
+            this.enableNetwork = constraints.getEnableNetwork();
+            
+            // 추가 파일이 있으면 Base64로 인코딩
+            if (constraints.getAdditionalFiles() != null && constraints.getAdditionalFiles().length > 0) {
+                this.additionalFiles = java.util.Base64.getEncoder().encodeToString(constraints.getAdditionalFiles());
+            }
+        }
+        
+        return this;
     }
 }

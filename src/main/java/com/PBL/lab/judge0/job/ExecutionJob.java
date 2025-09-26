@@ -1,6 +1,11 @@
 package com.PBL.lab.judge0.job;
 
+import com.PBL.lab.core.service.ConfigService;
+import com.PBL.lab.core.service.DockerExecutionService;
+import com.PBL.lab.core.service.ExecutionResult;
+import com.PBL.lab.core.service.WebhookService;
 import com.PBL.lab.judge0.entity.Submission;
+import com.PBL.lab.core.enums.Status;
 import com.PBL.lab.judge0.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -98,7 +103,7 @@ public class ExecutionJob {
             
             // 제출 상태를 "처리 중"으로 변경
             // 클라이언트가 결과를 조회할 때 실행 중임을 알 수 있도록 함
-            submissionService.updateStatus(submissionToken, com.PBL.lab.judge0.enums.Status.PROCESS);
+            submissionService.updateStatus(submissionToken, Status.PROCESS);
             
             // Docker 컨테이너에서 실제 코드 실행
             // Submission 정보를 CodeExecutionRequest로 변환하여 Docker 실행 서비스에 전달
@@ -149,7 +154,7 @@ public class ExecutionJob {
             // 실행 실패 결과 객체 생성
             // BOXERR 상태로 설정하여 시스템 오류임을 명시
             ExecutionResult errorResult = ExecutionResult.builder()
-                    .status(com.PBL.lab.judge0.enums.Status.BOXERR)  // 시스템 오류 상태
+                    .status(com.PBL.lab.core.enums.Status.BOXERR)  // 시스템 오류 상태
                     .message("Internal execution error: " + exception.getMessage())  // 사용자용 오류 메시지
                     .errorMessage(exception.getMessage())  // 개발자용 상세 오류 메시지
                     .build();

@@ -5,8 +5,8 @@ import com.PBL.lab.judge0.dto.SubmissionResponse;
 import com.PBL.lab.judge0.entity.Submission;
 import com.PBL.lab.judge0.service.SubmissionService;
 import com.PBL.lab.judge0.service.ExecutionService;
-import com.PBL.lab.judge0.service.ConfigService;
-import com.PBL.lab.judge0.service.Base64Service;
+import com.PBL.lab.core.service.ConfigService;
+import com.PBL.lab.core.service.Base64Service;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +53,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class SubmissionsController {
-
     private final SubmissionService submissionService;
     private final ExecutionService executionService;
     private final ConfigService configService;
@@ -122,7 +121,7 @@ public class SubmissionsController {
 
     /**
      * POST /submissions
-     * 새로운 제출 생성
+     * 단일 새로운 제출 생성
      */
     @PostMapping("/submissions")
     public ResponseEntity<?> create(
@@ -186,7 +185,6 @@ public class SubmissionsController {
             return ResponseEntity.internalServerError().body(Map.of("error", "Internal server error"));
         }
     }
-
     /**
      * DELETE /submissions/{token}
      * 제출 삭제
@@ -223,120 +221,122 @@ public class SubmissionsController {
     /**
      * POST /submissions/batch
      * 다중 제출 일괄 생성
+     * 다중 제출 필요성 필요없다고 생각되어서 주석처리 다양한언어를 일괄처리시 사용
      */
-    @PostMapping("/submissions/batch")
-    public ResponseEntity<?> batchCreate(@RequestBody Map<String, List<SubmissionRequest>> requestBody) {
-
-        // 배치 제출 기능 활성화 여부 확인
-        if (!configService.isBatchedSubmissionsEnabled()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "batched submissions are not allowed"));
-        }
-
-        List<SubmissionRequest> submissions = requestBody.get("submissions");
-        if (submissions == null) {
-            submissions = new ArrayList<>();
-        }
-
-        int numberOfSubmissions = submissions.size();
-
-        // 배치 크기 제한 확인
-        if (numberOfSubmissions > configService.getMaxSubmissionBatchSize()) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "number of submissions in a batch should be less than or equal to " +
-                            configService.getMaxSubmissionBatchSize()
-            ));
-        }
-
-        if (numberOfSubmissions == 0) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "there should be at least one submission in a batch"
-            ));
-        }
-
-        // 전체 대기열 크기 확인
-        if (submissionService.countSubmissionsInQueue() + numberOfSubmissions > configService.getMaxQueueSize()) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("error", "queue is full"));
-        }
-
-        List<Object> response = new ArrayList<>();
-        boolean hasValidSubmission = false;
-
-        for (SubmissionRequest request : submissions) {
-            try {
-                Submission submission = submissionService.createSubmission(request);
-                executionService.executeAsync(submission);
-                response.add(Map.of("token", submission.getToken()));
-                hasValidSubmission = true;
-            } catch (Exception e) {
-                response.add(Map.of("error", e.getMessage()));
-            }
-        }
-
-        HttpStatus status = hasValidSubmission ? HttpStatus.CREATED : HttpStatus.UNPROCESSABLE_ENTITY;
-        return ResponseEntity.status(status).body(response);
-    }
+//    @PostMapping("/submissions/batch")
+//    public ResponseEntity<?> batchCreate(@RequestBody Map<String, List<SubmissionRequest>> requestBody) {
+//
+//        // 배치 제출 기능 활성화 여부 확인
+//        if (!configService.isBatchedSubmissionsEnabled()) {
+//            return ResponseEntity.badRequest().body(Map.of("error", "batched submissions are not allowed"));
+//        }
+//
+//        List<SubmissionRequest> submissions = requestBody.get("submissions");
+//        if (submissions == null) {
+//            submissions = new ArrayList<>();
+//        }
+//
+//        int numberOfSubmissions = submissions.size();
+//
+//        // 배치 크기 제한 확인
+//        if (numberOfSubmissions > configService.getMaxSubmissionBatchSize()) {
+//            return ResponseEntity.badRequest().body(Map.of(
+//                    "error", "number of submissions in a batch should be less than or equal to " +
+//                            configService.getMaxSubmissionBatchSize()
+//            ));
+//        }
+//
+//        if (numberOfSubmissions == 0) {
+//            return ResponseEntity.badRequest().body(Map.of(
+//                    "error", "there should be at least one submission in a batch"
+//            ));
+//        }
+//
+//        // 전체 대기열 크기 확인
+//        if (submissionService.countSubmissionsInQueue() + numberOfSubmissions > configService.getMaxQueueSize()) {
+//            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+//                    .body(Map.of("error", "queue is full"));
+//        }
+//
+//        List<Object> response = new ArrayList<>();
+//        boolean hasValidSubmission = false;
+//
+//        for (SubmissionRequest request : submissions) {
+//            try {
+//                Submission submission = submissionService.createSubmission(request);
+//                executionService.executeAsync(submission);
+//                response.add(Map.of("token", submission.getToken()));
+//                hasValidSubmission = true;
+//            } catch (Exception e) {
+//                response.add(Map.of("error", e.getMessage()));
+//            }
+//        }
+//
+//        HttpStatus status = hasValidSubmission ? HttpStatus.CREATED : HttpStatus.UNPROCESSABLE_ENTITY;
+//        return ResponseEntity.status(status).body(response);
+//    }
 
     /**
      * GET /submissions/batch
      * 다중 제출 일괄 조회
      */
-    @GetMapping("/submissions/batch")
-    public ResponseEntity<?> batchShow(
-            @RequestParam(required = false) String tokens,
-            @RequestHeader(value = "tokens", required = false) String headerTokens,
-            @RequestParam(defaultValue = "false") boolean base64_encoded,
-            @RequestParam(required = false) String fields) {
+//    @GetMapping("/submissions/batch")
+//    public ResponseEntity<?> batchShow(
+//            @RequestParam(required = false) String tokens,
+//            @RequestHeader(value = "tokens", required = false) String headerTokens,
+//            @RequestParam(defaultValue = "false") boolean base64_encoded,
+//            @RequestParam(required = false) String fields) {
+//
+//        // 배치 조회 기능 활성화 여부 확인
+//        if (!configService.isBatchedSubmissionsEnabled()) {
+//            return ResponseEntity.badRequest().body(Map.of("error", "batched submissions are not allowed"));
+//        }
+//
+//        String tokenStr = tokens != null ? tokens : headerTokens;
+//        if (tokenStr == null) {
+//            tokenStr = "";
+//        }
+//
+//        List<String> tokenList = Arrays.stream(tokenStr.split(","))
+//                .map(String::trim)
+//                .filter(s -> !s.isEmpty())
+//                .collect(Collectors.toList());
+//
+//        // 배치 크기 제한 확인
+//        if (tokenList.size() > configService.getMaxSubmissionBatchSize()) {
+//            return ResponseEntity.badRequest().body(Map.of(
+//                    "error", "number of submissions in a batch should be less than or equal to " +
+//                            configService.getMaxSubmissionBatchSize()
+//            ));
+//        }
+//
+//        if (tokenList.isEmpty()) {
+//            return ResponseEntity.badRequest().body(Map.of(
+//                    "error", "there should be at least one submission in a batch"
+//            ));
+//        }
+//
+//        try {
+//            Map<String, Submission> submissionMap = submissionService.findByTokens(tokenList);
+//
+//            List<Object> submissions = new ArrayList<>();
+//            for (String token : tokenList) {
+//                if (submissionMap.containsKey(token)) {
+//                    Submission submission = submissionMap.get(token);
+//                    submissions.add(SubmissionResponse.from(submission, base64_encoded, parseFields(fields)));
+//                } else {
+//                    submissions.add(null);
+//                }
+//            }
+//
+//            return ResponseEntity.ok(Map.of("submissions", submissions));
+//        } catch (Exception e) {
+//            return ResponseEntity.badRequest().body(Map.of(
+//                    "error", "some attributes for one or more submissions cannot be converted to UTF-8, use base64_encoded=true query parameter"
+//            ));
+//        }
+//    }
 
-        // 배치 조회 기능 활성화 여부 확인
-        if (!configService.isBatchedSubmissionsEnabled()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "batched submissions are not allowed"));
-        }
-
-        String tokenStr = tokens != null ? tokens : headerTokens;
-        if (tokenStr == null) {
-            tokenStr = "";
-        }
-
-        List<String> tokenList = Arrays.stream(tokenStr.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toList());
-
-        // 배치 크기 제한 확인
-        if (tokenList.size() > configService.getMaxSubmissionBatchSize()) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "number of submissions in a batch should be less than or equal to " +
-                            configService.getMaxSubmissionBatchSize()
-            ));
-        }
-
-        if (tokenList.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "there should be at least one submission in a batch"
-            ));
-        }
-
-        try {
-            Map<String, Submission> submissionMap = submissionService.findByTokens(tokenList);
-
-            List<Object> submissions = new ArrayList<>();
-            for (String token : tokenList) {
-                if (submissionMap.containsKey(token)) {
-                    Submission submission = submissionMap.get(token);
-                    submissions.add(SubmissionResponse.from(submission, base64_encoded, parseFields(fields)));
-                } else {
-                    submissions.add(null);
-                }
-            }
-
-            return ResponseEntity.ok(Map.of("submissions", submissions));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "some attributes for one or more submissions cannot be converted to UTF-8, use base64_encoded=true query parameter"
-            ));
-        }
-    }
 
     /**
      * fields 파라미터 파싱

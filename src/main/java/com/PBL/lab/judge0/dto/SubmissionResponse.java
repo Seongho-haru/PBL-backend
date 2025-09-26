@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.PBL.lab.judge0.entity.Submission;
-import com.PBL.lab.judge0.enums.Status;
+import com.PBL.lab.core.enums.Status;
 import lombok.Builder;
 import lombok.Data;
 

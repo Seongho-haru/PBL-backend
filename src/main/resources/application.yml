@@ -17,7 +17,7 @@ spring:
   # Cache Configuration (Simple in-memory)
   cache:
     type: simple
-    
+
   # Task Execution
   task:
     execution:
@@ -26,7 +26,7 @@ spring:
         max-size: 8
         queue-capacity: 50
         keep-alive: 60s
-        
+
   # Flyway Configuration - DISABLED for demo
   flyway:
     enabled: true
@@ -34,7 +34,7 @@ spring:
     locations:
       - classpath:db/migration
       - classpath:db/migration/postgresql
-    
+
   # JobRunr Configuration (Demo Mode)
 org:
   jobrunr:
@@ -46,7 +46,7 @@ org:
       port: 8081
     jobs:
       default-number-of-retries: 3
-    
+
 # Server Configuration
 server:
   port: 2358
@@ -55,7 +55,7 @@ server:
   compression:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/xml,text/plain
-    
+
 # Management/Actuator Configuration
 management:
   endpoints:
@@ -72,7 +72,7 @@ management:
     export:
       prometheus:
         enabled: true
-        
+
 # Logging Configuration
 logging:
   level:
@@ -96,7 +96,7 @@ judge0:
   maintenance:
     mode: false
     message: "Judge0 is currently in maintenance."
-    
+
   # Feature Flags
   features:
     enable-wait-result: true
@@ -109,12 +109,12 @@ judge0:
     allow-enable-network: true
     enable-network: false
     disable-implicit-base64-encoding: false
-    
+
   # Queue Configuration
   queue:
     max-size: 100
     max-submission-batch-size: 20
-    
+
   # Execution Limits - Defaults
   execution:
     number-of-runs: 1
@@ -128,7 +128,7 @@ judge0:
     enable-per-process-and-thread-time-limit: false
     enable-per-process-and-thread-memory-limit: false
     redirect-stderr-to-stdout: false
-    
+
     # Maximum Limits
     max-number-of-runs: 20
     max-cpu-time-limit: 15.0
@@ -139,65 +139,66 @@ judge0:
     max-max-processes-and-or-threads: 120
     max-max-file-size: 4096 # KB
     max-extract-size: 10240 # KB
-    
+
     # Permission Controls
     allow-enable-per-process-and-thread-time-limit: true
     allow-enable-per-process-and-thread-memory-limit: true
-    
+
   # Compiler Configuration
   compiler:
     allowed-languages: ""
-    
+
   # Callback Configuration
   callbacks:
     max-tries: 3
     timeout: 5.0
-    
+
   # Cache Configuration
   cache:
     submission-cache-duration: 1.0
-    
+
   # Docker Configuration
   docker:
-    host: "unix:///var/run/docker.sock"
+    #    host: "unix:///var/run/docker.sock"
+    host: "npipe:////./pipe/docker_engine"
     registry-url: "docker.io"
     max-concurrent-containers: 10
     container-timeout: 300
     api-version: ""
     tls-verify: false
     cert-path: ""
-    
+
   # Container Pool Configuration
   container-pool:
     min-size: 5
     max-size: 20
-    max-idle-time: 300000  # 5 minutes in milliseconds
+    max-idle-time: 300000 # 5 minutes in milliseconds
     max-uses: 100
-    health-check-interval: 30000  # 30 seconds
+    health-check-interval: 30000 # 30 seconds
     image: "judge0/compilers:latest"
-    
+
   # Docker Execution Configuration
   docker-execution:
-    container-timeout: 30000  # 30 seconds to acquire container
-    cleanup-async: true  # Async cleanup for better performance
-    
+    container-timeout: 30000 # 30 seconds to acquire container
+    cleanup-async: true # Async cleanup for better performance
+
   # Security Configuration
   security:
     sandbox-user: "judge"
-#    allowed-syscalls: "read,write,exit,exit_group"
-    
+  #    allowed-syscalls: "read,write,exit,exit_group"
+
   # CORS Configuration
   cors:
     allowed-origins: ""
     disallowed-origins: ""
     allowed-ips: ""
     disallowed-ips: ""
-    
+
   # Web Configuration
   web:
     request-timeout: 30
     connection-timeout: 10
-    
+
   # JobRunr Configuration
   jobrunr:
     worker-count: 4
@@ -219,12 +220,12 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: create-drop
-      
+
 logging:
   level:
     com.judge0: DEBUG
     org.springframework.web: DEBUG
-    
+
 judge0:
   maintenance:
     mode: false

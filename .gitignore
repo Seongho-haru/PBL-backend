@@ -46,7 +46,13 @@ Desktop.ini
 
 # Log files
 *.log
+*.log.*
 logs/
+log/
+
+# Judge0 specific logs
+judge0-spring.log
+judge0-spring.log.*
 
 # Environment variables
 .env
@@ -60,6 +66,16 @@ application-local.yml
 application-dev.yml
 application-prod.yml
 
+# Judge0 temporary directories
+tmp/
+temp/
+/tmp/judge0/
+/tmp/judge/
+
+# Docker volumes and temporary files
+docker-volumes/
+judge0-data/
+
 # Docker (클라우드 에디터 프로젝트이므로 Docker 관련 파일들은 Git에 포함)
 # .docker/
 # docker-compose.yml
@@ -69,3 +85,5 @@ application-prod.yml
 # Temporary files
 *.tmp
 *.temp
+*.bak
+*.backup

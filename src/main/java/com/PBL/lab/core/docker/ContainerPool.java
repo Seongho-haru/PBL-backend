@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import java.io.File;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
@@ -63,40 +64,40 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ContainerPool {
 
     private final DockerClient dockerClient;
-    
+
     @Value("${judge0.container-pool.min-size:5}")
     private int minPoolSize;
-    
+
     @Value("${judge0.container-pool.max-size:20}")
     private int maxPoolSize;
-    
+
     @Value("${judge0.container-pool.max-idle-time:300000}") // 5 minutes default
     private long maxIdleTime;
-    
+
     @Value("${judge0.container-pool.max-uses:100}")
     private int maxContainerUses;
-    
+
     @Value("${judge0.container-pool.health-check-interval:30000}") // 30 seconds
     private long healthCheckInterval;
-    
+
     @Value("${judge0.container-pool.image:judge0/compilers}")
     private String judge0Image;
-    
+
     // Pool data structures
     private final BlockingQueue<PooledContainer> availableContainers = new LinkedBlockingQueue<>();
     private final Map<String, PooledContainer> busyContainers = new ConcurrentHashMap<>();
     private final AtomicInteger totalContainers = new AtomicInteger(0);
     private final ReentrantLock poolLock = new ReentrantLock();
-    
+
     // Background tasks
     private ScheduledExecutorService poolMaintenanceExecutor;
     private ExecutorService containerCreationExecutor;
-    
+
     // Pool statistics
     private final AtomicInteger totalRequests = new AtomicInteger(0);
     private final AtomicInteger poolHits = new AtomicInteger(0);
     private final AtomicInteger poolMisses = new AtomicInteger(0);
-    
+
     /**
      * Container wrapper with metadata
      */
@@ -110,57 +111,57 @@ public class ContainerPool {
         private int useCount;
         private boolean healthy;
         private String mountPath; // Host path for file mounting
-        
+
         public boolean isExpired(long maxIdleTime, int maxUses) {
             if (useCount >= maxUses) {
                 return true;
             }
-            
+
             long idleTime = System.currentTimeMillis() - lastUsedAt.toEpochMilli();
             return idleTime > maxIdleTime;
         }
-        
+
         public void markUsed() {
             this.lastUsedAt = Instant.now();
             this.useCount++;
         }
     }
-    
+
     /**
      * Initialize the container pool on startup
      */
     @PostConstruct
     public void initialize() {
         log.info("Initializing container pool with min={}, max={} containers", minPoolSize, maxPoolSize);
-        
+
         // Start background executors
         poolMaintenanceExecutor = Executors.newScheduledThreadPool(2, r -> {
             Thread t = new Thread(r, "container-pool-maintenance");
             t.setDaemon(true);
             return t;
         });
-        
+
         containerCreationExecutor = Executors.newCachedThreadPool(r -> {
             Thread t = new Thread(r, "container-creator");
             t.setDaemon(true);
             return t;
         });
-        
+
         // Create initial pool
         createInitialPool();
-        
+
         // Schedule maintenance tasks
         scheduleMaintenanceTasks();
-        
+
         log.info("Container pool initialized successfully");
     }
-    
+
     /**
      * Create initial pool of containers
      */
     private void createInitialPool() {
         List<CompletableFuture<Void>> creationFutures = new ArrayList<>();
-        
+
         for (int i = 0; i < minPoolSize; i++) {
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 try {
@@ -173,10 +174,10 @@ public class ContainerPool {
                     log.error("Failed to create initial container", e);
                 }
             }, containerCreationExecutor);
-            
+
             creationFutures.add(future);
         }
-        
+
         // Wait for all containers to be created
         try {
             CompletableFuture.allOf(creationFutures.toArray(new CompletableFuture[0]))
@@ -186,7 +187,7 @@ public class ContainerPool {
             log.warn("Some containers failed during initial pool creation", e);
         }
     }
-    
+
     /**
      * Schedule periodic maintenance tasks
      */
@@ -196,42 +197,39 @@ public class ContainerPool {
                 this::performHealthCheck,
                 healthCheckInterval,
                 healthCheckInterval,
-                TimeUnit.MILLISECONDS
-        );
-        
+                TimeUnit.MILLISECONDS);
+
         // Pool size adjustment task
         poolMaintenanceExecutor.scheduleWithFixedDelay(
                 this::adjustPoolSize,
                 30000, // Initial delay 30s
                 30000, // Run every 30s
-                TimeUnit.MILLISECONDS
-        );
-        
+                TimeUnit.MILLISECONDS);
+
         // Expired container cleanup task
         poolMaintenanceExecutor.scheduleWithFixedDelay(
                 this::cleanupExpiredContainers,
                 60000, // Initial delay 1 minute
                 60000, // Run every minute
-                TimeUnit.MILLISECONDS
-        );
+                TimeUnit.MILLISECONDS);
     }
-    
+
     /**
      * Acquire a container from the pool
      */
     public PooledContainer acquireContainer(long timeoutMs) throws TimeoutException, InterruptedException {
         totalRequests.incrementAndGet();
-        
+
         // Try to get from available pool first
         PooledContainer container = availableContainers.poll(50, TimeUnit.MILLISECONDS);
-        
+
         if (container != null) {
             // Validate container is still healthy
             if (isContainerHealthy(container)) {
                 container.markUsed();
                 busyContainers.put(container.getContainerId(), container);
                 poolHits.incrementAndGet();
-                log.debug("Acquired container {} from pool (uses: {})", 
+                log.debug("Acquired container {} from pool (uses: {})",
                         container.getContainerId(), container.getUseCount());
                 return container;
             } else {
@@ -240,10 +238,10 @@ public class ContainerPool {
                 container = null;
             }
         }
-        
+
         // No available container, try to create one if under max
         poolMisses.incrementAndGet();
-        
+
         if (totalContainers.get() < maxPoolSize) {
             log.debug("No available containers, creating new one");
             container = createNewContainer();
@@ -253,48 +251,48 @@ public class ContainerPool {
                 return container;
             }
         }
-        
+
         // If still no container, wait for one to become available
         long startTime = System.currentTimeMillis();
         long remainingTime = timeoutMs;
-        
+
         while (remainingTime > 0) {
             container = availableContainers.poll(Math.min(remainingTime, 1000), TimeUnit.MILLISECONDS);
-            
+
             if (container != null && isContainerHealthy(container)) {
                 container.markUsed();
                 busyContainers.put(container.getContainerId(), container);
                 log.debug("Acquired container {} after waiting", container.getContainerId());
                 return container;
             }
-            
+
             remainingTime = timeoutMs - (System.currentTimeMillis() - startTime);
         }
-        
+
         throw new TimeoutException("Failed to acquire container within " + timeoutMs + "ms");
     }
-    
+
     /**
      * Release a container back to the pool
      */
     public void releaseContainer(String containerId) {
         PooledContainer container = busyContainers.remove(containerId);
-        
+
         if (container == null) {
             log.warn("Attempted to release unknown container: {}", containerId);
             return;
         }
-        
+
         try {
             // Clean up container for reuse
             cleanupContainerForReuse(container);
-            
+
             // Check if container should be recycled
             if (container.isExpired(maxIdleTime, maxContainerUses)) {
-                log.debug("Container {} expired (uses: {}), destroying", 
+                log.debug("Container {} expired (uses: {}), destroying",
                         containerId, container.getUseCount());
                 destroyContainer(container);
-                
+
                 // Create replacement if below min size
                 if (totalContainers.get() < minPoolSize) {
                     containerCreationExecutor.submit(this::createReplacementContainer);
@@ -309,7 +307,7 @@ public class ContainerPool {
             destroyContainer(container);
         }
     }
-    
+
     /**
      * Create a new Judge0 container
      */
@@ -322,19 +320,24 @@ public class ContainerPool {
                 log.error("Judge0 image not found: {}. Please pull the image first.", judge0Image);
                 return null;
             }
-            
+
             String containerName = "judge0-pool-" + UUID.randomUUID().toString().substring(0, 8);
-            String mountPath = "/tmp/judge0/" + containerName;
-            
+            // 윈도우 환경 호환성을 위한 임시 디렉토리 경로
+            String mountPath = System.getProperty("java.io.tmpdir") + File.separator + "judge0" + File.separator
+                    + containerName;
+
             // Create mount directory
             java.io.File mountDir = new java.io.File(mountPath);
             if (!mountDir.exists()) {
                 boolean created = mountDir.mkdirs();
                 if (!created) {
-                    log.warn("Failed to create mount directory: {}", mountPath);
+                    log.error("Failed to create mount directory: {}", mountPath);
+                    return null;
+                } else {
+                    log.debug("Created mount directory: {}", mountPath);
                 }
             }
-            
+
             // Create container with Judge0 image that supports all languages
             CreateContainerResponse response = dockerClient.createContainerCmd(judge0Image)
                     .withName(containerName)
@@ -348,17 +351,28 @@ public class ContainerPool {
                             .withReadonlyRootfs(false)
                             .withBinds(new Bind(mountPath, new Volume("/tmp/judge"), AccessMode.rw))
                             .withSecurityOpts(Arrays.asList("no-new-privileges:true"))
-                            .withAutoRemove(false)
-                    )
+                            .withAutoRemove(false))
                     .exec();
-            
+
             String containerId = response.getId();
-            
+
             // Start the container
-            dockerClient.startContainerCmd(containerId).exec();
-            
+            try {
+                dockerClient.startContainerCmd(containerId).exec();
+                log.debug("Successfully started container: {} with mount: {}", containerId, mountPath);
+            } catch (Exception e) {
+                log.error("Failed to start container: {}", containerId, e);
+                // Clean up failed container
+                try {
+                    dockerClient.removeContainerCmd(containerId).exec();
+                } catch (Exception cleanupException) {
+                    log.warn("Failed to cleanup failed container: {}", containerId, cleanupException);
+                }
+                return null;
+            }
+
             totalContainers.incrementAndGet();
-            
+
             PooledContainer container = PooledContainer.builder()
                     .containerId(containerId)
                     .containerName(containerName)
@@ -368,16 +382,16 @@ public class ContainerPool {
                     .healthy(true)
                     .mountPath(mountPath)
                     .build();
-            
+
             log.info("Created new container: {} (total: {})", containerId, totalContainers.get());
             return container;
-            
+
         } catch (Exception e) {
             log.error("Failed to create new container", e);
             return null;
         }
     }
-    
+
     /**
      * Clean up container for reuse
      */
@@ -398,7 +412,7 @@ public class ContainerPool {
                     }
                 }
             }
-            
+
             // Kill any running processes in container (except the tail command)
             try {
                 dockerClient.execCreateCmd(container.getContainerId())
@@ -407,15 +421,15 @@ public class ContainerPool {
             } catch (Exception e) {
                 log.debug("No processes to kill in container {}", container.getContainerId());
             }
-            
+
             log.debug("Cleaned up container {} for reuse", container.getContainerId());
-            
+
         } catch (Exception e) {
             log.error("Failed to cleanup container {}", container.getContainerId(), e);
             throw new RuntimeException("Container cleanup failed", e);
         }
     }
-    
+
     /**
      * Recursively delete directory
      */
@@ -430,7 +444,7 @@ public class ContainerPool {
         }
         dir.delete();
     }
-    
+
     /**
      * Check if container is healthy
      */
@@ -445,7 +459,7 @@ public class ContainerPool {
             return false;
         }
     }
-    
+
     /**
      * Destroy a container
      */
@@ -458,49 +472,49 @@ public class ContainerPool {
             dockerClient.removeContainerCmd(container.getContainerId())
                     .withForce(true)
                     .exec();
-            
+
             // Clean up mount directory
             if (container.getMountPath() != null) {
                 deleteDirectory(new java.io.File(container.getMountPath()));
             }
-            
+
             totalContainers.decrementAndGet();
-            log.debug("Destroyed container {} (total: {})", 
+            log.debug("Destroyed container {} (total: {})",
                     container.getContainerId(), totalContainers.get());
-            
+
         } catch (Exception e) {
             log.error("Failed to destroy container {}", container.getContainerId(), e);
         }
     }
-    
+
     /**
      * Perform health check on all containers
      */
     private void performHealthCheck() {
         log.debug("Performing health check on {} available containers", availableContainers.size());
-        
+
         List<PooledContainer> unhealthyContainers = new ArrayList<>();
-        
+
         for (PooledContainer container : availableContainers) {
             if (!isContainerHealthy(container)) {
                 unhealthyContainers.add(container);
             }
         }
-        
+
         // Remove unhealthy containers
         for (PooledContainer unhealthy : unhealthyContainers) {
             availableContainers.remove(unhealthy);
             destroyContainer(unhealthy);
             log.info("Removed unhealthy container: {}", unhealthy.getContainerId());
         }
-        
+
         // Create replacements if needed
         int toCreate = minPoolSize - totalContainers.get();
         for (int i = 0; i < toCreate; i++) {
             containerCreationExecutor.submit(this::createReplacementContainer);
         }
     }
-    
+
     /**
      * Adjust pool size based on demand
      */
@@ -508,24 +522,24 @@ public class ContainerPool {
         int available = availableContainers.size();
         int busy = busyContainers.size();
         int total = totalContainers.get();
-        
+
         log.debug("Pool status - Available: {}, Busy: {}, Total: {}", available, busy, total);
-        
+
         // Scale up if we're running low on available containers
         if (available < 2 && total < maxPoolSize) {
             int toCreate = Math.min(3, maxPoolSize - total);
             log.info("Scaling up pool by {} containers", toCreate);
-            
+
             for (int i = 0; i < toCreate; i++) {
                 containerCreationExecutor.submit(this::createReplacementContainer);
             }
         }
-        
+
         // Scale down if we have too many idle containers
         if (available > minPoolSize * 2 && total > minPoolSize) {
             int toRemove = Math.min(available - minPoolSize, 3);
             log.info("Scaling down pool by {} containers", toRemove);
-            
+
             for (int i = 0; i < toRemove; i++) {
                 PooledContainer container = availableContainers.poll();
                 if (container != null) {
@@ -534,32 +548,32 @@ public class ContainerPool {
             }
         }
     }
-    
+
     /**
      * Clean up expired containers
      */
     private void cleanupExpiredContainers() {
         List<PooledContainer> toRemove = new ArrayList<>();
-        
+
         for (PooledContainer container : availableContainers) {
             if (container.isExpired(maxIdleTime, maxContainerUses)) {
                 toRemove.add(container);
             }
         }
-        
+
         for (PooledContainer expired : toRemove) {
             availableContainers.remove(expired);
             destroyContainer(expired);
             log.debug("Cleaned up expired container: {}", expired.getContainerId());
         }
-        
+
         // Ensure minimum pool size
         int toCreate = minPoolSize - totalContainers.get();
         for (int i = 0; i < toCreate; i++) {
             containerCreationExecutor.submit(this::createReplacementContainer);
         }
     }
-    
+
     /**
      * Create replacement container
      */
@@ -574,7 +588,7 @@ public class ContainerPool {
             log.error("Failed to create replacement container", e);
         }
     }
-    
+
     /**
      * Get pool statistics
      */
@@ -586,11 +600,10 @@ public class ContainerPool {
                 .totalRequests(totalRequests.get())
                 .poolHits(poolHits.get())
                 .poolMisses(poolMisses.get())
-                .hitRate(totalRequests.get() > 0 ? 
-                        (double) poolHits.get() / totalRequests.get() * 100 : 0)
+                .hitRate(totalRequests.get() > 0 ? (double) poolHits.get() / totalRequests.get() * 100 : 0)
                 .build();
     }
-    
+
     /**
      * Pool statistics
      */
@@ -605,34 +618,34 @@ public class ContainerPool {
         private int poolMisses;
         private double hitRate;
     }
-    
+
     /**
      * Shutdown the pool
      */
     @PreDestroy
     public void shutdown() {
         log.info("Shutting down container pool");
-        
+
         // Stop accepting new requests
         poolMaintenanceExecutor.shutdown();
         containerCreationExecutor.shutdown();
-        
+
         // Destroy all containers
         List<PooledContainer> allContainers = new ArrayList<>();
         allContainers.addAll(availableContainers);
         allContainers.addAll(busyContainers.values());
-        
+
         for (PooledContainer container : allContainers) {
             destroyContainer(container);
         }
-        
+
         try {
             poolMaintenanceExecutor.awaitTermination(10, TimeUnit.SECONDS);
             containerCreationExecutor.awaitTermination(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             log.warn("Interrupted while waiting for executor shutdown", e);
         }
-        
+
         log.info("Container pool shutdown complete");
     }
 }

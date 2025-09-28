@@ -61,15 +61,15 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DockerExecutionService {
 
-    private final DockerClient dockerClient;        // Docker API 클라이언트 (컨테이너 제어)
-    private final ConfigService configService;      // 시스템 설정 관리 서비스
-    private final ContainerPool containerPool;      // 컨테이너 풀 관리 서비스
-    
+    private final DockerClient dockerClient; // Docker API 클라이언트 (컨테이너 제어)
+    private final ConfigService configService; // 시스템 설정 관리 서비스
+    private final ContainerPool containerPool; // 컨테이너 풀 관리 서비스
+
     @Value("${judge0.docker-execution.container-timeout:30000}")
-    private long containerAcquireTimeout;           // 컨테이너 획득 대기 시간 (밀리초)
-    
+    private long containerAcquireTimeout; // 컨테이너 획득 대기 시간 (밀리초)
+
     @Value("${judge0.docker-execution.cleanup-async:true}")
-    private boolean asyncCleanup;                   // 비동기 정리 작업 사용 여부
+    private boolean asyncCleanup; // 비동기 정리 작업 사용 여부
 
     /**
      * 코드 실행 메인 메서드
@@ -100,36 +100,36 @@ public class DockerExecutionService {
     public ExecutionResult executeCode(ExecutionService.CodeExecutionRequest request) {
         ContainerPool.PooledContainer container = null;
         Path containerWorkDir = null;
-        
+
         long startTime = System.currentTimeMillis();
-        
+
         try {
             log.debug("컨테이너 풀을 활용한 코드 실행 시작 - 언어: {}", request.getLanguage().getName());
-            
+
             // 컨테이너 풀에서 사용 가능한 컨테이너 획득
             // 설정된 타임아웃 시간 내에 컨테이너를 가져오지 못하면 TimeoutException 발생
             container = acquireContainer();
             containerWorkDir = Paths.get(container.getMountPath());
-            
+
             long acquireTime = System.currentTimeMillis() - startTime;
             log.debug("컨테이너 획득 완료 - 소요 시간: {}ms", acquireTime);
-            
+
             // 실행에 필요한 모든 파일 준비
             // 소스코드, 입력 데이터, 컴파일/실행 스크립트 생성
             prepareExecutionFiles(request, containerWorkDir);
-            
+
             // 컨테이너 내에서 실제 코드 실행
             ExecutionResult result = executeInPooledContainer(request, container, containerWorkDir);
-            
+
             long totalTime = System.currentTimeMillis() - startTime;
             log.info("코드 실행 완료 - 총 소요 시간: {}ms, 최종 상태: {}", totalTime, result.getStatus());
-            
+
             // 성능 메트릭을 결과 객체에 추가
             result.setContainerAcquireTime(acquireTime);
             result.setTotalExecutionTime(totalTime);
-            
+
             return result;
-            
+
         } catch (TimeoutException e) {
             log.error("컨테이너 풀에서 컨테이너 획득 실패", e);
             return ExecutionResult.error("Service temporarily unavailable - please try again");
@@ -144,7 +144,7 @@ public class DockerExecutionService {
             }
         }
     }
-    
+
     /**
      * 컨테이너 풀에서 사용 가능한 컨테이너를 획득하는 메서드
      * 
@@ -157,7 +157,7 @@ public class DockerExecutionService {
      * - 풀 통계를 로그에 기록하여 모니터링 지원
      * 
      * @return PooledContainer 사용 가능한 컨테이너 객체
-     * @throws TimeoutException 타임아웃 시간 내에 컨테이너를 획득하지 못한 경우
+     * @throws TimeoutException     타임아웃 시간 내에 컨테이너를 획득하지 못한 경우
      * @throws InterruptedException 스레드가 중단된 경우
      */
     private ContainerPool.PooledContainer acquireContainer() throws TimeoutException, InterruptedException {
@@ -172,7 +172,7 @@ public class DockerExecutionService {
             throw e;
         }
     }
-    
+
     /**
      * 사용 완료된 컨테이너를 풀에 반환하는 메서드
      * 
@@ -194,7 +194,7 @@ public class DockerExecutionService {
      * - 메모리 사용량 예측 가능
      * 
      * @param container 반환할 컨테이너 객체
-     * @param workDir 정리할 작업 디렉토리 경로
+     * @param workDir   정리할 작업 디렉토리 경로
      */
     private void releaseContainer(ContainerPool.PooledContainer container, Path workDir) {
         try {
@@ -211,13 +211,13 @@ public class DockerExecutionService {
                 cleanupWorkDirectory(workDir);
                 containerPool.releaseContainer(container.getContainerId());
             }
-            
+
             log.debug("컨테이너 풀에 반환 완료 - 컨테이너 ID: {}", container.getContainerId());
         } catch (Exception e) {
             log.error("컨테이너 반환 중 오류 발생", e);
         }
     }
-    
+
     /**
      * 코드 실행에 필요한 파일들을 준비하는 메서드
      * 
@@ -242,37 +242,37 @@ public class DockerExecutionService {
      */
     private void prepareExecutionFiles(ExecutionService.CodeExecutionRequest request, Path workDir) throws IOException {
         Language language = request.getLanguage();
-        
+
         // 이전 실행의 잔여 파일들을 정리하여 깨끗한 환경 준비
         cleanupWorkDirectory(workDir);
-        
+
         // 소스코드 파일 생성
         if (request.getSourceCode() != null && !request.getSourceCode().trim().isEmpty()) {
             Path sourceFile = workDir.resolve(language.getSourceFile());
             Files.write(sourceFile, request.getSourceCode().getBytes(StandardCharsets.UTF_8));
             log.debug("소스코드 파일 생성 완료: {}", sourceFile.getFileName());
         }
-        
+
         // 표준 입력 파일 생성
         String stdin = request.getStdin() != null ? request.getStdin() : "";
         Files.write(workDir.resolve("stdin.txt"), stdin.getBytes(StandardCharsets.UTF_8));
-        
+
         // 추가 파일들 처리 (프로젝트 제출 시)
         if (request.getAdditionalFiles() != null && request.getAdditionalFiles().length > 0) {
             // TODO: additionalFiles는 byte[]로 저장되므로, 압축 해제 및 파일 추출 로직 구현 필요
             // 현재는 단순히 로그만 남기고 실제 파일 처리는 추후 구현
             log.debug("추가 파일들이 존재하지만 아직 처리되지 않음: {} bytes", request.getAdditionalFiles().length);
         }
-        
+
         // 컴파일 스크립트 생성 (컴파일이 필요한 언어의 경우)
         createCompileScript(request, workDir);
-        
+
         // 실행 스크립트 생성
         createRunScript(request, workDir);
-        
+
         log.debug("모든 실행 파일 준비 완료 - 작업 디렉토리: {}", workDir);
     }
-    
+
     /**
      * 컴파일 스크립트 생성 메서드
      * 
@@ -297,37 +297,37 @@ public class DockerExecutionService {
      */
     private void createCompileScript(ExecutionService.CodeExecutionRequest request, Path workDir) throws IOException {
         Language language = request.getLanguage();
-        
+
         // 컴파일이 필요하지 않은 언어는 스크립트 생성하지 않음
         if (!language.supportsCompilation()) {
             return;
         }
-        
+
         // 컴파일러 옵션 보안 검증 및 정리
         String compilerOptions = sanitizeOptions(request.getCompilerOptions());
         String compileCommand = language.getEffectiveCompileCommand();
-        
+
         // %s 플레이스홀더를 실제 컴파일러 옵션으로 교체
         if (compileCommand.contains("%s")) {
             compileCommand = compileCommand.replace("%s", compilerOptions);
         } else {
             compileCommand = compileCommand + " " + compilerOptions;
         }
-        
+
         // 컴파일 스크립트 파일 생성
         Path compileScript = workDir.resolve("compile.sh");
         String scriptContent = "#!/bin/bash\n" +
-                              "set -e\n" +                    // 오류 발생 시 스크립트 중단
-                              "cd /tmp/judge\n" +             // 작업 디렉토리로 이동
-                              compileCommand + "\n" +         // 실제 컴파일 명령어
-                              "echo \"Compilation completed successfully\"";  // 성공 메시지
-                              
+                "set -e\n" + // 오류 발생 시 스크립트 중단
+                "cd /tmp/judge\n" + // 작업 디렉토리로 이동
+                compileCommand + "\n" + // 실제 컴파일 명령어
+                "echo \"Compilation completed successfully\""; // 성공 메시지
+
         Files.write(compileScript, scriptContent.getBytes(StandardCharsets.UTF_8));
-        compileScript.toFile().setExecutable(true);  // 실행 권한 부여
-        
+        compileScript.toFile().setExecutable(true); // 실행 권한 부여
+
         log.debug("컴파일 스크립트 생성 완료: {}", compileCommand);
     }
-    
+
     /**
      * 실행 스크립트 생성 메서드
      * 
@@ -352,90 +352,88 @@ public class DockerExecutionService {
      */
     private void createRunScript(ExecutionService.CodeExecutionRequest request, Path workDir) throws IOException {
         Language language = request.getLanguage();
-        
+
         // 명령행 인자 보안 검증 및 정리
         String commandLineArgs = sanitizeOptions(request.getCommandLineArguments());
         String runCommand = language.getEffectiveRunCommand() + " " + commandLineArgs;
-        
+
         // 표준 에러 출력 처리 방식 결정
-        String stderrRedirect = Boolean.TRUE.equals(request.getRedirectStderrToStdout()) ? 
-                               "2>&1" : "2>stderr.txt";
-        
+        String stderrRedirect = Boolean.TRUE.equals(request.getRedirectStderrToStdout()) ? "2>&1" : "2>stderr.txt";
+
         // 실행 스크립트 파일 생성
         Path runScript = workDir.resolve("run.sh");
         String scriptContent = "#!/bin/bash\n" +
-                              "cd /tmp/judge\n" +                    // 작업 디렉토리로 이동
-                              "timeout " + request.getConstraints().getTimeLimit() + "s " +  // 시간 제한 적용
-                              runCommand + " <stdin.txt >stdout.txt " + stderrRedirect + "\n" +  // 실행 및 입출력 리다이렉션
-                              "echo $? >exit_code.txt";             // 종료 코드 저장
-                              
+                "cd /tmp/judge\n" + // 작업 디렉토리로 이동
+                "timeout " + request.getConstraints().getTimeLimit() + "s " + // 시간 제한 적용
+                runCommand + " <stdin.txt >stdout.txt " + stderrRedirect + "\n" + // 실행 및 입출력 리다이렉션
+                "echo $? >exit_code.txt"; // 종료 코드 저장
+
         Files.write(runScript, scriptContent.getBytes(StandardCharsets.UTF_8));
-        runScript.toFile().setExecutable(true);  // 실행 권한 부여
-        
+        runScript.toFile().setExecutable(true); // 실행 권한 부여
+
         log.debug("실행 스크립트 생성 완료: {}", runCommand);
     }
-    
-    private ExecutionResult executeInPooledContainer(ExecutionService.CodeExecutionRequest request, 
-                                                     ContainerPool.PooledContainer container,
-                                                     Path workDir) throws Exception {
+
+    private ExecutionResult executeInPooledContainer(ExecutionService.CodeExecutionRequest request,
+            ContainerPool.PooledContainer container,
+            Path workDir) throws Exception {
         Language language = request.getLanguage();
         String containerId = container.getContainerId();
-        
+
         String compileOutput = "";
         if (language.supportsCompilation()) {
             long compileStart = System.currentTimeMillis();
             compileOutput = runCompilation(containerId);
             long compileTime = System.currentTimeMillis() - compileStart;
-            
+
             log.debug("Compilation took {}ms", compileTime);
-            
+
             if (compileOutput.contains("error") || compileOutput.contains("Error")) {
                 return ExecutionResult.compilationError(compileOutput);
             }
         }
-        
+
         long executionStart = System.currentTimeMillis();
-        
+
         ExecCreateCmdResponse execResponse = dockerClient.execCreateCmd(containerId)
                 .withCmd("bash", "/tmp/judge/run.sh")
                 .withWorkingDir("/tmp/judge")
-                .withUser("nobody:nogroup")
+                .withUser(System.getProperty("os.name").toLowerCase().contains("windows") ? "root" : "nobody:nogroup")
                 .withAttachStdout(true)
                 .withAttachStderr(true)
                 .exec();
-        
+
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
         ByteArrayOutputStream stderr = new ByteArrayOutputStream();
-        
+
         BigDecimal timeLimit = request.getConstraints().getTimeLimit();
         boolean completed = dockerClient.execStartCmd(execResponse.getId())
                 .exec(new ExecResultCallback(stdout, stderr))
                 .awaitCompletion(timeLimit.longValue() + 2, TimeUnit.SECONDS);
-        
+
         long executionTime = System.currentTimeMillis() - executionStart;
         BigDecimal wallTime = BigDecimal.valueOf(executionTime / 1000.0);
-        
+
         InspectExecResponse inspectExec = dockerClient.inspectExecCmd(execResponse.getId()).exec();
-        Integer exitCode = inspectExec.getExitCodeLong() != null ? 
-                          inspectExec.getExitCodeLong().intValue() : null;
-        
+        Integer exitCode = inspectExec.getExitCodeLong() != null ? inspectExec.getExitCodeLong().intValue() : null;
+
         String stdoutContent = readFileContent(workDir.resolve("stdout.txt"));
         String stderrContent = readFileContent(workDir.resolve("stderr.txt"));
         String exitCodeContent = readFileContent(workDir.resolve("exit_code.txt"));
-        
+
         if (exitCodeContent != null && !exitCodeContent.trim().isEmpty()) {
             try {
                 exitCode = Integer.parseInt(exitCodeContent.trim());
             } catch (NumberFormatException ignored) {
             }
         }
-        
+
         BigDecimal actualTime = calculateActualExecutionTime(workDir, wallTime);
-        
+
         Status status = determineExecutionStatus(completed, exitCode, request.getExpectedOutput(), stdoutContent);
-        
+
         Integer memoryUsage = getExecutionMemoryUsage(container, workDir);
-        
+
         return ExecutionResult.builder()
                 .stdout(stdoutContent)
                 .stderr(stderrContent)
@@ -447,29 +445,29 @@ public class DockerExecutionService {
                 .status(status)
                 .build();
     }
-    
+
     private String runCompilation(String containerId) throws Exception {
         ExecCreateCmdResponse execResponse = dockerClient.execCreateCmd(containerId)
                 .withCmd("bash", "/tmp/judge/compile.sh")
                 .withWorkingDir("/tmp/judge")
-                .withUser("nobody:nogroup")
+                .withUser(System.getProperty("os.name").toLowerCase().contains("windows") ? "root" : "nobody:nogroup")
                 .withAttachStdout(true)
                 .withAttachStderr(true)
                 .exec();
-        
+
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        
+
         boolean completed = dockerClient.execStartCmd(execResponse.getId())
                 .exec(new ExecResultCallback(output, output))
                 .awaitCompletion(30, TimeUnit.SECONDS);
-        
+
         if (!completed) {
             throw new RuntimeException("Compilation timeout exceeded");
         }
-        
+
         return output.toString(StandardCharsets.UTF_8);
     }
-    
+
     private BigDecimal calculateActualExecutionTime(Path workDir, BigDecimal wallTime) {
         try {
             Path timingFile = workDir.resolve("timing.txt");
@@ -480,12 +478,12 @@ public class DockerExecutionService {
         } catch (Exception e) {
             log.debug("Could not read timing information", e);
         }
-        
+
         BigDecimal overhead = new BigDecimal("0.05");
         BigDecimal actualTime = wallTime.subtract(overhead);
         return actualTime.compareTo(BigDecimal.ZERO) > 0 ? actualTime : BigDecimal.ZERO;
     }
-    
+
     private Integer getExecutionMemoryUsage(ContainerPool.PooledContainer container, Path workDir) {
         try {
             Path memoryFile = workDir.resolve("memory.txt");
@@ -493,21 +491,21 @@ public class DockerExecutionService {
                 String memory = Files.readString(memoryFile, StandardCharsets.UTF_8).trim();
                 return Integer.parseInt(memory) / 1024;
             }
-            
+
             return 2048;
-            
+
         } catch (Exception e) {
             log.debug("Could not determine memory usage", e);
             return null;
         }
     }
-    
-    private Status determineExecutionStatus(boolean completed, Integer exitCode, 
-                                           String expectedOutput, String actualOutput) {
+
+    private Status determineExecutionStatus(boolean completed, Integer exitCode,
+            String expectedOutput, String actualOutput) {
         if (!completed) {
             return Status.TLE;
         }
-        
+
         if (exitCode == null || exitCode != 0) {
             if (exitCode != null && exitCode == 124) {
                 return Status.TLE;
@@ -519,32 +517,32 @@ public class DockerExecutionService {
                 return Status.NZEC;
             }
         }
-        
+
         if (expectedOutput != null && !expectedOutput.trim().isEmpty()) {
             String normalizedExpected = normalizeOutput(expectedOutput);
             String normalizedActual = normalizeOutput(actualOutput);
-            
+
             if (normalizedExpected.equals(normalizedActual)) {
                 return Status.AC;
             } else {
                 return Status.WA;
             }
         }
-        
+
         return Status.AC;
     }
-    
+
     private String normalizeOutput(String output) {
         if (output == null) {
             return "";
         }
-        
+
         return Arrays.stream(output.split("\n"))
                 .map(String::stripTrailing)
                 .collect(Collectors.joining("\n"))
                 .stripTrailing();
     }
-    
+
     private String readFileContent(Path filePath) {
         try {
             if (Files.exists(filePath) && Files.size(filePath) > 0) {
@@ -560,7 +558,7 @@ public class DockerExecutionService {
         }
         return null;
     }
-    
+
     /**
      * 사용자 입력 옵션 보안 검증 및 정리 메서드
      * 
@@ -589,11 +587,11 @@ public class DockerExecutionService {
         if (options == null) {
             return "";
         }
-        
+
         // 잠재적인 보안 위험 문자들을 제거하여 안전한 옵션만 남김
         return options.replaceAll("[&;<>|`$\\\\]", "").trim();
     }
-    
+
     /**
      * 작업 디렉토리 정리 메서드
      * 
@@ -617,15 +615,15 @@ public class DockerExecutionService {
         if (workDir == null || !Files.exists(workDir)) {
             return;
         }
-        
+
         try {
             // 작업 디렉토리 내 모든 파일과 하위 디렉토리를 순회
             Files.walk(workDir)
-                    .filter(path -> !path.equals(workDir))  // 루트 디렉토리는 제외
-                    .sorted(Comparator.reverseOrder())     // 역순 정렬 (하위 파일부터 삭제)
+                    .filter(path -> !path.equals(workDir)) // 루트 디렉토리는 제외
+                    .sorted(Comparator.reverseOrder()) // 역순 정렬 (하위 파일부터 삭제)
                     .forEach(path -> {
                         try {
-                            Files.deleteIfExists(path);    // 파일/디렉토리 삭제
+                            Files.deleteIfExists(path); // 파일/디렉토리 삭제
                         } catch (IOException e) {
                             log.debug("파일 삭제 실패: {}", path);
                         }
@@ -635,7 +633,7 @@ public class DockerExecutionService {
             log.warn("작업 디렉토리 정리 실패: {}", workDir, e);
         }
     }
-    
+
     /**
      * Docker 실행 결과 콜백 클래스
      * 
@@ -657,8 +655,8 @@ public class DockerExecutionService {
      * - 각 실행마다 새로운 인스턴스 생성
      */
     private static class ExecResultCallback extends ResultCallback.Adapter<Frame> {
-        private final ByteArrayOutputStream stdout;  // 표준 출력 수집용
-        private final ByteArrayOutputStream stderr;  // 표준 에러 수집용
+        private final ByteArrayOutputStream stdout; // 표준 출력 수집용
+        private final ByteArrayOutputStream stderr; // 표준 에러 수집용
 
         /**
          * 실행 결과 콜백 생성자
@@ -700,7 +698,7 @@ public class DockerExecutionService {
             }
         }
     }
-    
+
     /**
      * 컨테이너 풀 통계 정보 조회 메서드
      * 

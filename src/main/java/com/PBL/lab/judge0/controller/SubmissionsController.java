@@ -182,6 +182,7 @@ public class SubmissionsController {
             return ResponseEntity.unprocessableEntity().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             log.error("제출 생성 실패", e);
+            log.info(e.getMessage());
             return ResponseEntity.internalServerError().body(Map.of("error", "Internal server error"));
         }
     }

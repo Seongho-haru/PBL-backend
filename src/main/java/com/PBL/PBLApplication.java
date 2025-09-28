@@ -3,6 +3,7 @@ package com.PBL;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
@@ -38,6 +39,10 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @SpringBootApplication
 @EnableCaching
 @EnableAsync
+@ComponentScan(basePackages = {
+    "com.PBL.lab",      // 기존 Judge0 패키지
+    "com.PBL.lecture"   // 새로운 Lecture 패키지
+})
 public class PBLApplication {
 
     public static void main(String[] args) {

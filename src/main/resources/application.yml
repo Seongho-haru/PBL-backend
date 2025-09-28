@@ -73,11 +73,58 @@ management:
       prometheus:
         enabled: true
 
+# SpringDoc OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    filter: true
+    displayRequestDuration: true
+    urls: # 모듈 추가시 이곳에 추가
+      - name: "All APIs"
+        url: /api-docs
+      - name: "Judge0 Core APIs"
+        url: /api-docs/judge0-core
+      - name: "Lecture Management APIs"
+        url: /api-docs/lectures
+      - name: "Grading System APIs"
+        url: /api-docs/grading
+  show-actuator: true
+  packages-to-scan: com.PBL # 전체 PBL 패키지 자동 스캔
+  group-configs:
+    - group: "judge0-core"
+      display-name: "Judge0 Core APIs"
+      paths-to-match:
+        - /submissions/**
+        - /languages/**
+        - /statuses/**
+        - /system_info/**
+        - /health/**
+    - group: "lectures"
+      display-name: "Lecture Management APIs"
+      paths-to-match:
+        - /api/lectures/**
+      packages-to-scan:
+        - com.PBL.lecture
+    - group: "grading"
+      display-name: "Grading System APIs"
+      paths-to-match:
+        - /grading/**
+
 # Logging Configuration
 logging:
   level:
     com.judge0: INFO
+    com.PBL.lecture: DEBUG
     org.springframework.web: WARN
+    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: DEBUG
+    org.springdoc: DEBUG
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
     com.github.dockerjava: WARN

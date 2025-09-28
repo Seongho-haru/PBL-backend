@@ -1,5 +1,6 @@
 package com.PBL.lab.grading.service;
 
+import com.PBL.lab.core.service.ExecutionResult;
 import com.PBL.lab.grading.dto.GradingProgressResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -147,6 +148,39 @@ public class GradingProgressService {
                     .currentStatus("ERROR")
                     .updatedAt(LocalDateTime.now())
                     .message(errorMessage)
+                    .build();
+        }
+        
+        updateProgress(token, currentProgress);
+        
+        // 에러 후 잠시 후 연결 해제
+        scheduler.schedule(() -> unregisterProgressListener(token), 3, TimeUnit.SECONDS);
+    }
+
+    /**
+     * 채점 에러 알림 (ExecutionResult 포함)
+     */
+    public void notifyGradingErrorWithDetails(String token, ExecutionResult executionResult) {
+        GradingProgressResponse currentProgress = progressCache.get(token);
+        if (currentProgress != null) {
+            currentProgress.markError(executionResult.getMessage());
+            currentProgress.setStderr(executionResult.getStderr());
+            currentProgress.setStdout(executionResult.getStdout());
+            currentProgress.setCompileOutput(executionResult.getCompileOutput());
+            currentProgress.setTime(executionResult.getTime());
+            currentProgress.setMemory(executionResult.getMemory());
+        } else {
+            currentProgress = GradingProgressResponse.builder()
+                    .token(token)
+                    .status(GradingProgressResponse.StatusResponse.from(executionResult.getStatus()))
+                    .currentStatus("ERROR")
+                    .updatedAt(LocalDateTime.now())
+                    .message(executionResult.getMessage())
+                    .stderr(executionResult.getStderr())
+                    .stdout(executionResult.getStdout())
+                    .compileOutput(executionResult.getCompileOutput())
+                    .time(executionResult.getTime())
+                    .memory(executionResult.getMemory())
                     .build();
         }
         

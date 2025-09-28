@@ -114,6 +114,7 @@ public class GradingExecutionJob {
             
             if (testCases.isEmpty()) {
                 log.warn("테스트케이스가 없음 - grading token: {}", gradingToken);
+                // SSE로 오류 알림
                 gradingProgressService.notifyGradingError(gradingToken, "테스트케이스가 없습니다");
                 // 테스트케이스가 없는 경우 기본 결과로 처리
                 ExecutionResult defaultResult = ExecutionResult.builder()
@@ -160,6 +161,7 @@ public class GradingExecutionJob {
                     // Docker에서 코드 실행
                     ExecutionService.CodeExecutionRequest request = ExecutionService.CodeExecutionRequest.from(submission);
                     ExecutionResult result = dockerExecutionService.executeCode(request);
+                    log.info(result.toString());
                     
                     // 결과 저장
                     submissionService.updateResult(submission.getToken(), result);
@@ -191,6 +193,9 @@ public class GradingExecutionJob {
                             .message("Test case execution failed: " + e.getMessage())
                             .errorMessage(e.getMessage())
                             .build();
+                    
+                    // SSE로 오류 알림
+                    gradingProgressService.notifyGradingError(gradingToken, "테스트케이스 실행 중 오류 발생: " + e.getMessage());
                     break;
                 }
             }
@@ -207,11 +212,18 @@ public class GradingExecutionJob {
             // 채점 결과를 데이터베이스에 저장
             gradingService.updateResult(gradingToken, finalResult);
             
-            // SSE로 채점 완료 알림
-            gradingProgressService.notifyGradingCompleted(gradingToken);
-            
-            log.info("코드 채점 작업 완료 - grading token: {}, 통과: {}/{}, 최종 상태: {}", 
-                    gradingToken, passedTestCases, totalTestCases, finalResult.getStatus().getName());
+            // 최종 상태에 따라 다른 알림 전송
+            if (finalResult.getStatus().equals(Status.AC)) {
+                // 성공 시 완료 알림
+                gradingProgressService.notifyGradingCompleted(gradingToken);
+                log.info("코드 채점 작업 완료 - grading token: {}, 통과: {}/{}, 최종 상태: {}", 
+                        gradingToken, passedTestCases, totalTestCases, finalResult.getStatus().getName());
+            } else {
+                // 실패 시 오류 알림 (ExecutionResult 포함)
+                gradingProgressService.notifyGradingErrorWithDetails(gradingToken, finalResult);
+                log.info("코드 채점 작업 실패 - grading token: {}, 통과: {}/{}, 최종 상태: {}", 
+                        gradingToken, passedTestCases, totalTestCases, finalResult.getStatus().getName());
+            }
             
         } catch (Exception e) {
             log.error("코드 채점 작업 실패 - grading token: {}", gradingToken, e);

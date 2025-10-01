@@ -44,8 +44,15 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * Find submissions by status ID with pagination
+     * - Fetch Join으로 constraints, language, inputOutput을 미리 로딩하여 Lazy Loading 문제 방지
      */
-    Page<Submission> findByStatusId(Integer statusId, Pageable pageable);
+    @Query(value = "SELECT DISTINCT s FROM Submission s " +
+                   "LEFT JOIN FETCH s.constraints " +
+                   "LEFT JOIN FETCH s.inputOutput " +
+                   "LEFT JOIN FETCH s.language " +
+                   "WHERE s.statusId = :statusId",
+           countQuery = "SELECT COUNT(DISTINCT s) FROM Submission s WHERE s.statusId = :statusId")
+    Page<Submission> findByStatusId(@Param("statusId") Integer statusId, Pageable pageable);
 
     /**
      * Find submissions created between dates
@@ -64,8 +71,15 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * Find submissions by language ID with pagination
+     * - Fetch Join으로 constraints, language, inputOutput을 미리 로딩하여 Lazy Loading 문제 방지
      */
-    Page<Submission> findByLanguageId(Integer languageId, Pageable pageable);
+    @Query(value = "SELECT DISTINCT s FROM Submission s " +
+                   "LEFT JOIN FETCH s.constraints " +
+                   "LEFT JOIN FETCH s.inputOutput " +
+                   "LEFT JOIN FETCH s.language " +
+                   "WHERE s.languageId = :languageId",
+           countQuery = "SELECT COUNT(DISTINCT s) FROM Submission s WHERE s.languageId = :languageId")
+    Page<Submission> findByLanguageId(@Param("languageId") Integer languageId, Pageable pageable);
 
     /**
      * Find submissions by multiple tokens
@@ -144,8 +158,15 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     /**
      * Find submissions ordered by creation date (default order)
+     * - Fetch Join으로 constraints, language, inputOutput을 미리 로딩하여 Lazy Loading 문제 방지
      */
-    @Query("SELECT s FROM Submission s ORDER BY s.createdAt DESC")
+    @Query(value = "SELECT DISTINCT s FROM Submission s " +
+                   "LEFT JOIN FETCH s.constraints " +
+                   "LEFT JOIN FETCH s.inputOutput " +
+                   "LEFT JOIN FETCH s.language " +
+                   "WHERE s.isGrading = false " +
+                   "ORDER BY s.createdAt DESC",
+           countQuery = "SELECT COUNT(DISTINCT s) FROM Submission s WHERE s.isGrading = false")
     Page<Submission> findAllOrderedByCreatedAt(Pageable pageable);
 
     /**

@@ -108,42 +108,46 @@ public class GradingExecutionJob {
             // 채점 상태를 "처리 중"으로 변경
             // 클라이언트가 결과를 조회할 때 채점 중임을 알 수 있도록 함
             gradingService.updateStatus(gradingToken, Status.PROCESS);
-            
+
+            log.info("테스트케이스 찾는 중... token: {}", gradingToken);
             // 모든 테스트케이스 조회
             List<ProblemTestCase> testCases = gradingService.findByProblemId(grading.getProblemId());
+            log.info("테스트케이스 조회 완료 token: {}", gradingToken);
+
+            // 공통 ExecutionResult 객체 생성 (재사용)
+            ExecutionResult commonResult = ExecutionResult.builder()
+                    .status(Status.PROCESS)
+                    .message("")
+                    .build();
             
             if (testCases.isEmpty()) {
                 log.warn("테스트케이스가 없음 - grading token: {}", gradingToken);
-                // SSE로 오류 알림
-                gradingProgressService.notifyGradingError(gradingToken, "테스트케이스가 없습니다");
                 // 테스트케이스가 없는 경우 기본 결과로 처리
-                ExecutionResult defaultResult = ExecutionResult.builder()
-                        .status(Status.BOXERR)
-                        .message("No test cases found for this problem")
-                        .build();
-                gradingService.updateResult(gradingToken, defaultResult);
+                commonResult.setStatus(Status.BOXERR);
+                commonResult.setMessage("No test cases found for this problem");
+                gradingService.updateResult(gradingToken, commonResult);
+                gradingProgressService.notifyGradingError(gradingToken);
                 return;
             }
             
             // 채점 결과 집계를 위한 변수들
             int totalTestCases = testCases.size();
             int passedTestCases = 0;
-            ExecutionResult finalResult = null;
-            Status finalStatus = Status.AC; // 기본값은 정답
+
+
             
             log.info("총 {}개의 테스트케이스로 채점 시작 - grading token: {}", totalTestCases, gradingToken);
             
-            // SSE로 채점 시작 알림
-            gradingProgressService.notifyGradingStarted(gradingToken, grading.getProblemId(), totalTestCases);
+            // 캐시된 응답 객체 한 번만 조회 (재사용)
+            commonResult.setMessage("채점을 시작하겠습니다.");
+            gradingService.updateResult(gradingToken, commonResult);
+            gradingProgressService.notifyGradingStarted(gradingToken, totalTestCases);
             
             // 각 테스트케이스에 대해 실행
             for (int i = 0; i < testCases.size(); i++) {
                 ProblemTestCase testCase = testCases.get(i);
                 log.info("테스트케이스 {}/{} 실행 중 - grading token: {}", i + 1, totalTestCases, gradingToken);
-                
-                // SSE로 현재 테스트케이스 진행상황 업데이트
-                gradingProgressService.updateTestCaseProgress(gradingToken, i, totalTestCases, "RUNNING");
-                
+
                 try {
                     // SubmissionRequest 생성 및 설정
                     SubmissionRequest submissionRequest = new SubmissionRequest();
@@ -156,85 +160,71 @@ public class GradingExecutionJob {
                     Submission submission = submissionService.createSubmission(submissionRequest);
                     submission.setStartedAt(LocalDateTime.now());
                     submission.setExecutionHost(getHostname());
+                    submission.setGrading(true);
                     submissionService.updateStatus(submission.getToken(), Status.PROCESS);
                     
                     // Docker에서 코드 실행
                     ExecutionService.CodeExecutionRequest request = ExecutionService.CodeExecutionRequest.from(submission);
-                    ExecutionResult result = dockerExecutionService.executeCode(request);
-                    log.info(result.toString());
+                    commonResult = dockerExecutionService.executeCode(request);
                     
                     // 결과 저장
-                    submissionService.updateResult(submission.getToken(), result);
+                    submissionService.updateResult(submission.getToken(), commonResult);
                     
                     // 결과 분석
-                    if (result.getStatus().equals(Status.AC)) {
+                    // 테스트케이스가 정답으로 통과시 
+                    if (commonResult.getStatus().equals(Status.AC)) {
                         passedTestCases++;
                         log.info("테스트케이스 {}/{} 통과 - grading token: {}", i + 1, totalTestCases, gradingToken);
-                    } else {
-                        log.info("테스트케이스 {}/{} 실패 (상태: {}) - grading token: {}", 
-                                i + 1, totalTestCases, result.getStatus().getName(), gradingToken);
-                        finalStatus = Status.WA;
-                        // 첫 번째 실패한 테스트케이스의 결과를 최종 결과로 사용
-                        if (finalResult == null) {
-                            finalResult = result;
+                        commonResult.setMessage("테스트케이스 " + (i + 1) + "/" + totalTestCases + " 통과");
+                        if (totalTestCases != passedTestCases) {
+                            commonResult.setStatus(Status.PROCESS);
                         }
-                        break; // 첫 번째 실패 시 채점 중단
+                        gradingService.updateResult(gradingToken, commonResult);
+                        gradingProgressService.updateTestCaseProgress(gradingToken, i, totalTestCases, Status.PROCESS.getName());
+                    } else {
+                        //테스트케이스 성공아닐시 어떤것이든 실패로처리 하고 바로 종료
+                        //동기로 실행하기에 반드시 에러가 발생
+                        log.info("테스트케이스 {}/{} 실패 (상태: {}) - grading token: {}", 
+                                i + 1, totalTestCases, commonResult.getStatus().getName(), gradingToken);
+
+                        commonResult.setMessage("테스트케이스 " + (i + 1) + "/" + totalTestCases + " 실패: " + commonResult.getStatus().getName());
+                        gradingService.updateResult(gradingToken, commonResult);
+                        break;
                     }
-                    
-                    // TODO: 이벤트 리스너로 진행 상황 발행
-                    // "테스트케이스 {}/{} 완료" 메시지 전송
-                    
+
                 } catch (Exception e) {
                     log.error("테스트케이스 {}/{} 실행 중 오류 발생 - grading token: {}", 
                             i + 1, totalTestCases, gradingToken, e);
-                    finalStatus = Status.BOXERR;
-                    finalResult = ExecutionResult.builder()
-                            .status(finalStatus)
-                            .message("Test case execution failed: " + e.getMessage())
-                            .errorMessage(e.getMessage())
-                            .build();
-                    
-                    // SSE로 오류 알림
-                    gradingProgressService.notifyGradingError(gradingToken, "테스트케이스 실행 중 오류 발생: " + e.getMessage());
+                    // 오류 메시지 설정 및 DB 저장, 캐시 업데이트
+                    commonResult.setMessage("테스트케이스 실행 중 오류 발생: " + e.getMessage());
+                    commonResult.setStatus(Status.BOXERR);
+                    gradingService.updateResult(gradingToken, commonResult);
+                    gradingProgressService.notifyGradingError(gradingToken);
                     break;
                 }
             }
-            
-            // 최종 결과 결정
-            if (finalResult == null) {
-                // 모든 테스트케이스가 통과한 경우
-                finalResult = ExecutionResult.builder()
-                        .status(finalStatus)
-                        .message(String.format("All %d test cases passed", totalTestCases))
-                        .build();
-            }
-            
-            // 채점 결과를 데이터베이스에 저장
-            gradingService.updateResult(gradingToken, finalResult);
-            
             // 최종 상태에 따라 다른 알림 전송
-            if (finalResult.getStatus().equals(Status.AC)) {
-                // 성공 시 완료 알림
+            if (commonResult.getStatus().equals(Status.AC)) {
+                // 성공 시 완료 메시지 설정 및 DB 저장, 캐시 업데이트
+                commonResult.setMessage("채점이 완료되었습니다!");
+                gradingService.updateResult(gradingToken, commonResult);
                 gradingProgressService.notifyGradingCompleted(gradingToken);
                 log.info("코드 채점 작업 완료 - grading token: {}, 통과: {}/{}, 최종 상태: {}", 
-                        gradingToken, passedTestCases, totalTestCases, finalResult.getStatus().getName());
+                        gradingToken, passedTestCases, totalTestCases, commonResult.getStatus().getName());
             } else {
-                // 실패 시 오류 알림 (ExecutionResult 포함)
-                gradingProgressService.notifyGradingErrorWithDetails(gradingToken, finalResult);
+                gradingService.updateResult(gradingToken, commonResult);
+                gradingProgressService.notifyGradingError(gradingToken);
                 log.info("코드 채점 작업 실패 - grading token: {}, 통과: {}/{}, 최종 상태: {}", 
-                        gradingToken, passedTestCases, totalTestCases, finalResult.getStatus().getName());
+                        gradingToken, passedTestCases, totalTestCases, commonResult.getStatus().getName());
             }
             
         } catch (Exception e) {
             log.error("코드 채점 작업 실패 - grading token: {}", gradingToken, e);
             // 채점 실패 시 오류 처리 및 상태 업데이트
             handleGradingFailure(gradingToken, e);
-        } finally {
-            // 웹훅 콜백 전송 (설정된 경우)
-            // 채점 완료 후 외부 시스템에 결과를 알림
-            if (grading != null) {
-                sendCallback(grading);
-            }
+        }
+        finally {
+            log.info("채점 종료 token: {}", gradingToken);
         }
     }
 
@@ -270,9 +260,7 @@ public class GradingExecutionJob {
             // 오류 결과를 데이터베이스에 저장
             // 클라이언트가 결과를 조회할 때 오류 상황을 확인할 수 있도록 함
             gradingService.updateResult(gradingToken, errorResult);
-            
-            // SSE로 채점 에러 알림
-            gradingProgressService.notifyGradingError(gradingToken, exception.getMessage());
+            gradingProgressService.notifyGradingError(gradingToken);
             
         } catch (Exception e) {
             // 오류 처리 중에도 예외가 발생한 경우 (매우 드문 상황)

@@ -77,6 +77,9 @@ public class Submission {
     @Column(unique = true, nullable = false, length = 36)
     private String token;
 
+    @Column
+    private boolean isGrading;
+
     /**
      * 실행할 소스 코드
      * - 사용자가 제출한 실제 프로그래밍 코드

@@ -41,6 +41,7 @@ org:
     background-job-server:
       enabled: true
       worker-count: 4
+      poll-interval-in-seconds: 5 # 폴링 간격 1초로 설정
     dashboard:
       enabled: false
       port: 8081
@@ -68,10 +69,7 @@ management:
       show-details: always
     metrics:
       enabled: true
-  metrics:
-    export:
-      prometheus:
-        enabled: true
+
 
 # SpringDoc OpenAPI Configuration
 springdoc:

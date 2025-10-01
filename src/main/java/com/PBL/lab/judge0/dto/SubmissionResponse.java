@@ -1,5 +1,7 @@
 package com.PBL.lab.judge0.dto;
 
+import com.PBL.lab.core.dto.ConstraintsResponse;
+import com.PBL.lab.core.dto.StatusResponse;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,6 +26,8 @@ public class SubmissionResponse {
 
     private String token;
 
+    private Long id;
+
     @JsonProperty("source_code")
     private String sourceCode;
 
@@ -46,6 +50,8 @@ public class SubmissionResponse {
 
     private StatusResponse status;
 
+    private ConstraintsResponse constraints;
+
     @JsonProperty("created_at")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private LocalDateTime createdAt;
@@ -67,74 +73,6 @@ public class SubmissionResponse {
     @JsonProperty("exit_signal")
     private Integer exitSignal;
 
-    @JsonProperty("number_of_runs")
-    private Integer numberOfRuns;
-
-    @JsonProperty("cpu_time_limit")
-    private BigDecimal cpuTimeLimit;
-
-    @JsonProperty("cpu_extra_time")
-    private BigDecimal cpuExtraTime;
-
-    @JsonProperty("wall_time_limit")
-    private BigDecimal wallTimeLimit;
-
-    @JsonProperty("memory_limit")
-    private Integer memoryLimit;
-
-    @JsonProperty("stack_limit")
-    private Integer stackLimit;
-
-    @JsonProperty("max_processes_and_or_threads")
-    private Integer maxProcessesAndOrThreads;
-
-    @JsonProperty("enable_per_process_and_thread_time_limit")
-    private Boolean enablePerProcessAndThreadTimeLimit;
-
-    @JsonProperty("enable_per_process_and_thread_memory_limit")
-    private Boolean enablePerProcessAndThreadMemoryLimit;
-
-    @JsonProperty("max_file_size")
-    private Integer maxFileSize;
-
-    @JsonProperty("compiler_options")
-    private String compilerOptions;
-
-    @JsonProperty("command_line_arguments")
-    private String commandLineArguments;
-
-    @JsonProperty("redirect_stderr_to_stdout")
-    private Boolean redirectStderrToStdout;
-
-    @JsonProperty("callback_url")
-    private String callbackUrl;
-
-    @JsonProperty("additional_files")
-    private String additionalFiles;
-
-    @JsonProperty("enable_network")
-    private Boolean enableNetwork;
-
-    /**
-     * Status Response nested class
-     */
-    @Data
-    @Builder
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public static class StatusResponse {
-        private Integer id;
-        private String description;
-
-        public static StatusResponse from(Status status) {
-            if (status == null) {
-                return null;
-            }
-            return StatusResponse.builder()
-                    .id(status.getId())
-                    .description(status.getName())
-                    .build();
-        }
-    }
 
     /**
      * Create SubmissionResponse from Submission entity
@@ -152,6 +90,7 @@ public class SubmissionResponse {
         }
 
         SubmissionResponseBuilder builder = SubmissionResponse.builder()
+                .id(submission.getId())
                 .token(submission.getToken())
                 .languageId(submission.getLanguageId())
                 .status(StatusResponse.from(submission.getStatus()))
@@ -163,21 +102,8 @@ public class SubmissionResponse {
                 .exitCode(submission.getExitCode())
                 .exitSignal(submission.getExitSignal())
                 .message(submission.getInputOutput() != null ? submission.getInputOutput().getMessage() : null)
-                .numberOfRuns(submission.getConstraints().getNumberOfRuns())
-                .cpuTimeLimit(submission.getConstraints().getCpuTimeLimit())
-                .cpuExtraTime(submission.getConstraints().getCpuExtraTime())
-                .wallTimeLimit(submission.getConstraints().getWallTimeLimit())
-                .memoryLimit(submission.getConstraints().getMemoryLimit())
-                .stackLimit(submission.getConstraints().getStackLimit())
-                .maxProcessesAndOrThreads(submission.getConstraints().getMaxProcessesAndOrThreads())
-                .enablePerProcessAndThreadTimeLimit(submission.getConstraints().getEnablePerProcessAndThreadTimeLimit())
-                .enablePerProcessAndThreadMemoryLimit(submission.getConstraints().getEnablePerProcessAndThreadMemoryLimit())
-                .maxFileSize(submission.getConstraints().getMaxFileSize())
-                .compilerOptions(submission.getConstraints().getCompilerOptions())
-                .commandLineArguments(submission.getConstraints().getCommandLineArguments())
-                .redirectStderrToStdout(submission.getConstraints().getRedirectStderrToStdout())
-                .callbackUrl(submission.getConstraints().getCallbackUrl())
-                .enableNetwork(submission.getConstraints().getEnableNetwork());
+
+                .constraints(ConstraintsResponse.from(submission.getConstraints()));
 
         // Handle text fields with base64 encoding
         if (base64Encoded) {
@@ -195,12 +121,6 @@ public class SubmissionResponse {
                     .stdout(submission.getInputOutput() != null ? submission.getInputOutput().getStdout() : null)
                     .stderr(submission.getInputOutput() != null ? submission.getInputOutput().getStderr() : null)
                     .compileOutput(submission.getInputOutput() != null ? submission.getInputOutput().getCompileOutput() : null);
-        }
-
-        // Handle additional files
-        if (submission.getConstraints().getAdditionalFiles() != null) {
-            // Convert byte array to base64 string
-            builder.additionalFiles(java.util.Base64.getEncoder().encodeToString(submission.getConstraints().getAdditionalFiles()));
         }
 
         return builder.build();

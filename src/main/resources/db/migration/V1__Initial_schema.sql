@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     source_code TEXT,
     language_id INTEGER NOT NULL,
     status_id INTEGER DEFAULT 1,
+    is_grading BOOLEAN DEFAULT false,
     
     -- Timestamps
     created_at TIMESTAMP NOT NULL,

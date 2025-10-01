@@ -2,7 +2,8 @@ package com.PBL.lab.grading.controller;
 
 import com.PBL.lab.grading.dto.GradingRequest;
 import com.PBL.lab.grading.dto.GradingResponse;
-import com.PBL.lab.grading.dto.GradingProgressResponse;
+import com.PBL.lab.grading.dto.ProgressResponse;
+import com.PBL.lab.grading.entity.ProblemTestCase;
 import com.PBL.lab.grading.service.ExecutionGradingService;
 import com.PBL.lab.grading.entity.Grading;
 import com.PBL.lab.core.service.Base64Service;
@@ -11,6 +12,7 @@ import com.PBL.lab.grading.service.GradingService;
 import com.PBL.lab.grading.service.GradingProgressService;
 import com.PBL.lab.core.enums.Status;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Null;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -50,6 +52,7 @@ public class GradingController {
     public ResponseEntity<?> index(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(name = "per_page", defaultValue = "20") int perPage,
+            @RequestParam(name = "problem_id" , required = false) Long problemId,
             @RequestParam(defaultValue = "false") boolean base64_encoded,
             @RequestParam(required = false) String fields) {
 
@@ -62,8 +65,13 @@ public class GradingController {
 
         try {
             Pageable pageable = PageRequest.of(page - 1, perPage);
-            Page<Grading> GradingPage = gradingService.findAll(pageable);
-
+            Page<Grading> GradingPage = null;
+            if (problemId != null){
+                GradingPage = gradingService.findByProblemId(problemId,pageable);
+            }
+            else{
+                GradingPage = gradingService.findAll(pageable);
+            }
             List<GradingResponse> gradings = GradingPage.getContent().stream()
                     .map(grading -> GradingResponse.from(grading, base64_encoded, parseFields(fields)))
                     .collect(Collectors.toList());
@@ -74,6 +82,7 @@ public class GradingController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            log.error(e.getMessage());
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "some attributes for one or more gradings cannot be converted to UTF-8, use base64_encoded=true query parameter"
             ));
@@ -198,60 +207,24 @@ public class GradingController {
      * SSE를 통한 채점 진행상황 실시간 스트림 (내부 메서드)
      */
     @GetMapping(value = "/grading/{token}/progress", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter getGradingProgressSSE(@PathVariable String token, boolean base64_encoded, String fields) {
+    public SseEmitter getGradingProgressSSE(
+            @PathVariable String token,
+            boolean base64_encoded,
+            String fields) {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE); // 타임아웃 없음
         
         try {
             // 채점이 존재하는지 확인
             Grading grading = gradingService.findByToken(token);
-            
-            // 초기 진행상황 전송 (GradingResponse와 동일한 형태)
-            GradingProgressResponse initialProgress = GradingProgressResponse.builder()
-                    .token(token)
-                    .problemId(grading.getProblemId())
-                    .status(GradingProgressResponse.StatusResponse.from(Status.PROCESS))
-                    .currentStatus("INITIALIZING")
-                    .totalTestCase(0)
-                    .doneTestCase(0)
-                    .currentTestCase(0)
-                    .progressPercentage(0.0)
-                    .updatedAt(java.time.LocalDateTime.now())
-                    .createdAt(grading.getCreatedAt())
-                    .message("채점을 시작합니다...")
-                    .build();
-            
-            // 실제 진행상황 업데이트를 위한 이벤트 리스너 등록 (먼저 등록)
+
+            // 실제 진행상황 업데이트를 위한 이벤트 리스너 등록
             gradingProgressService.registerProgressListener(token, emitter);
-            
-            // 초기 진행상황 전송
-            try {
-                emitter.send(SseEmitter.event()
-                        .name("progress")
-                        .data(objectMapper.writeValueAsString(initialProgress)));
-                log.info("Initial progress sent for token: {}", token);
-            } catch (Exception e) {
-                log.error("Failed to send initial progress for token: {}", token, e);
-                emitter.completeWithError(e);
-                return emitter;
-            }
             
             // 연결 종료 시 정리
             emitter.onCompletion(() -> {
                 log.info("SSE connection completed for grading: {}", token);
                 gradingProgressService.unregisterProgressListener(token);
-                
-                // 채점 완료 시 최종 결과를 SSE로 전송
-                try {
-                    Grading finalGrading = gradingService.findByToken(token);
-                    if (finalGrading.getStatus().isTerminal()) {
-                        GradingResponse finalResponse = GradingResponse.from(finalGrading, base64_encoded, parseFields(fields));
-                        emitter.send(SseEmitter.event()
-                                .name("final_result")
-                                .data(objectMapper.writeValueAsString(finalResponse)));
-                    }
-                } catch (Exception e) {
-                    log.warn("Failed to send final result for grading: {}", token, e);
-                }
+
             });
             
             emitter.onTimeout(() -> {

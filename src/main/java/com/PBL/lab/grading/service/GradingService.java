@@ -1,8 +1,10 @@
 package com.PBL.lab.grading.service;
 
+import com.PBL.lab.core.dto.StatusResponse;
 import com.PBL.lab.core.entity.Language;
 import com.PBL.lab.core.entity.Constraints;
 import com.PBL.lab.grading.dto.GradingRequest;
+import com.PBL.lab.grading.dto.GradingResponse;
 import com.PBL.lab.grading.entity.Grading;
 import com.PBL.lab.grading.entity.GradingTestCaseToken;
 import com.PBL.lab.grading.entity.ProblemTestCase;
@@ -44,11 +46,14 @@ public class GradingService {
     private final LanguageService languageService;
     private final ConstraintsRepository constraintsRepository;
     private final ConfigService configService;
-    private final Base64Service base64Service;
 
 
     public Page<Grading> findAll(Pageable pageable) {
-        return gradingRepository.findAll(pageable);
+        return gradingRepository.findAllWithFetch(pageable);
+    }
+
+    public Page<Grading> findByProblemId(Long problemId, Pageable pageable) {
+        return gradingRepository.findByProblemId(problemId, pageable);
     }
 
     public Grading findByToken(String token) {
@@ -119,21 +124,12 @@ public class GradingService {
         grading.setProblemId(request.getProblemId());
 
         // 3) 소스/추가파일 처리: 프로젝트형 vs 비프로젝트형 상호배타성 보장
-        if (language.isProject()) {
-            // 프로젝트형은 추가파일(바이너리 번들) 필수, 소스코드 입력 금지
-            if (request.getSourceCode() != null && !request.getSourceCode().trim().isEmpty()) {
-                throw new IllegalArgumentException("Source code should not be provided for project submissions");
-            }
-            if (request.getAdditionalFiles() == null || request.getAdditionalFiles().trim().isEmpty()) {
-                throw new IllegalArgumentException("Additional files are required for project submissions");
-            }
-        } else {
-            // 단일 소스코드 제출: sourceCode 필수
-            if (request.getSourceCode() == null || request.getSourceCode().trim().isEmpty()) {
-                throw new IllegalArgumentException("Source code is required for non-project submissions");
-            }
-             grading.setSourceCode(request.getSourceCode());
+        // 단일 소스코드 제출: sourceCode 필수
+        if (request.getSourceCode() == null || request.getSourceCode().trim().isEmpty()) {
+            throw new IllegalArgumentException("Source code is required for non-project submissions");
         }
+        grading.setSourceCode(request.getSourceCode());
+    
 
         // 4) 표준입력/기대출력 설정 (SubmissionInputOutput 엔티티 사용)
         // Grading은 채점용이므로 초기에는 빈 입출력 객체 생성
@@ -158,28 +154,6 @@ public class GradingService {
 
     public List<ProblemTestCase> findByProblemId(Long problemId) {
         return problemTestCaseRepository.findByProblemId(problemId);
-    }
-
-    public List<Submission> createSubmissionsForProblem(Grading grading) {
-        //1. 문제 ID를 가지고 모든 테스트케이스 가져오기
-        List<ProblemTestCase> testCases = findByProblemId(grading.getProblemId());
-
-        //2. 테스트케이스의 입력부분과 request를 사용하여 새로운 제출용 Submission 만들기
-        List<Submission> submissions = new ArrayList<>();
-        
-        for (ProblemTestCase testCase : testCases) {
-            log.info("테스트케이스 ID: {}, 입력: {}, 예상출력: {}", 
-                    testCase.getId(), testCase.getStrin(), testCase.getStrout());
-
-            SubmissionRequest submissionRequest = new SubmissionRequest();
-            submissionRequest.build(grading);
-            submissionRequest.setStdin(testCase.getStrin());
-            submissionRequest.setExpectedOutput(testCase.getStrout());
-            submissions.add(submissionService.createSubmission(submissionRequest));
-
-        }
-        
-        return submissions;
     }
 
     private String generateToken() {
@@ -251,72 +225,10 @@ public class GradingService {
                             "Constraints with id " + request.getConstraintsId() + " not found"));
         }
 
-        // 2. 개별 제약조건 값들이 있는지 확인
-        if (hasCustomConstraints(request)) {
-            // 새로운 제약조건 생성 (기본값으로 채움)
-            return createAndSaveConstraints(request);
-        }
 
         // 3. 기본 제약조건(id=1) 사용
         return constraintsRepository.findDefaultConstraints()
                 .orElseThrow(() -> new IllegalStateException("Default constraints (id=1) not found"));
-    }
-    /**
-     * 요청에 개별 제약조건 값들이 있는지 확인
-     */
-    private boolean hasCustomConstraints(GradingRequest request) {
-        return request.getNumberOfRuns() != null ||
-                request.getCpuTimeLimit() != null ||
-                request.getCpuExtraTime() != null ||
-                request.getWallTimeLimit() != null ||
-                request.getMemoryLimit() != null ||
-                request.getStackLimit() != null ||
-                request.getMaxProcessesAndOrThreads() != null ||
-                request.getEnablePerProcessAndThreadTimeLimit() != null ||
-                request.getEnablePerProcessAndThreadMemoryLimit() != null ||
-                request.getMaxFileSize() != null ||
-                request.getCompilerOptions() != null ||
-                request.getCommandLineArguments() != null ||
-                request.getRedirectStderrToStdout() != null ||
-                request.getCallbackUrl() != null ||
-                request.getEnableNetwork() != null;
-    }
-
-    /**
-     * 새로운 제약조건 생성 및 저장
-     * 사용자가 설정하지 않은 부분은 기본 제약조건에서 가져옴
-     */
-    private Constraints createAndSaveConstraints(GradingRequest request) {
-        // 기본 제약조건 가져오기
-        Constraints defaultConstraints = constraintsRepository.findDefaultConstraints()
-                .orElseThrow(() -> new IllegalStateException("Default constraints (id=1) not found"));
-
-        // 새로운 제약조건 생성
-        Constraints newConstraints = new Constraints();
-
-        // 사용자가 설정한 값이 있으면 사용, 없으면 기본값 사용
-        newConstraints.setNumberOfRuns(getValueOrDefault(request.getNumberOfRuns(), defaultConstraints.getNumberOfRuns()));
-        newConstraints.setCpuTimeLimit(getValueOrDefault(request.getCpuTimeLimit(), defaultConstraints.getCpuTimeLimit()));
-        newConstraints.setCpuExtraTime(getValueOrDefault(request.getCpuExtraTime(), defaultConstraints.getCpuExtraTime()));
-        newConstraints.setWallTimeLimit(getValueOrDefault(request.getWallTimeLimit(), defaultConstraints.getWallTimeLimit()));
-        newConstraints.setMemoryLimit(getValueOrDefault(request.getMemoryLimit(), defaultConstraints.getMemoryLimit()));
-        newConstraints.setStackLimit(getValueOrDefault(request.getStackLimit(), defaultConstraints.getStackLimit()));
-        newConstraints.setMaxProcessesAndOrThreads(getValueOrDefault(request.getMaxProcessesAndOrThreads(), defaultConstraints.getMaxProcessesAndOrThreads()));
-        newConstraints.setEnablePerProcessAndThreadTimeLimit(getValueOrDefault(request.getEnablePerProcessAndThreadTimeLimit(), defaultConstraints.getEnablePerProcessAndThreadTimeLimit()));
-        newConstraints.setEnablePerProcessAndThreadMemoryLimit(getValueOrDefault(request.getEnablePerProcessAndThreadMemoryLimit(), defaultConstraints.getEnablePerProcessAndThreadMemoryLimit()));
-        newConstraints.setMaxFileSize(getValueOrDefault(request.getMaxFileSize(), defaultConstraints.getMaxFileSize()));
-        newConstraints.setCompilerOptions(getValueOrDefault(request.getCompilerOptions(), defaultConstraints.getCompilerOptions()));
-        newConstraints.setCommandLineArguments(getValueOrDefault(request.getCommandLineArguments(), defaultConstraints.getCommandLineArguments()));
-        newConstraints.setRedirectStderrToStdout(getValueOrDefault(request.getRedirectStderrToStdout(), defaultConstraints.getRedirectStderrToStdout()));
-        newConstraints.setCallbackUrl(getValueOrDefault(request.getCallbackUrl(), defaultConstraints.getCallbackUrl()));
-        newConstraints.setEnableNetwork(getValueOrDefault(request.getEnableNetwork(), defaultConstraints.getEnableNetwork()));
-
-        // 추가 파일 처리
-        if (request.getAdditionalFiles() != null && !request.getAdditionalFiles().trim().isEmpty()) {
-            newConstraints.setAdditionalFiles(base64Service.decodeToBytes(request.getAdditionalFiles()));
-        }
-
-        return constraintsRepository.save(newConstraints);
     }
 
     /**
@@ -335,12 +247,6 @@ public class GradingService {
         log.info("Saved {} test case tokens for grading: {}", submissions.size(), grading.getToken());
     }
 
-    /**
-     * 값이 null이면 기본값을 반환하는 헬퍼 메서드
-     */
-    private <T> T getValueOrDefault(T value, T defaultValue) {
-        return value != null ? value : defaultValue;
-    }
 
     public List<Submission> findByGradingToken(String token) {
         List<GradingTestCaseToken> submission_token= gradingTestCaseTokenRepository.findByGradingToken(token);

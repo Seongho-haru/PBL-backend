@@ -1,6 +1,8 @@
 package com.PBL.lab.grading.repository;
 
 import com.PBL.lab.grading.entity.ProblemTestCase;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

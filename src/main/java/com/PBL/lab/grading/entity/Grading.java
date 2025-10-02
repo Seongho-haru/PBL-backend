@@ -148,7 +148,7 @@ public class Grading {
     @Column(columnDefinition = "TEXT")
     private String message;
 
-    //submission 틀린/에러 토큰을 넣으면 알아서 submissionInputOutput이랑 조인
+    //submission 틀린/에러 id을 넣으면 알아서 submissionInputOutput이랑 조인
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "error_id", nullable = false)
     private SubmissionInputOutput inputOutput;

@@ -508,7 +508,7 @@ public class SubmissionService {
         return value != null ? value : defaultValue;
     }
 
-    public SubmissionInputOutput findByTokenInputOutput(String token) {
-        return submissionInputOutputRepository.findByTokenInputOutput(token);
+    public SubmissionInputOutput findById(Long id) {
+        return submissionInputOutputRepository.findById(id).orElse(null);
     }
 }

@@ -46,4 +46,14 @@ public interface SubmissionInputOutputRepository extends JpaRepository<Submissio
             "JOIN Submission s ON s.inputOutput.id = sio.id " +
             "WHERE s.token = :token")
     SubmissionInputOutput findByTokenInputOutput(@Param("token") String tokenInputOutput);
+
+    /**
+     * ID로 입출력 정보 조회
+     * - Spring Data JPA의 기본 findById와 동일한 기능
+     * - Optional을 반환하지 않고 직접 엔티티를 반환
+     * 
+     * @param id 입출력 정보 ID
+     * @return 입출력 정보
+     */
+    Optional<SubmissionInputOutput> findById(Long id);
 }

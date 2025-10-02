@@ -35,7 +35,12 @@ public interface GradingRepository extends JpaRepository<Grading, Long> {
     @Query("SELECT COUNT(g) FROM Grading g WHERE g.statusId = :statusId")
     Long countByStatusId(Integer statusId);
 
-    @Query("SELECT g FROM Grading g LEFT JOIN FETCH g.language LEFT JOIN FETCH g.constraints LEFT JOIN FETCH g.testCaseTokens WHERE g.token = :token")
+    @Query(value =  "SELECT g FROM Grading g " +
+                    "LEFT JOIN FETCH g.language " +
+                    "LEFT JOIN FETCH g.constraints " +
+                    "LEFT JOIN FETCH g.testCaseTokens " +
+                    "LEFT JOIN FETCH g.inputOutput " +
+                    "WHERE g.token = :token")
     Grading findByToken(@Param("token") String token);
     
     /**

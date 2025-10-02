@@ -13,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -64,20 +66,11 @@ public class SubmissionsController {
      */
     @GetMapping("/submissions")
     public ResponseEntity<?> index(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(name = "per_page", defaultValue = "20") int perPage,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(defaultValue = "false") boolean base64_encoded,
             @RequestParam(required = false) String fields) {
 
-        if (page <= 0) {
-            return ResponseEntity.badRequest().body(Map.of("error", "invalid page: " + page));
-        }
-        if (perPage < 0) {
-            return ResponseEntity.badRequest().body(Map.of("error", "invalid per_page: " + perPage));
-        }
-
         try {
-            Pageable pageable = PageRequest.of(page - 1, perPage);
             Page<Submission> submissionPage = submissionService.findAll(pageable);
 
             List<SubmissionResponse> submissions = submissionPage.getContent().stream()

@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +40,6 @@ public class GradingController {
     private final ConfigService configService;
     private final Base64Service base64Service;
     private final GradingProgressService gradingProgressService;
-    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     /**
      * GET /grading
@@ -46,21 +47,12 @@ public class GradingController {
      */
     @GetMapping("/grading")
     public ResponseEntity<?> index(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(name = "per_page", defaultValue = "20") int perPage,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(name = "problem_id" , required = false) Long problemId,
             @RequestParam(defaultValue = "false") boolean base64_encoded,
             @RequestParam(required = false) String fields) {
 
-        if (page <= 0) {
-            return ResponseEntity.badRequest().body(Map.of("error", "invalid page: " + page));
-        }
-        if (perPage < 0) {
-            return ResponseEntity.badRequest().body(Map.of("error", "invalid per_page: " + perPage));
-        }
-
         try {
-            Pageable pageable = PageRequest.of(page - 1, perPage);
             Page<Grading> GradingPage = null;
             if (problemId != null){
                 GradingPage = gradingService.findByProblemId(problemId,pageable);

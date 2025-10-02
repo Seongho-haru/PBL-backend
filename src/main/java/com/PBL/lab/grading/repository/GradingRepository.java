@@ -40,17 +40,21 @@ public interface GradingRepository extends JpaRepository<Grading, Long> {
                     "LEFT JOIN FETCH g.constraints " +
                     "LEFT JOIN FETCH g.testCaseTokens " +
                     "LEFT JOIN FETCH g.inputOutput " +
-                    "WHERE g.token = :token")
+                    "WHERE g.token = :token "+
+                    "ORDER BY g.createdAt DESC ")
     Grading findByToken(@Param("token") String token);
     
     /**
      * 특정 문제의 채점 목록을 페이지네이션하여 조회
      * - Fetch Join으로 language, constraints를 미리 로딩하여 Lazy Loading 문제 방지
      */
-    @Query(value = "SELECT DISTINCT g FROM Grading g " +
-                   "LEFT JOIN FETCH g.language " +
-                   "LEFT JOIN FETCH g.constraints " +
-                   "WHERE g.problemId = :problemId",
+    @Query(value =  "SELECT DISTINCT g FROM Grading g " +
+                    "LEFT JOIN FETCH g.language " +
+                    "LEFT JOIN FETCH g.constraints " +
+                    "LEFT JOIN FETCH g.testCaseTokens " +
+                    "LEFT JOIN FETCH g.inputOutput " +
+                    "WHERE g.problemId = :problemId "+
+                    "ORDER BY g.createdAt DESC ",
            countQuery = "SELECT COUNT(DISTINCT g) FROM Grading g WHERE g.problemId = :problemId")
     Page<Grading> findByProblemId(@Param("problemId") Long problemId, Pageable pageable);
     
@@ -58,10 +62,13 @@ public interface GradingRepository extends JpaRepository<Grading, Long> {
      * 전체 채점 목록을 페이지네이션하여 조회
      * - Fetch Join으로 language, constraints를 미리 로딩하여 Lazy Loading 문제 방지
      */
-    @Query(value = "SELECT DISTINCT g FROM Grading g " +
-                   "LEFT JOIN FETCH g.language " +
-                   "LEFT JOIN FETCH g.constraints",
-           countQuery = "SELECT COUNT(DISTINCT g) FROM Grading g")
+    @Query(value =  "SELECT DISTINCT g FROM Grading g " +
+                    "LEFT JOIN FETCH g.language " +
+                    "LEFT JOIN FETCH g.constraints "+
+                    "LEFT JOIN FETCH g.testCaseTokens " +
+                    "LEFT JOIN FETCH g.inputOutput " +
+                    "ORDER BY g.createdAt DESC " ,
+       countQuery = "SELECT COUNT(DISTINCT g) FROM Grading g")
     Page<Grading> findAllWithFetch(Pageable pageable);
     
     /**

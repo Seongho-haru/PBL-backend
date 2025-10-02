@@ -31,8 +31,7 @@ import java.time.LocalDateTime;
  * 
  * === 분리된 엔티티와의 관계 ===
  * - SubmissionInputOutput: 입출력 정보 (stdin, stdout, stderr, compileOutput, message)
- * - SubmissionConstraints: 실행 제약조건 (시간/메모리 제한, 컴파일러 옵션, 추가 파일 등)
- * - SubmissionTiming: 시간 추적 정보 (생성/시작/완료 시간, 호스트 정보, 성능 정보)
+ * - Constraints: 실행 제약조건 (시간/메모리 제한, 컴파일러 옵션, 추가 파일 등)
  * 
  * === 데이터베이스 최적화 ===
  * - 인덱스 설정:

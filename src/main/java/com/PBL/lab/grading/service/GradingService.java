@@ -277,9 +277,7 @@ public class GradingService {
     public void updateResult(String token, ExecutionResult result) {
         Grading grading = findByToken(token);
 
-        grading.setStdout(result.getStdout());
-        grading.setStderr(result.getStderr());
-        grading.setCompileOutput(result.getCompileOutput());
+        grading.setInputOutput(submissionService.findByTokenInputOutput(result.getErrorToken()));
         grading.setMessage(result.getMessage());
 
         // 실행 결과 정보 설정

@@ -26,10 +26,8 @@ CREATE TABLE IF NOT EXISTS grading (
     exit_signal INTEGER,
     
     -- Output fields (added for direct storage)
-    stdout TEXT,
-    stderr TEXT,
-    compile_output TEXT,
     message TEXT,
+    error_id BIGINT,
     
     -- Foreign keys to related tables
     input_output_id BIGINT,
@@ -75,8 +73,8 @@ INSERT INTO problem_test_case (problem_id, strin, strout) VALUES
 (3, '-5 3', '-2'),
 (3, '999 1', '1000'),
 (3, '1 2', '3'),
-(3, '5 7', '12'),
-(3, '10 20', '30')
+(3, '5 8', '12'),
+(3, '10 21', '30')
 -- (3, '100 200', '300'),
 -- (3, '0 0', '0'),
 -- (3, '-5 3', '-2'),

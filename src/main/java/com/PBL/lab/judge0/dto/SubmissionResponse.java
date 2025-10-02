@@ -34,19 +34,13 @@ public class SubmissionResponse {
     @JsonProperty("language_id")
     private Integer languageId;
 
-    private String stdin;
-
-    @JsonProperty("expected_output")
-    private String expectedOutput;
-
-    private String stdout;
-
-    private String stderr;
-
-    @JsonProperty("compile_output")
-    private String compileOutput;
-
-    private String message;
+    /**
+     * Input/Output 정보를 담는 DTO 객체
+     * - 전체 입출력 정보를 한 번에 관리
+     * - 코드의 가독성과 유지보수성 향상
+     */
+    @JsonProperty("input_output")
+    private InputOutput inputOutput;
 
     private StatusResponse status;
 
@@ -88,7 +82,7 @@ public class SubmissionResponse {
         if (submission == null) {
             return null;
         }
-
+        
         SubmissionResponseBuilder builder = SubmissionResponse.builder()
                 .id(submission.getId())
                 .token(submission.getToken())
@@ -101,27 +95,11 @@ public class SubmissionResponse {
                 .memory(submission.getMemory())
                 .exitCode(submission.getExitCode())
                 .exitSignal(submission.getExitSignal())
-                .message(submission.getInputOutput() != null ? submission.getInputOutput().getMessage() : null)
-
+                .inputOutput(InputOutput.from(submission.getInputOutput()))
                 .constraints(ConstraintsResponse.from(submission.getConstraints()));
 
-        // Handle text fields with base64 encoding
-        if (base64Encoded) {
-            builder.sourceCode(submission.getSourceCode())
-                    .stdin(submission.getInputOutput() != null ? submission.getInputOutput().getStdin() : null)
-                    .expectedOutput(submission.getInputOutput() != null ? submission.getInputOutput().getExpectedOutput() : null)
-                    .stdout(submission.getInputOutput() != null ? submission.getInputOutput().getStdout() : null)
-                    .stderr(submission.getInputOutput() != null ? submission.getInputOutput().getStderr() : null)
-                    .compileOutput(submission.getInputOutput() != null ? submission.getInputOutput().getCompileOutput() : null);
-        } else {
-            // For non-base64, we need to decode if stored as base64
-            builder.sourceCode(submission.getSourceCode())
-                    .stdin(submission.getInputOutput() != null ? submission.getInputOutput().getStdin() : null)
-                    .expectedOutput(submission.getInputOutput() != null ? submission.getInputOutput().getExpectedOutput() : null)
-                    .stdout(submission.getInputOutput() != null ? submission.getInputOutput().getStdout() : null)
-                    .stderr(submission.getInputOutput() != null ? submission.getInputOutput().getStderr() : null)
-                    .compileOutput(submission.getInputOutput() != null ? submission.getInputOutput().getCompileOutput() : null);
-        }
+        // Set source code
+        builder.sourceCode(submission.getSourceCode());
 
         return builder.build();
     }

@@ -31,6 +31,7 @@ public class ExecutionResult {
     private Integer exitSignal;
     
     private String errorMessage;
+    private String errorToken;
     
     // Container pool metrics
     private Long containerAcquireTime;

@@ -2,20 +2,15 @@ package com.PBL.lab.grading.dto;
 
 import com.PBL.lab.core.dto.ConstraintsResponse;
 import com.PBL.lab.core.dto.StatusResponse;
-import com.PBL.lab.core.entity.Language;
-import com.PBL.lab.judge0.entity.Submission;
+import com.PBL.lab.judge0.dto.InputOutput;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.PBL.lab.grading.entity.Grading;
-import com.PBL.lab.core.enums.Status;
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.Null;
 import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDateTime;
 
 /**
@@ -42,21 +37,10 @@ public class GradingResponse {
 
     private ConstraintsResponse constraints;
 
-    private String stdin;
-
-    @JsonProperty("expected_output")
-    private String expectedOutput;
-
-    private String stdout;
-
-    private String stderr;
-
-    @JsonProperty("compile_output")
-    private String compileOutput;
+    @JsonProperty("err_inputOutput")
+    private InputOutput inputOutput;
 
     private String message;
-
-    // ProgressBar는 SSE 전용으로 별도 엔드포인트에서 처리
 
     private StatusResponse status;
 
@@ -111,14 +95,12 @@ public class GradingResponse {
                 .createdAt(grading.getCreatedAt())
                 .finishedAt(grading.getFinishedAt())
                 .time(grading.getTime())
+                .message(grading.getMessage())
+                .inputOutput(InputOutput.from(grading.getInputOutput()))
                 .wallTime(grading.getWallTime())
                 .memory(grading.getMemory())
                 .exitCode(grading.getExitCode())
                 .exitSignal(grading.getExitSignal())
-                .message(grading.getMessage())
-                .stdout(grading.getStdout())
-                .stderr(grading.getStderr())
-                .compileOutput(grading.getCompileOutput())
                 .problemId(grading.getProblemId())
                 .progress(progress);
 

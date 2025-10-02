@@ -41,4 +41,9 @@ public interface SubmissionInputOutputRepository extends JpaRepository<Submissio
            "JOIN Submission s ON s.inputOutput.id = sio.id " +
            "WHERE s.token = :token")
     Optional<SubmissionInputOutput> findBySubmissionToken(@Param("token") String token);
+
+    @Query("SELECT sio FROM SubmissionInputOutput sio " +
+            "JOIN Submission s ON s.inputOutput.id = sio.id " +
+            "WHERE s.token = :token")
+    SubmissionInputOutput findByTokenInputOutput(@Param("token") String tokenInputOutput);
 }

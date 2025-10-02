@@ -3,6 +3,7 @@ package com.PBL.lab.grading.entity;
 import com.PBL.lab.core.entity.Language;
 import com.PBL.lab.core.entity.Constraints;
 import com.PBL.lab.core.enums.Status;
+import com.PBL.lab.judge0.entity.SubmissionInputOutput;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -39,6 +40,7 @@ public class Grading {
      * - 모든 프로그래밍 언어의 소스 코드 저장 가능
      */
     @Lob
+    @NotNull
     @Column(columnDefinition = "TEXT")
     private String sourceCode;
 
@@ -52,9 +54,29 @@ public class Grading {
     @Column(name = "language_id", nullable = false)
     private Integer languageId;
 
+    /**
+     * 프로그래밍 언어 정보 (지연 로딩)
+     * - languageId를 통해 Language 엔티티와 연결
+     * - insertable=false, updatable=false로 읽기 전용
+     * - FetchType.LAZY로 성능 최적화
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "language_id", insertable = false, updatable = false)
+    private Language language;
+
     @NotNull
     @Column(name = "problem_id", nullable = false)
     private Long problemId;
+
+    /**
+     * 실행 제약조건 (1:1 관계)
+     * - 시간/메모리 제한, 컴파일러 옵션, 추가 파일 등
+     * - 지연 로딩으로 성능 최적화
+     */
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @NotNull
+    @JoinColumn(name = "constraints_id", nullable = false)
+    private Constraints constraints;
 
 
     /**
@@ -75,21 +97,14 @@ public class Grading {
      * - 14: Partial Score (부분 점수)
      * - 15: Other (기타)
      */
+
     @Column(name = "status_id")
     private Integer statusId = 1; // 기본값: 대기열
 
 
     // ========== 관계 매핑 (Relationships) ==========
 
-    /**
-     * 프로그래밍 언어 정보 (지연 로딩)
-     * - languageId를 통해 Language 엔티티와 연결
-     * - insertable=false, updatable=false로 읽기 전용
-     * - FetchType.LAZY로 성능 최적화
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "language_id", insertable = false, updatable = false)
-    private Language language;
+
 
     /**
      * 실행 상태 열거형 (임시 필드)
@@ -122,23 +137,6 @@ public class Grading {
         }
     }
 
-    @Lob
-    @Column(columnDefinition = "TEXT")
-    private String stdout;
-
-    @Lob
-    @Column(columnDefinition = "TEXT")
-    private String stderr;
-
-    /**
-     * 컴파일 출력 및 오류 메시지
-     * - 컴파일 과정에서 발생한 모든 출력
-     * - 컴파일 경고, 오류 메시지, 링크 정보 등
-     * - TEXT 타입으로 대용량 컴파일 로그 지원
-     */
-    @Lob
-    @Column(name = "compile_output", columnDefinition = "TEXT")
-    private String compileOutput;
 
     /**
      * 추가적인 실행 관련 메시지
@@ -150,15 +148,10 @@ public class Grading {
     @Column(columnDefinition = "TEXT")
     private String message;
 
-    /**
-     * 실행 제약조건 (1:1 관계)
-     * - 시간/메모리 제한, 컴파일러 옵션, 추가 파일 등
-     * - 지연 로딩으로 성능 최적화
-     */
+    //submission 틀린/에러 토큰을 넣으면 알아서 submissionInputOutput이랑 조인
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "constraints_id", nullable = false)
-    private Constraints constraints;
-
+    @JoinColumn(name = "error_id", nullable = false)
+    private SubmissionInputOutput inputOutput;
 
     // ========== 시간 추적 정보 (Timing Information) ==========
 

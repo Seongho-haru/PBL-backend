@@ -188,6 +188,7 @@ public class GradingExecutionJob {
                                 i + 1, totalTestCases, commonResult.getStatus().getName(), gradingToken);
 
                         commonResult.setMessage("테스트케이스 " + (i + 1) + "/" + totalTestCases + " 실패: " + commonResult.getStatus().getName());
+                        commonResult.setErrorToken(submission.getToken());
                         gradingService.updateResult(gradingToken, commonResult);
                         break;
                     }

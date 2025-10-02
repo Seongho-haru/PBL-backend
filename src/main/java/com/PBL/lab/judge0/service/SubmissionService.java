@@ -9,6 +9,7 @@ import com.PBL.lab.core.entity.Language;
 import com.PBL.lab.judge0.entity.Submission;
 import com.PBL.lab.judge0.entity.SubmissionInputOutput;
 import com.PBL.lab.core.enums.Status;
+import com.PBL.lab.judge0.repository.SubmissionInputOutputRepository;
 import com.PBL.lab.judge0.repository.SubmissionRepository;
 import com.PBL.lab.core.repository.ConstraintsRepository;
 import com.PBL.lab.core.entity.Constraints;
@@ -70,6 +71,7 @@ public class SubmissionService {
     private final LanguageService languageService;
     private final Base64Service base64Service;
     private final ConfigService configService;
+    private final SubmissionInputOutputRepository submissionInputOutputRepository;
 
     /**
      * 새로운 제출을 생성합니다.
@@ -504,5 +506,9 @@ public class SubmissionService {
 
     private <T> T getValueOrDefault(T value, T defaultValue) {
         return value != null ? value : defaultValue;
+    }
+
+    public SubmissionInputOutput findByTokenInputOutput(String token) {
+        return submissionInputOutputRepository.findByTokenInputOutput(token);
     }
 }

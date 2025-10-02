@@ -3,11 +3,9 @@ package com.PBL.lab.grading.service;
 import com.PBL.lab.grading.dto.GradingResponse;
 import com.PBL.lab.grading.dto.ProgressResponse;
 import com.PBL.lab.grading.entity.Grading;
-import com.PBL.lab.grading.repository.GradingRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;

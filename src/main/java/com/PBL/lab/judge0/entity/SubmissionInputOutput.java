@@ -25,7 +25,6 @@ import lombok.ToString;
 @Table(name = "submission_input_output")
 @Data
 @EqualsAndHashCode
-@ToString(exclude = {"stdin", "expectedOutput", "stdout", "stderr", "compileOutput", "message"})
 public class SubmissionInputOutput {
 
     /**

@@ -1,7 +1,6 @@
 package com.PBL.lab.grading.job;
 
 import com.PBL.lab.grading.entity.Grading;
-import com.PBL.lab.grading.entity.ProblemTestCase;
 import com.PBL.lab.grading.service.*;
 import com.PBL.lab.judge0.dto.SubmissionRequest;
 import com.PBL.lab.judge0.entity.Submission;
@@ -10,6 +9,7 @@ import com.PBL.lab.core.service.DockerExecutionService;
 import com.PBL.lab.core.service.ExecutionResult;
 import com.PBL.lab.judge0.service.ExecutionService;
 import com.PBL.lab.judge0.service.SubmissionService;
+import com.PBL.lecture.TestCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jobrunr.jobs.annotations.Job;
@@ -111,7 +111,7 @@ public class GradingExecutionJob {
 
             log.info("테스트케이스 찾는 중... token: {}", gradingToken);
             // 모든 테스트케이스 조회
-            List<ProblemTestCase> testCases = gradingService.findByProblemId(grading.getProblemId());
+            List<TestCase> testCases = gradingService.findByProblemId(grading.getProblemId());
             log.info("테스트케이스 조회 완료 token: {}", gradingToken);
 
             // 공통 ExecutionResult 객체 생성 (재사용)
@@ -145,15 +145,15 @@ public class GradingExecutionJob {
             
             // 각 테스트케이스에 대해 실행
             for (int i = 0; i < testCases.size(); i++) {
-                ProblemTestCase testCase = testCases.get(i);
+                TestCase testCase = testCases.get(i);
                 log.info("테스트케이스 {}/{} 실행 중 - grading token: {}", i + 1, totalTestCases, gradingToken);
 
                 try {
                     // SubmissionRequest 생성 및 설정
                     SubmissionRequest submissionRequest = new SubmissionRequest();
                     submissionRequest.build(grading);
-                    submissionRequest.setStdin(testCase.getStrin());
-                    submissionRequest.setExpectedOutput(testCase.getStrout());
+                    submissionRequest.setStdin(testCase.getInput());
+                    submissionRequest.setExpectedOutput(testCase.getExpectedOutput());
                     submissionRequest.setConstraintsId(submissionRequest.getConstraintsId());
                     
                     // Submission 생성 및 실행

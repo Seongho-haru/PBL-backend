@@ -249,13 +249,13 @@ public class Grading {
     private Integer exitSignal;
 
 
-    /**
-     * 테스트케이스 토큰들 (1:N 관계)
-     * - 각 테스트케이스별 실행 토큰 저장
-     * - 진행률 계산 및 결과 조회용
-     */
-    @OneToMany(mappedBy = "grading", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<GradingTestCaseToken> testCaseTokens;
+//    /**
+//     * 테스트케이스 토큰들 (1:N 관계)
+//     * - 각 테스트케이스별 실행 토큰 저장
+//     * - 진행률 계산 및 결과 조회용
+//     */
+//    @OneToMany(mappedBy = "grading", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    private List<GradingTestCaseToken> testCaseTokens;
 
     /**
      * 추가 파일 존재 여부 확인

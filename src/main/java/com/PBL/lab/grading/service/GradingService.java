@@ -1,26 +1,20 @@
 package com.PBL.lab.grading.service;
 
-import com.PBL.lab.core.dto.StatusResponse;
 import com.PBL.lab.core.entity.Language;
 import com.PBL.lab.core.entity.Constraints;
 import com.PBL.lab.grading.dto.GradingRequest;
-import com.PBL.lab.grading.dto.GradingResponse;
 import com.PBL.lab.grading.entity.Grading;
-import com.PBL.lab.grading.entity.GradingTestCaseToken;
-import com.PBL.lab.grading.entity.ProblemTestCase;
-import com.PBL.lab.judge0.dto.SubmissionRequest;
 import com.PBL.lab.judge0.entity.*;
 import com.PBL.lab.core.enums.Status;
 import com.PBL.lab.grading.repository.GradingRepository;
-import com.PBL.lab.grading.repository.GradingTestCaseTokenRepository;
-import com.PBL.lab.grading.repository.ProblemTestCaseRepository;
 import com.PBL.lab.core.repository.ConstraintsRepository;
 import com.PBL.lab.judge0.repository.SubmissionRepository;
-import com.PBL.lab.core.service.Base64Service;
 import com.PBL.lab.core.service.ConfigService;
 import com.PBL.lab.core.service.LanguageService;
 import com.PBL.lab.judge0.service.SubmissionService;
 import com.PBL.lab.core.service.ExecutionResult;
+import com.PBL.lecture.TestCase;
+import com.PBL.lecture.repository.TestCaseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -39,8 +33,7 @@ import java.util.UUID;
 @Transactional
 public class GradingService {
     private final GradingRepository gradingRepository;
-    private final GradingTestCaseTokenRepository gradingTestCaseTokenRepository;
-    private final ProblemTestCaseRepository problemTestCaseRepository;
+    private final TestCaseRepository testCaseRepository;
     private final SubmissionRepository submissionRepository;
     private final SubmissionService submissionService;
     private final LanguageService languageService;
@@ -152,8 +145,8 @@ public class GradingService {
         return grading;
     }
 
-    public List<ProblemTestCase> findByProblemId(Long problemId) {
-        return problemTestCaseRepository.findByProblemId(problemId);
+    public List<TestCase> findByProblemId(Long id) {
+        return testCaseRepository.findByLectureId(id);
     }
 
     private String generateToken() {
@@ -229,32 +222,6 @@ public class GradingService {
         // 3. 기본 제약조건(id=1) 사용
         return constraintsRepository.findDefaultConstraints()
                 .orElseThrow(() -> new IllegalStateException("Default constraints (id=1) not found"));
-    }
-
-    /**
-     * 테스트케이스 토큰들을 저장합니다.
-     * 
-     * @param grading Grading 엔티티
-     * @param submissions 테스트케이스별 Submission 목록
-     */
-    public void saveTestCaseTokens(Grading grading, List<Submission> submissions) {
-        for (Submission submission : submissions) {
-            GradingTestCaseToken token = new GradingTestCaseToken();
-            token.setGrading(grading);
-            token.setSubmissionToken(submission.getToken());
-            gradingTestCaseTokenRepository.save(token);
-        }
-        log.info("Saved {} test case tokens for grading: {}", submissions.size(), grading.getToken());
-    }
-
-
-    public List<Submission> findByGradingToken(String token) {
-        List<GradingTestCaseToken> submission_token= gradingTestCaseTokenRepository.findByGradingToken(token);
-        List<Submission> submissions  = new ArrayList<Submission>();
-        for (GradingTestCaseToken token_ : submission_token) {
-            submissions.add(submissionService.findByToken(token));
-        }
-        return submissions;
     }
 
     public void updateStatus(String token, Status status) {

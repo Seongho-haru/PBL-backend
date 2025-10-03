@@ -13,3 +13,5 @@ CREATE INDEX IF NOT EXISTS idx_grading_testcase_tokens_grading_id ON grading_tes
 
 -- Create index for faster submission_token lookups
 CREATE INDEX IF NOT EXISTS idx_grading_testcase_tokens_submission_token ON grading_testcase_tokens(submission_token);
+
+

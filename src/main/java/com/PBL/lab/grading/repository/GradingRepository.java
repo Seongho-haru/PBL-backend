@@ -38,7 +38,7 @@ public interface GradingRepository extends JpaRepository<Grading, Long> {
     @Query(value =  "SELECT g FROM Grading g " +
                     "LEFT JOIN FETCH g.language " +
                     "LEFT JOIN FETCH g.constraints " +
-                    "LEFT JOIN FETCH g.testCaseTokens " +
+//                    "LEFT JOIN FETCH g.testCaseTokens " +
                     "LEFT JOIN FETCH g.inputOutput " +
                     "WHERE g.token = :token "+
                     "ORDER BY g.createdAt DESC ")
@@ -51,7 +51,7 @@ public interface GradingRepository extends JpaRepository<Grading, Long> {
     @Query(value =  "SELECT DISTINCT g FROM Grading g " +
                     "LEFT JOIN FETCH g.language " +
                     "LEFT JOIN FETCH g.constraints " +
-                    "LEFT JOIN FETCH g.testCaseTokens " +
+//                    "LEFT JOIN FETCH g.testCaseTokens " +
                     "LEFT JOIN FETCH g.inputOutput " +
                     "WHERE g.problemId = :problemId "+
                     "ORDER BY g.createdAt DESC ",
@@ -65,7 +65,7 @@ public interface GradingRepository extends JpaRepository<Grading, Long> {
     @Query(value =  "SELECT DISTINCT g FROM Grading g " +
                     "LEFT JOIN FETCH g.language " +
                     "LEFT JOIN FETCH g.constraints "+
-                    "LEFT JOIN FETCH g.testCaseTokens " +
+//                    "LEFT JOIN FETCH g.testCaseTokens " +
                     "LEFT JOIN FETCH g.inputOutput " +
                     "ORDER BY g.createdAt DESC " ,
        countQuery = "SELECT COUNT(DISTINCT g) FROM Grading g")

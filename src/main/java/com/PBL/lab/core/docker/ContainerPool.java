@@ -62,65 +62,86 @@ import java.util.concurrent.locks.ReentrantLock;
 @RequiredArgsConstructor
 @Slf4j
 public class ContainerPool {
-
+    //컨테이너 풀 라벨
+    private static final String PROJECT_NAME = "pbl-backend-judge0";
+    private static final String SERVICE_NAME = "judge0";
+    private static final String VERSION = "1.0";
     private final DockerClient dockerClient;
 
+    // 풀 설정값들 - application.yml에서 주입받는 컨테이너 풀 구성 파라미터
     @Value("${judge0.container-pool.min-size:5}")
-    private int minPoolSize;
+    private int minPoolSize; // 최소 유지 컨테이너 수 (콜드 스타트 방지)
 
     @Value("${judge0.container-pool.max-size:20}")
-    private int maxPoolSize;
+    private int maxPoolSize; // 최대 허용 컨테이너 수 (리소스 제한)
 
     @Value("${judge0.container-pool.max-idle-time:300000}") // 5 minutes default
-    private long maxIdleTime;
+    private long maxIdleTime; // 컨테이너 최대 유휴 시간 (밀리초)
 
     @Value("${judge0.container-pool.max-uses:100}")
-    private int maxContainerUses;
+    private int maxContainerUses; // 컨테이너 최대 재사용 횟수
 
     @Value("${judge0.container-pool.health-check-interval:30000}") // 30 seconds
-    private long healthCheckInterval;
+    private long healthCheckInterval; // 건강 상태 점검 주기 (밀리초)
 
     @Value("${judge0.container-pool.image:judge0/compilers}")
-    private String judge0Image;
+    private String judge0Image; // Judge0 컴파일러 이미지 이름
 
-    // Pool data structures
-    private final BlockingQueue<PooledContainer> availableContainers = new LinkedBlockingQueue<>();
-    private final Map<String, PooledContainer> busyContainers = new ConcurrentHashMap<>();
-    private final AtomicInteger totalContainers = new AtomicInteger(0);
-    private final ReentrantLock poolLock = new ReentrantLock();
 
-    // Background tasks
-    private ScheduledExecutorService poolMaintenanceExecutor;
-    private ExecutorService containerCreationExecutor;
 
-    // Pool statistics
-    private final AtomicInteger totalRequests = new AtomicInteger(0);
-    private final AtomicInteger poolHits = new AtomicInteger(0);
-    private final AtomicInteger poolMisses = new AtomicInteger(0);
+
+
+
+    // 풀 데이터 구조 - 컨테이너 풀의 상태를 관리하는 핵심 자료구조들
+    private final BlockingQueue<PooledContainer> availableContainers = new LinkedBlockingQueue<>(); // 사용 가능한 컨테이너 큐
+    private final Map<String, PooledContainer> busyContainers = new ConcurrentHashMap<>(); // 현재 사용 중인 컨테이너 맵
+    private final AtomicInteger totalContainers = new AtomicInteger(0); // 전체 컨테이너 수 (스레드 안전)
+    private final ReentrantLock poolLock = new ReentrantLock(); // 풀 조작 시 동기화를 위한 락
+
+    // 백그라운드 작업 관리자들
+    private ScheduledExecutorService poolMaintenanceExecutor; // 주기적 풀 유지보수 작업용
+    private ExecutorService containerCreationExecutor; // 비동기 컨테이너 생성 작업용
+
+    // 풀 통계 데이터 - 성능 모니터링 및 풀 효율성 측정용
+    private final AtomicInteger totalRequests = new AtomicInteger(0); // 총 요청 수
+    private final AtomicInteger poolHits = new AtomicInteger(0); // 풀 히트 수 (기존 컨테이너 재사용)
+    private final AtomicInteger poolMisses = new AtomicInteger(0); // 풀 미스 수 (새 컨테이너 생성 필요)
 
     /**
-     * Container wrapper with metadata
+     * 풀링된 컨테이너 래퍼 클래스 - 컨테이너 메타데이터와 생명주기 정보 포함
+     * Judge0 컨테이너의 재사용 가능 상태와 사용 통계를 추적
      */
     @Data
     @Builder
     public static class PooledContainer {
-        private String containerId;
-        private String containerName;
-        private Instant createdAt;
-        private Instant lastUsedAt;
-        private int useCount;
-        private boolean healthy;
-        private String mountPath; // Host path for file mounting
+        private String containerId; // Docker 컨테이너 ID
+        private String containerName; // Docker 컨테이너 이름
+        private Instant createdAt; // 컨테이너 생성 시간
+        private Instant lastUsedAt; // 마지막 사용 시간
+        private int useCount; // 총 사용 횟수 (재사용 카운터)
+        private boolean healthy; // 컨테이너 건강 상태 (실행 중/비정상)
+        private String mountPath; // 호스트 마운트 경로 (파일 입출력용)
 
+        /**
+         * 컨테이너가 만료되었는지 확인 (최대 사용 횟수 또는 최대 유휴 시간 초과)
+         * @param maxIdleTime 최대 유휴 시간 (밀리초)
+         * @param maxUses 최대 사용 횟수
+         * @return 만료 여부
+         */
         public boolean isExpired(long maxIdleTime, int maxUses) {
+            // 사용 횟수 제한 체크
             if (useCount >= maxUses) {
                 return true;
             }
 
+            // 유휴 시간 제한 체크
             long idleTime = System.currentTimeMillis() - lastUsedAt.toEpochMilli();
             return idleTime > maxIdleTime;
         }
 
+        /**
+         * 컨테이너 사용을 표시하고 사용 통계 업데이트
+         */
         public void markUsed() {
             this.lastUsedAt = Instant.now();
             this.useCount++;
@@ -128,57 +149,60 @@ public class ContainerPool {
     }
 
     /**
-     * Initialize the container pool on startup
+     * 컨테이너 풀 초기화 - 애플리케이션 시작 시 실행
+     * Judge0 컨테이너 풀을 설정하고 최소 크기만큼 컨테이너를 미리 생성
      */
     @PostConstruct
     public void initialize() {
         log.info("Initializing container pool with min={}, max={} containers", minPoolSize, maxPoolSize);
 
-        // Start background executors
+        // 백그라운드 작업용 스레드 풀 초기화
         poolMaintenanceExecutor = Executors.newScheduledThreadPool(2, r -> {
             Thread t = new Thread(r, "container-pool-maintenance");
-            t.setDaemon(true);
+            t.setDaemon(true); // 데몬 스레드로 설정하여 JVM 종료 시 자동 종료
             return t;
         });
 
         containerCreationExecutor = Executors.newCachedThreadPool(r -> {
             Thread t = new Thread(r, "container-creator");
-            t.setDaemon(true);
+            t.setDaemon(true); // 데몬 스레드로 설정
             return t;
         });
 
-        // Create initial pool
+        // 초기 풀 생성 (최소 크기만큼 컨테이너 미리 생성)
         createInitialPool();
 
-        // Schedule maintenance tasks
+        // 주기적 유지보수 작업 스케줄링
         scheduleMaintenanceTasks();
 
         log.info("Container pool initialized successfully");
     }
 
     /**
-     * Create initial pool of containers
+     * 초기 컨테이너 풀 생성 - 최소 크기만큼 Judge0 컨테이너를 비동기로 미리 생성
+     * 콜드 스타트를 방지하고 즉시 코드 실행 가능한 환경을 준비
      */
     private void createInitialPool() {
         List<CompletableFuture<Void>> creationFutures = new ArrayList<>();
 
+        // 최소 풀 크기만큼 컨테이너를 비동기로 생성
         for (int i = 0; i < minPoolSize; i++) {
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 try {
                     PooledContainer container = createNewContainer();
                     if (container != null) {
-                        availableContainers.offer(container);
+                        availableContainers.offer(container); // 사용 가능한 풀에 추가
                         log.debug("Added container {} to pool", container.getContainerId());
                     }
                 } catch (Exception e) {
                     log.error("Failed to create initial container", e);
                 }
-            }, containerCreationExecutor);
+            }, containerCreationExecutor); // 별도 스레드에서 컨테이너 생성
 
             creationFutures.add(future);
         }
 
-        // Wait for all containers to be created
+        // 모든 컨테이너 생성 완료까지 대기 (최대 60초)
         try {
             CompletableFuture.allOf(creationFutures.toArray(new CompletableFuture[0]))
                     .get(60, TimeUnit.SECONDS);
@@ -189,57 +213,61 @@ public class ContainerPool {
     }
 
     /**
-     * Schedule periodic maintenance tasks
+     * 주기적 유지보수 작업 스케줄링 - 풀의 건강성과 효율성을 자동으로 관리
      */
     private void scheduleMaintenanceTasks() {
-        // Health check task
+        // 건강 상태 점검 작업 - 비정상 컨테이너 감지 및 제거
         poolMaintenanceExecutor.scheduleWithFixedDelay(
                 this::performHealthCheck,
                 healthCheckInterval,
                 healthCheckInterval,
                 TimeUnit.MILLISECONDS);
 
-        // Pool size adjustment task
+        // 풀 크기 조정 작업 - 수요에 따른 동적 스케일링
         poolMaintenanceExecutor.scheduleWithFixedDelay(
                 this::adjustPoolSize,
-                30000, // Initial delay 30s
-                30000, // Run every 30s
+                30000, // 초기 지연 30초
+                30000, // 30초마다 실행
                 TimeUnit.MILLISECONDS);
 
-        // Expired container cleanup task
+        // 만료된 컨테이너 정리 작업 - 오래된 컨테이너 자동 제거
         poolMaintenanceExecutor.scheduleWithFixedDelay(
                 this::cleanupExpiredContainers,
-                60000, // Initial delay 1 minute
-                60000, // Run every minute
+                60000, // 초기 지연 1분
+                60000, // 1분마다 실행
                 TimeUnit.MILLISECONDS);
     }
 
     /**
-     * Acquire a container from the pool
+     * 풀에서 컨테이너 획득 - 코드 실행을 위한 Judge0 컨테이너 할당
+     * @param timeoutMs 최대 대기 시간 (밀리초)
+     * @return 사용 가능한 PooledContainer
+     * @throws TimeoutException 지정된 시간 내에 컨테이너를 획득하지 못한 경우
+     * @throws InterruptedException 스레드가 중단된 경우
      */
     public PooledContainer acquireContainer(long timeoutMs) throws TimeoutException, InterruptedException {
-        totalRequests.incrementAndGet();
+        totalRequests.incrementAndGet(); // 총 요청 수 증가
 
-        // Try to get from available pool first
+        // 먼저 사용 가능한 풀에서 컨테이너를 가져오려고 시도
         PooledContainer container = availableContainers.poll(50, TimeUnit.MILLISECONDS);
 
         if (container != null) {
-            // Validate container is still healthy
+            // 컨테이너가 여전히 건강한지 검증
             if (isContainerHealthy(container)) {
-                container.markUsed();
-                busyContainers.put(container.getContainerId(), container);
-                poolHits.incrementAndGet();
+                container.markUsed(); // 사용 표시 및 통계 업데이트
+                busyContainers.put(container.getContainerId(), container); // 사용 중 목록에 추가
+                poolHits.incrementAndGet(); // 풀 히트 수 증가
                 log.debug("Acquired container {} from pool (uses: {})",
                         container.getContainerId(), container.getUseCount());
                 return container;
             } else {
-                // Container unhealthy, destroy it
+                // 비정상 컨테이너는 제거
                 destroyContainer(container);
                 container = null;
             }
         }
 
-        // No available container, try to create one if under max
+        // 사용 가능한 컨테이너가 없으면, 최대 크기 내에서 새로 생성 시도
         poolMisses.incrementAndGet();
 
         if (totalContainers.get() < maxPoolSize) {
@@ -252,7 +280,7 @@ public class ContainerPool {
             }
         }
 
-        // If still no container, wait for one to become available
+        // 여전히 컨테이너가 없으면 사용 가능해질 때까지 대기
         long startTime = System.currentTimeMillis();
         long remainingTime = timeoutMs;
 
@@ -352,6 +380,12 @@ public class ContainerPool {
                             .withBinds(new Bind(mountPath, new Volume("/tmp/judge"), AccessMode.rw))
                             .withSecurityOpts(Arrays.asList("no-new-privileges:true"))
                             .withAutoRemove(false))
+                            .withLabels(Map.of(
+                                    "com.docker.compose.project", PROJECT_NAME,
+                                    "com.docker.compose.service",  SERVICE_NAME,
+                                    "com.docker.compose.version", VERSION,
+                                    "com.docker.compose.config-hash", "custom"
+                            ))
                     .exec();
 
             String containerId = response.getId();

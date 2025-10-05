@@ -53,11 +53,28 @@ public class CurriculumDTOs {
             this.title = curriculum.getTitle();
             this.description = curriculum.getDescription();
             this.isPublic = curriculum.getIsPublic();
-            this.totalLectureCount = curriculum.getTotalLectureCount();
-            this.requiredLectureCount = curriculum.getRequiredLectureCount();
-            this.optionalLectureCount = curriculum.getOptionalLectureCount();
             this.createdAt = curriculum.getCreatedAt();
             this.updatedAt = curriculum.getUpdatedAt();
+            
+            // Lazy Loading 안전 처리
+            try {
+                if (curriculum.getLectures() != null) {
+                    this.totalLectureCount = curriculum.getLectures().size();
+                    this.requiredLectureCount = (int) curriculum.getLectures().stream()
+                            .filter(cl -> Boolean.TRUE.equals(cl.getIsRequired()))
+                            .count();
+                    this.optionalLectureCount = this.totalLectureCount - this.requiredLectureCount;
+                } else {
+                    this.totalLectureCount = 0;
+                    this.requiredLectureCount = 0;
+                    this.optionalLectureCount = 0;
+                }
+            } catch (Exception e) {
+                // Lazy Loading 실패 시 기본값
+                this.totalLectureCount = 0;
+                this.requiredLectureCount = 0;
+                this.optionalLectureCount = 0;
+            }
         }
 
         // Getters and Setters

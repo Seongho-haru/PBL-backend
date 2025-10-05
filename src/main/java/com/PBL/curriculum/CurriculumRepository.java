@@ -16,29 +16,29 @@ public interface CurriculumRepository extends JpaRepository<Curriculum, Long> {
 
     /**
      * 모든 커리큘럼을 강의와 함께 조회 (최신순)
+     * MultipleBagFetchException 방지를 위해 단계별 로딩
      */
     @Query("SELECT DISTINCT c FROM Curriculum c " +
            "LEFT JOIN FETCH c.lectures cl " +
-           "LEFT JOIN FETCH cl.lecture l " +
            "ORDER BY c.createdAt DESC")
     List<Curriculum> findAllWithLectures();
 
     /**
      * 공개 커리큘럼만 강의와 함께 조회 (최신순)
+     * MultipleBagFetchException 방지를 위해 단계별 로딩
      */
     @Query("SELECT DISTINCT c FROM Curriculum c " +
            "LEFT JOIN FETCH c.lectures cl " +
-           "LEFT JOIN FETCH cl.lecture l " +
            "WHERE c.isPublic = true " +
            "ORDER BY c.createdAt DESC")
     List<Curriculum> findPublicCurriculumsWithLectures();
 
     /**
      * ID로 커리큘럼을 강의와 함께 조회
+     * MultipleBagFetchException 방지를 위해 단계별 로딩
      */
     @Query("SELECT c FROM Curriculum c " +
            "LEFT JOIN FETCH c.lectures cl " +
-           "LEFT JOIN FETCH cl.lecture l " +
            "WHERE c.id = :id")
     Optional<Curriculum> findByIdWithLectures(@Param("id") Long id);
 

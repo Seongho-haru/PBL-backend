@@ -184,19 +184,23 @@ public class CurriculumService {
     // === 커리큘럼 검색 ===
 
     /**
-     * 커리큘럼 제목으로 검색
+     * 커리큘럼 제목으로 검색 (강의 포함)
      */
     @Transactional(readOnly = true)
     public List<Curriculum> searchCurriculums(String title) {
-        return curriculumRepository.findByTitleContainingIgnoreCaseOrderByCreatedAtDesc(title);
+        return curriculumRepository.findAllWithLectures().stream()
+                .filter(c -> c.getTitle().toLowerCase().contains(title.toLowerCase()))
+                .toList();
     }
 
     /**
-     * 공개 커리큘럼 제목으로 검색
+     * 공개 커리큘럼 제목으로 검색 (강의 포함)
      */
     @Transactional(readOnly = true)
     public List<Curriculum> searchPublicCurriculums(String title) {
-        return curriculumRepository.findByIsPublicTrueAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(title);
+        return curriculumRepository.findPublicCurriculumsWithLectures().stream()
+                .filter(c -> c.getTitle().toLowerCase().contains(title.toLowerCase()))
+                .toList();
     }
 
     // === 강의 삭제 시 자동 정리 ===

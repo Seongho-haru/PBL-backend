@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 커리큘럼 엔티티
- * 여러 강의들을 체계적으로 구성한 학습 과정
+ * 커리큘럼 엔티티 (폴더 역할)
+ * 여러 강의들을 묶어서 관리하는 컨테이너
  */
 @Entity
 @Table(name = "curriculums")
@@ -23,59 +23,31 @@ public class Curriculum {
 
     /**
      * 커리큘럼 제목 (필수)
-     * 예: "Java 기초 과정", "알고리즘 마스터 클래스"
      */
     @Column(nullable = false, length = 200)
     private String title;
 
     /**
      * 커리큘럼 설명
-     * 학습 목표, 대상, 기대 효과 등
      */
     @Column(columnDefinition = "TEXT")
     private String description;
 
     /**
-     * 카테고리 (선택)
-     * 예: "프로그래밍 기초", "알고리즘", "웹 개발"
-     */
-    @Column(length = 100)
-    private String category;
-
-    /**
-     * 난이도 (선택)
-     * 예: "초급", "중급", "고급"
-     */
-    @Column(length = 50)
-    private String difficulty;
-
-    /**
-     * 예상 학습 시간 (시간 단위)
-     * 전체 커리큘럼 완주에 필요한 예상 시간
-     */
-    private Integer estimatedHours;
-
-    /**
-     * 커리큘럼 상태
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private CurriculumStatus status = CurriculumStatus.DRAFT;
-
-    /**
-     * 공개 여부
+     * 공개 커리큘럼 여부
+     * true: 다른 사용자가 볼 수 있음
+     * false: 비공개 커리큘럼
      */
     @Column(nullable = false)
     private Boolean isPublic = false;
 
     /**
-     * 커리큘럼 섹션들
-     * 순서를 가진 섹션 목록
+     * 커리큘럼에 포함된 강의들 (폴더-파일 관계)
      */
     @OneToMany(mappedBy = "curriculum", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderIndex ASC")
-    @BatchSize(size = 10)
-    private List<CurriculumSection> sections = new ArrayList<>();
+    @BatchSize(size = 20)
+    private List<CurriculumLecture> lectures = new ArrayList<>();
 
     /**
      * 생성 시간
@@ -103,73 +75,85 @@ public class Curriculum {
     // === 비즈니스 메서드 ===
 
     /**
-     * 섹션 추가
+     * 강의 추가
      */
-    public void addSection(String sectionTitle, String sectionDescription) {
-        int nextOrder = sections.size();
-        CurriculumSection section = new CurriculumSection(sectionTitle, sectionDescription, this, nextOrder);
-        this.sections.add(section);
+    public void addLecture(Long lectureId, boolean isRequired, String originalAuthor, String sourceInfo) {
+        CurriculumLecture curriculumLecture = new CurriculumLecture();
+        curriculumLecture.setCurriculum(this);
+        curriculumLecture.setLectureId(lectureId);
+        curriculumLecture.setRequired(isRequired);
+        curriculumLecture.setOriginalAuthor(originalAuthor);
+        curriculumLecture.setSourceInfo(sourceInfo);
+        curriculumLecture.setOrderIndex(this.lectures.size() + 1);
+        this.lectures.add(curriculumLecture);
     }
 
     /**
-     * 섹션 제거
+     * 강의 제거
      */
-    public void removeSection(CurriculumSection section) {
-        this.sections.remove(section);
-        section.setCurriculum(null);
-        // 순서 재정렬
-        reorderSections();
+    public void removeLecture(Long lectureId) {
+        this.lectures.removeIf(cl -> cl.getLectureId().equals(lectureId));
+        reorderLectures();
     }
 
     /**
-     * 섹션 순서 재정렬
+     * 강의 순서 재정렬
      */
-    private void reorderSections() {
-        for (int i = 0; i < sections.size(); i++) {
-            sections.get(i).setOrderIndex(i);
+    public void reorderLectures() {
+        for (int i = 0; i < this.lectures.size(); i++) {
+            this.lectures.get(i).setOrderIndex(i + 1);
         }
     }
 
     /**
-     * 커리큘럼 발행
+     * 커리큘럼 공개
      */
     public void publish() {
-        if (sections.isEmpty()) {
-            throw new IllegalStateException("섹션이 없는 커리큘럼은 발행할 수 없습니다.");
-        }
-        this.status = CurriculumStatus.PUBLISHED;
         this.isPublic = true;
     }
 
     /**
-     * 커리큘럼 비공개 처리
+     * 커리큘럼 비공개
      */
     public void unpublish() {
-        this.status = CurriculumStatus.DRAFT;
         this.isPublic = false;
     }
 
     /**
-     * 총 강의 수 계산
+     * 공개 커리큘럼인지 확인
+     */
+    public boolean isPublicCurriculum() {
+        return Boolean.TRUE.equals(this.isPublic);
+    }
+
+    /**
+     * 총 강의 수
      */
     public int getTotalLectureCount() {
-        return sections.stream()
-                .mapToInt(CurriculumSection::getLectureCount)
-                .sum();
+        return this.lectures != null ? this.lectures.size() : 0;
     }
 
     /**
-     * 총 섹션 수 반환
+     * 필수 강의 수
      */
-    public int getSectionCount() {
-        return sections != null ? sections.size() : 0;
+    public int getRequiredLectureCount() {
+        return this.lectures != null ? 
+            (int) this.lectures.stream().filter(CurriculumLecture::isRequired).count() : 0;
     }
 
     /**
-     * 발행된 커리큘럼인지 확인
+     * 선택 강의 수
      */
-    public boolean isPublished() {
-        return status == CurriculumStatus.PUBLISHED;
+    public int getOptionalLectureCount() {
+        return getTotalLectureCount() - getRequiredLectureCount();
+    }
+
+    /**
+     * 특정 강의가 포함되어 있는지 확인
+     */
+    public boolean containsLecture(Long lectureId) {
+        return this.lectures != null && 
+            this.lectures.stream().anyMatch(cl -> cl.getLectureId().equals(lectureId));
     }
 
     // === Getter & Setter ===
@@ -198,38 +182,6 @@ public class Curriculum {
         this.description = description;
     }
 
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public String getDifficulty() {
-        return difficulty;
-    }
-
-    public void setDifficulty(String difficulty) {
-        this.difficulty = difficulty;
-    }
-
-    public Integer getEstimatedHours() {
-        return estimatedHours;
-    }
-
-    public void setEstimatedHours(Integer estimatedHours) {
-        this.estimatedHours = estimatedHours;
-    }
-
-    public CurriculumStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(CurriculumStatus status) {
-        this.status = status;
-    }
-
     public Boolean getIsPublic() {
         return isPublic;
     }
@@ -238,12 +190,12 @@ public class Curriculum {
         this.isPublic = isPublic;
     }
 
-    public List<CurriculumSection> getSections() {
-        return sections;
+    public List<CurriculumLecture> getLectures() {
+        return lectures;
     }
 
-    public void setSections(List<CurriculumSection> sections) {
-        this.sections = sections;
+    public void setLectures(List<CurriculumLecture> lectures) {
+        this.lectures = lectures;
     }
 
     public LocalDateTime getCreatedAt() {

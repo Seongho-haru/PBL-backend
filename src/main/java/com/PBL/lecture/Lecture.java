@@ -74,6 +74,14 @@ public class Lecture {
     private Integer memoryLimit;
 
     /**
+     * 공개 강의 여부
+     * true: 다른 사용자가 커리큘럼에 링크 가능
+     * false: 비공개 강의 (본인만 사용 가능)
+     */
+    @Column(nullable = false)
+    private Boolean isPublic = false;
+
+    /**
      * 테스트케이스 목록
      * PROBLEM 타입에서만 사용
      * 입력/출력 문자열의 1:1 매핑 형식
@@ -152,6 +160,27 @@ public class Lecture {
         return this.testCases != null ? this.testCases.size() : 0;
     }
 
+    /**
+     * 공개 강의인지 확인
+     */
+    public boolean isPublicLecture() {
+        return Boolean.TRUE.equals(this.isPublic);
+    }
+
+    /**
+     * 강의를 공개로 설정
+     */
+    public void makePublic() {
+        this.isPublic = true;
+    }
+
+    /**
+     * 강의를 비공개로 설정
+     */
+    public void makePrivate() {
+        this.isPublic = false;
+    }
+
     // === Getter & Setter ===
 
     public Long getId() {
@@ -216,6 +245,14 @@ public class Lecture {
 
     public void setMemoryLimit(Integer memoryLimit) {
         this.memoryLimit = memoryLimit;
+    }
+
+    public Boolean getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(Boolean isPublic) {
+        this.isPublic = isPublic;
     }
 
     public List<TestCase> getTestCases() {

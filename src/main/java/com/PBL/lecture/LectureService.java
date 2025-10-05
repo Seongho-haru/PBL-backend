@@ -80,11 +80,10 @@ public class LectureService {
 
     /**
      * 모든 강의 조회 (최신순)
-     * N+1 쿼리 문제 해결을 위해 fetch join 사용
+     * N+1 쿼리 문제 해결을 위해 최적화된 쿼리 사용
      */
-    @Transactional
     public List<Lecture> getAllLectures() {
-        return lectureRepository.findAllWithTestCases();
+        return lectureRepository.findAllByOrderByCreatedAtDesc();
     }
 
     /**
@@ -212,6 +211,46 @@ public class LectureService {
      */
     public List<Lecture> getProblemLecturesWithTestCases() {
         return lectureRepository.findProblemLecturesWithTestCases(LectureType.PROBLEM);
+    }
+
+    // === 공개/비공개 설정 ===
+
+    /**
+     * 강의 공개
+     */
+    @Transactional
+    public void publishLecture(Long id) {
+        Lecture lecture = lectureRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + id));
+        
+        lecture.makePublic();
+        lectureRepository.save(lecture);
+    }
+
+    /**
+     * 강의 비공개
+     */
+    @Transactional
+    public void unpublishLecture(Long id) {
+        Lecture lecture = lectureRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + id));
+        
+        lecture.makePrivate();
+        lectureRepository.save(lecture);
+    }
+
+    /**
+     * 모든 공개 강의 조회
+     */
+    public List<Lecture> getPublicLectures() {
+        return lectureRepository.findByIsPublicTrueOrderByCreatedAtDesc();
+    }
+
+    /**
+     * 공개 강의 검색
+     */
+    public List<Lecture> searchPublicLectures(String title, String category, String difficulty, LectureType type) {
+        return lectureRepository.findPublicLecturesBySearchCriteria(title, category, difficulty, type);
     }
 
     // === 검증 메서드 ===

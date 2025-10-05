@@ -80,11 +80,10 @@ public class LectureService {
 
     /**
      * 모든 강의 조회 (최신순)
-     * N+1 쿼리 문제 해결을 위해 fetch join 사용
+     * N+1 쿼리 문제 해결을 위해 최적화된 쿼리 사용
      */
-    @Transactional
     public List<Lecture> getAllLectures() {
-        return lectureRepository.findAllWithTestCases();
+        return lectureRepository.findAllByOrderByCreatedAtDesc();
     }
 
     /**

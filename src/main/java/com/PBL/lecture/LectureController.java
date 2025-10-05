@@ -273,23 +273,24 @@ public class LectureController {
         response.setDifficulty(lecture.getDifficulty());
         response.setTimeLimit(lecture.getTimeLimit());
         response.setMemoryLimit(lecture.getMemoryLimit());
-        response.setTestCaseCount(lecture.getTestCaseCount());
         response.setCreatedAt(lecture.getCreatedAt());
         response.setUpdatedAt(lecture.getUpdatedAt());
 
-        // 테스트케이스 포함 - Lazy Loading 안전하게 처리
+        // 테스트케이스 안전하게 처리 - Lazy Loading 방지
         try {
-            if (lecture.getTestCases() != null && !lecture.getTestCases().isEmpty()) {
+            if (lecture.getTestCases() != null) {
+                response.setTestCaseCount(lecture.getTestCases().size());
                 List<TestCaseResponse> testCases = lecture.getTestCases().stream()
                         .map(tc -> new TestCaseResponse(tc.getInput(), tc.getExpectedOutput(), tc.getOrderIndex()))
                         .toList();
                 response.setTestCases(testCases);
             } else {
+                response.setTestCaseCount(0);
                 response.setTestCases(new ArrayList<>());
             }
         } catch (Exception e) {
-            // Lazy Loading 실패 시 빈 리스트로 설정
-            System.err.println("테스트케이스 로딩 실패: " + e.getMessage());
+            // Lazy Loading 실패 시 기본값으로 설정
+            response.setTestCaseCount(0);
             response.setTestCases(new ArrayList<>());
         }
 
@@ -411,3 +412,25 @@ class TestCaseResponse {
     public Integer getOrderIndex() { return orderIndex; }
     public void setOrderIndex(Integer orderIndex) { this.orderIndex = orderIndex; }
 }
+
+// === 강의 공개/비공개 설정 API 추가 ===
+// LectureController 클래스 내부에 다음 메소드들을 추가해야 합니다:
+/*
+    @PutMapping("/{id}/publish")
+    @Operation(summary = "강의 공개", description = "강의를 공개 상태로 변경합니다.")
+    public ResponseEntity<Map<String, String>> publishLecture(@PathVariable Long id) {
+        // 구현 필요
+    }
+
+    @PutMapping("/{id}/unpublish") 
+    @Operation(summary = "강의 비공개", description = "강의를 비공개 상태로 변경합니다.")
+    public ResponseEntity<Map<String, String>> unpublishLecture(@PathVariable Long id) {
+        // 구현 필요
+    }
+
+    @GetMapping("/public")
+    @Operation(summary = "공개 강의 조회", description = "모든 공개 강의를 조회합니다.")
+    public ResponseEntity<List<LectureResponse>> getPublicLectures() {
+        // 구현 필요
+    }
+*/

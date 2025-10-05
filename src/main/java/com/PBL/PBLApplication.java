@@ -40,8 +40,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableCaching
 @EnableAsync
 @ComponentScan(basePackages = {
-    "com.PBL.lab",      // 기존 Judge0 패키지
-    "com.PBL.lecture"   // 새로운 Lecture 패키지
+    "com.PBL.lab",        // 기존 Judge0 패키지
+    "com.PBL.lecture",    // Lecture 패키지
+    "com.PBL.curriculum"  // Curriculum 패키지
 })
 public class PBLApplication {
 

@@ -131,4 +131,47 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
      * 특정 난이도가 존재하는지 확인
      */
     boolean existsByDifficulty(String difficulty);
+
+    // === 공개 강의 관련 메소드 ===
+
+    /**
+     * 모든 공개 강의 조회 (최신순)
+     */
+    List<Lecture> findByIsPublicTrueOrderByCreatedAtDesc();
+
+    /**
+     * 공개 강의 중 제목으로 검색
+     */
+    List<Lecture> findByIsPublicTrueAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(String title);
+
+    /**
+     * 공개 강의 중 카테고리별 조회
+     */
+    List<Lecture> findByIsPublicTrueAndCategoryOrderByCreatedAtDesc(String category);
+
+    /**
+     * 공개 강의 중 난이도별 조회
+     */
+    List<Lecture> findByIsPublicTrueAndDifficultyOrderByCreatedAtDesc(String difficulty);
+
+    /**
+     * 공개 강의 중 유형별 조회
+     */
+    List<Lecture> findByIsPublicTrueAndTypeOrderByCreatedAtDesc(LectureType type);
+
+    /**
+     * 공개 강의 복합 검색
+     */
+    @Query("SELECT l FROM Lecture l WHERE l.isPublic = true AND " +
+            "(:title IS NULL OR LOWER(l.title) LIKE LOWER(CONCAT('%', :title, '%'))) AND " +
+            "(:category IS NULL OR l.category = :category) AND " +
+            "(:difficulty IS NULL OR l.difficulty = :difficulty) AND " +
+            "(:type IS NULL OR l.type = :type) " +
+            "ORDER BY l.createdAt DESC")
+    List<Lecture> findPublicLecturesBySearchCriteria(
+            @Param("title") String title,
+            @Param("category") String category,
+            @Param("difficulty") String difficulty,
+            @Param("type") LectureType type
+    );
 }

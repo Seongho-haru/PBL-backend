@@ -70,7 +70,6 @@ management:
     metrics:
       enabled: true
 
-
 # SpringDoc OpenAPI Configuration
 springdoc:
   api-docs:
@@ -91,6 +90,8 @@ springdoc:
         url: /api-docs/judge0-core
       - name: "Lecture Management APIs"
         url: /api-docs/lectures
+      - name: "Curriculum Management APIs"
+        url: /api-docs/curriculums
       - name: "Grading System APIs"
         url: /api-docs/grading
   show-actuator: true
@@ -110,6 +111,12 @@ springdoc:
         - /api/lectures/**
       packages-to-scan:
         - com.PBL.lecture
+    - group: "curriculums"
+      display-name: "Curriculum Management APIs"
+      paths-to-match:
+        - /api/curriculums/**
+      packages-to-scan:
+        - com.PBL.curriculum
     - group: "grading"
       display-name: "Grading System APIs"
       paths-to-match:

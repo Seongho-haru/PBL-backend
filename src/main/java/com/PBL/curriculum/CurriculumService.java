@@ -173,11 +173,21 @@ public class CurriculumService {
      */
     @Transactional(readOnly = true)
     public List<Lecture> searchPublicLectures(String title, String category, String difficulty, String type) {
+        com.PBL.lecture.LectureType lectureType = null;
+        if (type != null && !type.trim().isEmpty()) {
+            try {
+                lectureType = com.PBL.lecture.LectureType.valueOf(type.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // 잘못된 타입이면 null로 처리 (모든 타입 검색)
+                lectureType = null;
+            }
+        }
+        
         return lectureRepository.findPublicLecturesBySearchCriteria(
                 title, 
                 category, 
                 difficulty, 
-                type != null ? com.PBL.lecture.LectureType.valueOf(type.toUpperCase()) : null
+                lectureType
         );
     }
 

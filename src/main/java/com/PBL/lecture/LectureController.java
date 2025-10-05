@@ -261,6 +261,81 @@ public class LectureController {
         return ResponseEntity.ok(stats);
     }
 
+    // === 공개/비공개 설정 API ===
+
+    /**
+     * 강의 공개
+     * PUT /api/lectures/{id}/publish
+     */
+    @PutMapping("/{id}/publish")
+    @Operation(summary = "강의 공개", description = "강의를 공개 상태로 변경합니다.")
+    public ResponseEntity<Map<String, String>> publishLecture(
+            @Parameter(description = "강의 ID") @PathVariable Long id) {
+        try {
+            lectureService.publishLecture(id);
+            return ResponseEntity.ok(Map.of("message", "강의가 공개되었습니다."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "강의 공개 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
+     * 강의 비공개
+     * PUT /api/lectures/{id}/unpublish
+     */
+    @PutMapping("/{id}/unpublish")
+    @Operation(summary = "강의 비공개", description = "강의를 비공개 상태로 변경합니다.")
+    public ResponseEntity<Map<String, String>> unpublishLecture(
+            @Parameter(description = "강의 ID") @PathVariable Long id) {
+        try {
+            lectureService.unpublishLecture(id);
+            return ResponseEntity.ok(Map.of("message", "강의가 비공개되었습니다."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "강의 비공개 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
+     * 공개 강의 조회
+     * GET /api/lectures/public
+     */
+    @GetMapping("/public")
+    @Operation(summary = "공개 강의 조회", description = "모든 공개 강의를 최신순으로 조회합니다.")
+    public ResponseEntity<List<LectureResponse>> getPublicLectures() {
+        List<Lecture> lectures = lectureService.getPublicLectures();
+        List<LectureResponse> responses = lectures.stream()
+                .map(this::toLectureResponse)
+                .toList();
+        return ResponseEntity.ok(responses);
+    }
+
+    /**
+     * 공개 강의 검색
+     * GET /api/lectures/public/search
+     */
+    @GetMapping("/public/search")
+    @Operation(summary = "공개 강의 검색", description = "공개 강의 중에서 조건에 맞는 강의를 검색합니다.")
+    public ResponseEntity<List<LectureResponse>> searchPublicLectures(
+            @Parameter(description = "제목 검색") @RequestParam(required = false) String title,
+            @Parameter(description = "카테고리 필터") @RequestParam(required = false) String category,
+            @Parameter(description = "난이도 필터") @RequestParam(required = false) String difficulty,
+            @Parameter(description = "강의 유형 필터") @RequestParam(required = false) LectureType type) {
+        
+        List<Lecture> lectures = lectureService.searchPublicLectures(title, category, difficulty, type);
+        List<LectureResponse> responses = lectures.stream()
+                .map(this::toLectureResponse)
+                .toList();
+        return ResponseEntity.ok(responses);
+    }
+
     // === DTO 변환 메서드 ===
 
     private LectureResponse toLectureResponse(Lecture lecture) {
@@ -273,6 +348,7 @@ public class LectureController {
         response.setDifficulty(lecture.getDifficulty());
         response.setTimeLimit(lecture.getTimeLimit());
         response.setMemoryLimit(lecture.getMemoryLimit());
+        response.setIsPublic(lecture.getIsPublic());
         response.setCreatedAt(lecture.getCreatedAt());
         response.setUpdatedAt(lecture.getUpdatedAt());
 
@@ -344,6 +420,7 @@ class LectureResponse {
     private String difficulty;
     private Integer timeLimit;
     private Integer memoryLimit;
+    private Boolean isPublic;
     private int testCaseCount;
     private List<TestCaseResponse> testCases;
     private java.time.LocalDateTime createdAt;
@@ -366,6 +443,8 @@ class LectureResponse {
     public void setTimeLimit(Integer timeLimit) { this.timeLimit = timeLimit; }
     public Integer getMemoryLimit() { return memoryLimit; }
     public void setMemoryLimit(Integer memoryLimit) { this.memoryLimit = memoryLimit; }
+    public Boolean getIsPublic() { return isPublic; }
+    public void setIsPublic(Boolean isPublic) { this.isPublic = isPublic; }
     public int getTestCaseCount() { return testCaseCount; }
     public void setTestCaseCount(int testCaseCount) { this.testCaseCount = testCaseCount; }
     public List<TestCaseResponse> getTestCases() { return testCases; }
@@ -412,25 +491,3 @@ class TestCaseResponse {
     public Integer getOrderIndex() { return orderIndex; }
     public void setOrderIndex(Integer orderIndex) { this.orderIndex = orderIndex; }
 }
-
-// === 강의 공개/비공개 설정 API 추가 ===
-// LectureController 클래스 내부에 다음 메소드들을 추가해야 합니다:
-/*
-    @PutMapping("/{id}/publish")
-    @Operation(summary = "강의 공개", description = "강의를 공개 상태로 변경합니다.")
-    public ResponseEntity<Map<String, String>> publishLecture(@PathVariable Long id) {
-        // 구현 필요
-    }
-
-    @PutMapping("/{id}/unpublish") 
-    @Operation(summary = "강의 비공개", description = "강의를 비공개 상태로 변경합니다.")
-    public ResponseEntity<Map<String, String>> unpublishLecture(@PathVariable Long id) {
-        // 구현 필요
-    }
-
-    @GetMapping("/public")
-    @Operation(summary = "공개 강의 조회", description = "모든 공개 강의를 조회합니다.")
-    public ResponseEntity<List<LectureResponse>> getPublicLectures() {
-        // 구현 필요
-    }
-*/

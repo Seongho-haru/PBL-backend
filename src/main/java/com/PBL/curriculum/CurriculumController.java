@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -213,19 +214,54 @@ public class CurriculumController {
 
     @GetMapping("/lectures/public")
     @Operation(summary = "공개 강의 조회", description = "커리큘럼에 추가할 수 있는 모든 공개 강의를 조회합니다.")
-    public ResponseEntity<List<Lecture>> getPublicLectures() {
+    public ResponseEntity<List<Map<String, Object>>> getPublicLectures() {
         List<Lecture> lectures = curriculumService.getPublicLectures();
-        return ResponseEntity.ok(lectures);
+        List<Map<String, Object>> responses = lectures.stream()
+                .map(this::toLectureMap)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/lectures/public/search")
     @Operation(summary = "공개 강의 검색", description = "공개 강의 중에서 조건에 맞는 강의를 검색합니다.")
-    public ResponseEntity<List<Lecture>> searchPublicLectures(
+    public ResponseEntity<List<Map<String, Object>>> searchPublicLectures(
             @Parameter(description = "제목 검색") @RequestParam(required = false) String title,
             @Parameter(description = "카테고리 필터") @RequestParam(required = false) String category,
             @Parameter(description = "난이도 필터") @RequestParam(required = false) String difficulty,
             @Parameter(description = "강의 유형 필터") @RequestParam(required = false) String type) {
         List<Lecture> lectures = curriculumService.searchPublicLectures(title, category, difficulty, type);
-        return ResponseEntity.ok(lectures);
+        List<Map<String, Object>> responses = lectures.stream()
+                .map(this::toLectureMap)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
+    // === Helper 메서드 ===
+
+    /**
+     * Lecture 엔티티를 안전한 Map으로 변환 (Lazy Loading 방지)
+     */
+    private Map<String, Object> toLectureMap(Lecture lecture) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", lecture.getId());
+        map.put("title", lecture.getTitle());
+        map.put("description", lecture.getDescription());
+        map.put("type", lecture.getType());
+        map.put("category", lecture.getCategory());
+        map.put("difficulty", lecture.getDifficulty());
+        map.put("timeLimit", lecture.getTimeLimit());
+        map.put("memoryLimit", lecture.getMemoryLimit());
+        map.put("isPublic", lecture.getIsPublic());
+        map.put("createdAt", lecture.getCreatedAt());
+        map.put("updatedAt", lecture.getUpdatedAt());
+        
+        // 테스트케이스는 개수만 포함 (Lazy Loading 방지)
+        try {
+            map.put("testCaseCount", lecture.getTestCases() != null ? lecture.getTestCases().size() : 0);
+        } catch (Exception e) {
+            map.put("testCaseCount", 0);
+        }
+        
+        return map;
     }
 }

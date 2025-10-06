@@ -34,7 +34,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
-    
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
     // Database - H2 for demo
 //    implementation 'com.h2database:h2:2.2.224'
     runtimeOnly 'org.postgresql:postgresql'

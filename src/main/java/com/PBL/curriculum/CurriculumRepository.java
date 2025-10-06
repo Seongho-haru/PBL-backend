@@ -20,6 +20,7 @@ public interface CurriculumRepository extends JpaRepository<Curriculum, Long> {
      */
     @Query("SELECT DISTINCT c FROM Curriculum c " +
            "LEFT JOIN FETCH c.lectures cl " +
+           "LEFT JOIN FETCH cl.lecture " +
            "ORDER BY c.createdAt DESC")
     List<Curriculum> findAllWithLectures();
 
@@ -29,6 +30,7 @@ public interface CurriculumRepository extends JpaRepository<Curriculum, Long> {
      */
     @Query("SELECT DISTINCT c FROM Curriculum c " +
            "LEFT JOIN FETCH c.lectures cl " +
+           "LEFT JOIN FETCH cl.lecture " +
            "WHERE c.isPublic = true " +
            "ORDER BY c.createdAt DESC")
     List<Curriculum> findPublicCurriculumsWithLectures();
@@ -39,6 +41,7 @@ public interface CurriculumRepository extends JpaRepository<Curriculum, Long> {
      */
     @Query("SELECT c FROM Curriculum c " +
            "LEFT JOIN FETCH c.lectures cl " +
+           "LEFT JOIN FETCH cl.lecture " +
            "WHERE c.id = :id")
     Optional<Curriculum> findByIdWithLectures(@Param("id") Long id);
 

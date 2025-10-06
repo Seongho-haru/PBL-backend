@@ -250,7 +250,8 @@ public class LectureService {
      * 공개 강의 검색
      */
     public List<Lecture> searchPublicLectures(String title, String category, String difficulty, LectureType type) {
-        return lectureRepository.findPublicLecturesBySearchCriteria(title, category, difficulty, type);
+        return lectureRepository.findPublicLecturesBySearchCriteria(title, category, difficulty, type, 
+                type != null ? type.name() : null);
     }
 
     // === 검증 메서드 ===

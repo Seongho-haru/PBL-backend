@@ -187,7 +187,8 @@ public class CurriculumService {
                 title, 
                 category, 
                 difficulty, 
-                lectureType
+                lectureType,
+                lectureType != null ? lectureType.name() : null
         );
     }
 

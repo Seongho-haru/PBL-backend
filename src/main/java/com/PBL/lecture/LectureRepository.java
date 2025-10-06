@@ -162,16 +162,17 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     /**
      * 공개 강의 복합 검색
      */
-    @Query("SELECT l FROM Lecture l WHERE l.isPublic = true AND " +
-            "(:title IS NULL OR LOWER(l.title) LIKE LOWER(CONCAT('%', :title, '%'))) AND " +
+    @Query(value = "SELECT * FROM lectures l WHERE l.is_public = true AND " +
+            "(:title IS NULL OR l.title ILIKE CONCAT('%', :title, '%')) AND " +
             "(:category IS NULL OR l.category = :category) AND " +
             "(:difficulty IS NULL OR l.difficulty = :difficulty) AND " +
-            "(:type IS NULL OR l.type = :type) " +
-            "ORDER BY l.createdAt DESC")
+            "(:type IS NULL OR l.type = :typeStr) " +
+            "ORDER BY l.created_at DESC", nativeQuery = true)
     List<Lecture> findPublicLecturesBySearchCriteria(
             @Param("title") String title,
             @Param("category") String category,
             @Param("difficulty") String difficulty,
-            @Param("type") LectureType type
+            @Param("type") LectureType type,
+            @Param("typeStr") String typeStr
     );
 }

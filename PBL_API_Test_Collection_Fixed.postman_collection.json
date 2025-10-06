@@ -1,0 +1,704 @@
+{
+  "info": {
+    "_postman_id": "pbl-api-test-collection-fixed",
+    "name": "PBL Backend API Test Collection (Fixed)",
+    "description": "강의/커리큘럼 모듈의 모든 API를 테스트하는 컬렉션 - 기존 데이터 고려",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:2358",
+      "type": "string"
+    },
+    {
+      "key": "lectureId1",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "lectureId2",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "lectureId3",
+      "value": "3",
+      "type": "string"
+    },
+    {
+      "key": "newLectureId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "curriculumId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "📚 Lecture API Tests",
+      "item": [
+        {
+          "name": "1. 기존 강의 조회 (ID=1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has lecture data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData.id).to.eql(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures", "1"]
+            }
+          }
+        },
+        {
+          "name": "2. 새 마크다운 강의 생성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has lecture data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData.type).to.eql('MARKDOWN');",
+                  "    pm.collectionVariables.set('newLectureId', jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Vue.js 기초 강의\",\n  \"description\": \"# Vue.js 입문\\n\\nVue.js의 기본 개념을 배워봅시다.\",\n  \"type\": \"MARKDOWN\",\n  \"category\": \"Frontend\",\n  \"difficulty\": \"기초\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures"]
+            }
+          }
+        },
+        {
+          "name": "3. 모든 강의 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(jsonData.length).to.be.at.least(4);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures"]
+            }
+          }
+        },
+        {
+          "name": "4. 강의 검색 (수정된 파라미터)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Search results contain lectures\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('lectures');",
+                  "    pm.expect(jsonData.lectures).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures/search?title=Vue",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures", "search"],
+              "query": [
+                {
+                  "key": "title",
+                  "value": "Vue"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. 강의 공개",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Success message\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('공개');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures/{{newLectureId}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures", "{{newLectureId}}", "publish"]
+            }
+          }
+        },
+        {
+          "name": "6. 공개 강의 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Public lectures returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.expect(jsonData[0]).to.have.property('isPublic', true);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures/public",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures", "public"]
+            }
+          }
+        },
+        {
+          "name": "7. 공개 강의 검색 (수정된 파라미터)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Search results returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures/public/search?category=Frontend&type=MARKDOWN",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures", "public", "search"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "Frontend"
+                },
+                {
+                  "key": "type",
+                  "value": "MARKDOWN"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "8. 강의 통계 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Stats have required fields\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('byType');",
+                  "    pm.expect(jsonData).to.have.property('byCategory');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📚 Curriculum API Tests",
+      "item": [
+        {
+          "name": "1. 커리큘럼 생성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has curriculum data\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData.title).to.eql('웹 개발 마스터 과정');",
+                  "    pm.collectionVariables.set('curriculumId', jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"웹 개발 마스터 과정\",\n  \"description\": \"프론트엔드부터 백엔드까지 전체 웹 개발 학습 과정\",\n  \"isPublic\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums"]
+            }
+          }
+        },
+        {
+          "name": "2. 커리큘럼에 강의 추가 (기존 강의 1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Success message\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('추가');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lectureId\": {{lectureId1}},\n  \"isRequired\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/{{curriculumId}}/lectures",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "{{curriculumId}}", "lectures"]
+            }
+          }
+        },
+        {
+          "name": "3. 커리큘럼에 강의 추가 (기존 강의 2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Success message\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('추가');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lectureId\": {{lectureId2}},\n  \"isRequired\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/{{curriculumId}}/lectures",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "{{curriculumId}}", "lectures"]
+            }
+          }
+        },
+        {
+          "name": "4. 커리큘럼에 강의 추가 (새 강의)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Success message\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('추가');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lectureId\": {{newLectureId}},\n  \"isRequired\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/{{curriculumId}}/lectures",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "{{curriculumId}}", "lectures"]
+            }
+          }
+        },
+        {
+          "name": "5. 커리큘럼 상세 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Curriculum has lectures\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('lectures');",
+                  "    pm.expect(jsonData.lectures).to.be.an('array');",
+                  "    pm.expect(jsonData.lectures.length).to.eql(3);",
+                  "    pm.expect(jsonData.totalLectureCount).to.eql(3);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/{{curriculumId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "{{curriculumId}}"]
+            }
+          }
+        },
+        {
+          "name": "6. 🔥 강의 순서 변경 (핵심 테스트!)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Success message\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('순서가 성공적으로 변경');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lectureIds\": [{{newLectureId}}, {{lectureId1}}, {{lectureId2}}]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/{{curriculumId}}/lectures/reorder",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "curriculums",
+                "{{curriculumId}}",
+                "lectures",
+                "reorder"
+              ]
+            }
+          }
+        },
+        {
+          "name": "7. 순서 변경 확인",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Lecture order was changed\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var lectures = jsonData.lectures;",
+                  "    pm.expect(lectures[0].orderIndex).to.eql(1);",
+                  "    pm.expect(lectures[1].orderIndex).to.eql(2);",
+                  "    pm.expect(lectures[2].orderIndex).to.eql(3);",
+                  "    // 첫 번째가 newLectureId여야 함",
+                  "    pm.expect(lectures[0].lectureId).to.eql(parseInt(pm.collectionVariables.get('newLectureId')));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/{{curriculumId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "{{curriculumId}}"]
+            }
+          }
+        },
+        {
+          "name": "8. 모든 커리큘럼 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is array\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(jsonData.length).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums"]
+            }
+          }
+        },
+        {
+          "name": "9. 커리큘럼 검색 (수정된 파라미터)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Search results returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/search?title=웹",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "search"],
+              "query": [
+                {
+                  "key": "title",
+                  "value": "웹"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "10. 공개 강의 검색 (커리큘럼용, 수정된 파라미터)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Search results returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/lectures/public/search?category=Frontend&type=MARKDOWN",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "lectures", "public", "search"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "Frontend"
+                },
+                {
+                  "key": "type",
+                  "value": "MARKDOWN"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

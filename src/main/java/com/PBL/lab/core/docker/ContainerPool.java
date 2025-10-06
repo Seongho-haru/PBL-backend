@@ -2,6 +2,7 @@ package com.PBL.lab.core.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.model.*;
 import lombok.Builder;
 import lombok.Data;
@@ -346,6 +347,13 @@ public class ContainerPool {
                 dockerClient.inspectImageCmd(judge0Image).exec();
             } catch (Exception e) {
                 log.error("Judge0 image not found: {}. Please pull the image first.", judge0Image);
+                log.info("Judge0 image pull 준비 중: {}", judge0Image);
+                // 이미지 pull
+                dockerClient.pullImageCmd("judge0/compilers")
+                        .withTag("latest")
+                        .exec(new PullImageResultCallback())
+                        .awaitCompletion();
+                log.info("Judge0 image pull 완료: {}", judge0Image);
                 return null;
             }
 

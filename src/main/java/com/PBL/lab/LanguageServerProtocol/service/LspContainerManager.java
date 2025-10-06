@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 /**
  * LSP Container Manager - Docker Attach 방식으로 LSP와 직접 통신
@@ -31,10 +32,18 @@ public class LspContainerManager {
     
     private static final String PROJECT_NAME = "pbl-lsp";
     private static final String VERSION = "1.0";
-    
+
+    // 컨테이너 최대 유휴 시간 (10분)
+    private static final long MAX_IDLE_TIME_MS = 10 * 60 * 1000;
+    // 건강 체크 주기 (1분)
+    private static final long HEALTH_CHECK_INTERVAL_MS = 60 * 1000;
+
     private final DockerClient dockerClient;
     private final Map<String, LspContainer> activeContainers = new ConcurrentHashMap<>();
-    
+
+    // 주기적 정리를 위한 스케줄러
+    private ScheduledExecutorService maintenanceExecutor;
+
     // 언어별 LSP 명령어
     private final Map<String, String> lspCommands = Map.of(
         "python", "python -m pylsp",
@@ -51,38 +60,156 @@ public class LspContainerManager {
         private String language;
         private String sessionId;
         private Instant createdAt;
+        private Instant lastActivityAt;  // 마지막 활동 시간
         private boolean running;
         private OutputStream stdin;  // LSP 입력
         private BlockingQueue<String> responseQueue;  // 응답 큐
         private AttachContainerResultCallback attachCallback;
+
+        /**
+         * 컨테이너가 유휴 상태인지 확인
+         */
+        public boolean isIdle(long maxIdleTimeMs) {
+            if (lastActivityAt == null) {
+                return false;
+            }
+            long idleTime = System.currentTimeMillis() - lastActivityAt.toEpochMilli();
+            return idleTime > maxIdleTimeMs;
+        }
+
+        /**
+         * 마지막 활동 시간 업데이트
+         */
+        public void markActivity() {
+            this.lastActivityAt = Instant.now();
+        }
     }
     
     @PostConstruct
     public void initialize() {
-        log.info("Initializing LSP Container Manager (Docker Attach 방식)");
+        log.debug("LSP 컨테이너 매니저 초기화 중 (Docker Attach 방식)");
         cleanupExistingContainers();
-        log.info("LSP Container Manager initialized");
+
+        // 주기적 정리 스케줄러 시작
+        maintenanceExecutor = Executors.newScheduledThreadPool(1, r -> {
+            Thread t = new Thread(r, "lsp-container-maintenance");
+            t.setDaemon(true);
+            return t;
+        });
+
+        // 1분마다 건강 체크 및 정리 수행
+        maintenanceExecutor.scheduleWithFixedDelay(
+            this::performMaintenance,
+            HEALTH_CHECK_INTERVAL_MS,
+            HEALTH_CHECK_INTERVAL_MS,
+            TimeUnit.MILLISECONDS
+        );
+
+        log.debug("LSP 컨테이너 매니저 초기화 완료 (주기적 정리 스케줄러 시작됨)");
     }
     
+    /**
+     * 주기적 유지보수 작업 - 건강 체크, 유휴 컨테이너 정리, 고아 컨테이너 제거
+     */
+    private void performMaintenance() {
+        try {
+            log.debug("LSP 컨테이너 주기적 정리 시작");
+
+            // 1. 실행 중이지 않은 컨테이너 감지 및 정리
+            List<String> toRemove = new ArrayList<>();
+            for (Map.Entry<String, LspContainer> entry : activeContainers.entrySet()) {
+                LspContainer container = entry.getValue();
+                String sessionId = entry.getKey();
+
+                // 컨테이너 건강 상태 체크
+                if (!isContainerRunning(container.getContainerId())) {
+                    log.warn("실행 중이지 않은 컨테이너 감지: sessionId={}, containerId={}",
+                        sessionId, container.getContainerId());
+                    toRemove.add(sessionId);
+                    continue;
+                }
+
+                // 유휴 컨테이너 체크
+                if (container.isIdle(MAX_IDLE_TIME_MS)) {
+                    log.warn("유휴 컨테이너 감지 ({}분 비활성): sessionId={}, containerId={}",
+                        MAX_IDLE_TIME_MS / 60000, sessionId, container.getContainerId());
+                    toRemove.add(sessionId);
+                }
+            }
+
+            // 비정상 및 유휴 컨테이너 제거
+            for (String sessionId : toRemove) {
+                removeContainer(sessionId);
+            }
+
+            // 2. Docker에 남아있는 고아 LSP 컨테이너 정리
+            cleanupOrphanContainers();
+
+            log.debug("LSP 컨테이너 주기적 정리 완료 (제거: {}개)", toRemove.size());
+
+        } catch (Exception e) {
+            log.error("LSP 컨테이너 유지보수 작업 중 오류 발생", e);
+        }
+    }
+
+    /**
+     * Docker에 남아있는 고아 컨테이너 정리
+     */
+    private void cleanupOrphanContainers() {
+        try {
+            List<Container> existingContainers = dockerClient.listContainersCmd()
+                .withShowAll(true)
+                .withLabelFilter(Map.of("com.docker.compose.project", PROJECT_NAME))
+                .exec();
+
+            for (Container container : existingContainers) {
+                String containerId = container.getId();
+
+                // activeContainers에 없는 컨테이너는 고아 컨테이너
+                boolean isOrphan = activeContainers.values().stream()
+                    .noneMatch(c -> c.getContainerId().equals(containerId));
+
+                if (isOrphan) {
+                    log.warn("고아 LSP 컨테이너 발견, 제거 중: {}", containerId);
+                    try {
+                        if ("running".equalsIgnoreCase(container.getState())) {
+                            dockerClient.stopContainerCmd(containerId)
+                                .withTimeout(5)
+                                .exec();
+                        }
+                        dockerClient.removeContainerCmd(containerId)
+                            .withForce(true)
+                            .exec();
+                        log.debug("고아 컨테이너 제거 완료: {}", containerId);
+                    } catch (Exception e) {
+                        log.warn("고아 컨테이너 제거 실패 {}: {}", containerId, e.getMessage());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("고아 컨테이너 정리 작업 중 오류 발생", e);
+        }
+    }
+
     private void cleanupExistingContainers() {
         try {
             List<Container> existingContainers = dockerClient.listContainersCmd()
                 .withShowAll(true)
                 .withLabelFilter(Map.of("com.docker.compose.project", PROJECT_NAME))
                 .exec();
-            
+
             for (Container container : existingContainers) {
                 try {
-                    log.info("Cleaning up existing LSP container: {}", container.getId());
+                    log.debug("기존 LSP 컨테이너 정리 중: {}", container.getId());
                     dockerClient.removeContainerCmd(container.getId())
                         .withForce(true)
                         .exec();
                 } catch (Exception e) {
-                    log.warn("Failed to remove container {}: {}", container.getId(), e.getMessage());
+                    log.warn("컨테이너 제거 실패 {}: {}", container.getId(), e.getMessage());
                 }
             }
         } catch (Exception e) {
-            log.error("Error during cleanup", e);
+            log.error("정리 작업 중 오류 발생", e);
         }
     }
     
@@ -97,17 +224,17 @@ public class LspContainerManager {
         
         LspContainer existing = activeContainers.get(sessionId);
         if (existing != null && isContainerRunning(existing.getContainerId())) {
-            log.info("Reusing existing container for session: {}", sessionId);
+            log.debug("세션의 기존 컨테이너 재사용: {}", sessionId);
             return existing;
         }
-        
+
         try {
             ensureImageExists(language);
-            
-            String containerName = PROJECT_NAME + "-" + language + "-" + 
+
+            String containerName = PROJECT_NAME + "-" + language + "-" +
                                  UUID.randomUUID().toString().substring(0, 8);
-            
-            log.info("Creating LSP container for language: {}, session: {}", language, sessionId);
+
+            log.debug("LSP 컨테이너 생성 중 - 언어: {}, 세션: {}", language, sessionId);
             
             // LSP 프로세스를 메인 프로세스로 실행하는 컨테이너 생성
             CreateContainerResponse response = dockerClient
@@ -171,7 +298,7 @@ public class LspContainerManager {
                             log.warn("[{}] LSP stderr: {}", sessionId, data);
                         }
                     } catch (Exception e) {
-                        log.error("[{}] Error processing frame", sessionId, e);
+                        log.error("[{}] 프레임 처리 중 오류", sessionId, e);
                     }
                     super.onNext(frame);
                 }
@@ -181,8 +308,8 @@ public class LspContainerManager {
             
             // 컨테이너 시작
             dockerClient.startContainerCmd(containerId).exec();
-            
-            log.info("Started LSP container: {}", containerId);
+
+            log.debug("LSP 컨테이너 시작됨: {}", containerId);
             
             LspContainer container = LspContainer.builder()
                 .containerId(containerId)
@@ -190,6 +317,7 @@ public class LspContainerManager {
                 .language(language)
                 .sessionId(sessionId)
                 .createdAt(Instant.now())
+                .lastActivityAt(Instant.now())
                 .running(true)
                 .stdin(stdin)
                 .responseQueue(responseQueue)
@@ -201,12 +329,12 @@ public class LspContainerManager {
             // 초기화 대기
             Thread.sleep(1000);
             
-            log.info("Successfully created LSP container: {} for session: {}", containerName, sessionId);
+            log.debug("LSP 컨테이너 생성 완료: {} (세션: {})", containerName, sessionId);
             
             return container;
             
         } catch (Exception e) {
-            log.error("Failed to create LSP container for language: {}", language, e);
+            log.error("LSP 컨테이너 생성 실패 (언어: {})", language, e);
             throw new RuntimeException("Failed to create LSP container", e);
         }
     }
@@ -257,33 +385,36 @@ public class LspContainerManager {
      */
     public void sendToLsp(String language, String userId, String jsonRpcMessage) {
         LspContainer container = activeContainers.get(userId);
-        
+
         if (container == null) {
-            log.warn("No container found for session: {}, creating new one", userId);
+            log.warn("세션에 대한 컨테이너를 찾을 수 없음: {}, 새로 생성", userId);
             container = createContainer(language, userId);
         }
-        
+
         if (!isContainerRunning(container.getContainerId())) {
-            log.error("Container {} is not running", container.getContainerId());
+            log.error("컨테이너가 실행 중이 아님: {}", container.getContainerId());
             throw new RuntimeException("Container is not running");
         }
-        
+
         try {
             // UTF-8 바이트 수 계산 (문자 개수가 아님!)
             byte[] contentBytes = jsonRpcMessage.getBytes(StandardCharsets.UTF_8);
             int contentLength = contentBytes.length;
-            
+
             // Content-Length 헤더 추가
             String header = "Content-Length: " + contentLength + "\r\n\r\n";
             byte[] headerBytes = header.getBytes(StandardCharsets.UTF_8);
-            
+
             // 헤더 + 본문 전송
             container.getStdin().write(headerBytes);
             container.getStdin().write(contentBytes);
             container.getStdin().flush();
-            
+
+            // 마지막 활동 시간 업데이트
+            container.markActivity();
+
         } catch (Exception e) {
-            log.error("[{}] Failed to send to LSP", userId, e);
+            log.error("[{}] LSP로 전송 실패", userId, e);
             throw new RuntimeException("Failed to send to LSP: " + e.getMessage(), e);
         }
     }
@@ -293,46 +424,49 @@ public class LspContainerManager {
      */
     public String sendAndReceive(String language, String userId, String jsonRpcMessage) {
         LspContainer container = activeContainers.get(userId);
-        
+
         if (container == null) {
-            log.warn("No container found for session: {}, creating new one", userId);
+            log.warn("세션에 대한 컨테이너를 찾을 수 없음: {}, 새로 생성", userId);
             container = createContainer(language, userId);
         }
-        
+
         if (!isContainerRunning(container.getContainerId())) {
-            log.error("Container {} is not running", container.getContainerId());
+            log.error("컨테이너가 실행 중이 아님: {}", container.getContainerId());
             throw new RuntimeException("Container is not running");
         }
-        
+
         try {
             // Content-Length 헤더 추가
             byte[] jsonBytes = jsonRpcMessage.getBytes(StandardCharsets.UTF_8);
             String message = "Content-Length: " + jsonBytes.length + "\r\n\r\n" + jsonRpcMessage;
-            
-            log.info("[{}] → LSP: {}", userId, jsonRpcMessage);
-            
+
+            log.debug("[{}] → LSP: {}", userId, jsonRpcMessage);
+
             // stdin으로 메시지 전송
             container.getStdin().write(message.getBytes(StandardCharsets.UTF_8));
             container.getStdin().flush();
-            
+
+            // 마지막 활동 시간 업데이트
+            container.markActivity();
+
             // 응답 대기 (최대 60초로 증가 - completion은 시간이 걸릴 수 있음)
             String response = container.getResponseQueue().poll(60, TimeUnit.SECONDS);
-            
+
             if (response == null) {
-                log.debug("[{}] No response (might be notification)", userId);
+                log.debug("[{}] 응답 없음 (알림일 수 있음)", userId);
                 return "";
             }
-            
-            log.info("[{}] ← LSP: {}", userId, response);
-            
+
+            log.debug("[{}] ← LSP: {}", userId, response);
+
             return response;
             
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.error("[{}] LSP communication interrupted", userId, e);
+            log.error("[{}] LSP 통신 중단됨", userId, e);
             throw new RuntimeException("LSP communication interrupted", e);
         } catch (Exception e) {
-            log.error("[{}] Failed to communicate with LSP", userId, e);
+            log.error("[{}] LSP 통신 실패", userId, e);
             throw new RuntimeException("Failed to communicate with LSP: " + e.getMessage(), e);
         }
     }
@@ -351,9 +485,9 @@ public class LspContainerManager {
         
         try {
             dockerClient.inspectImageCmd(imageName).exec();
-            log.debug("Image {} already exists", imageName);
+            log.debug("이미지가 이미 존재함: {}", imageName);
         } catch (Exception e) {
-            log.info("Image {} not found, building...", imageName);
+            log.debug("이미지를 찾을 수 없어 빌드 시작: {}", imageName);
             buildImage(language, imageName);
         }
     }
@@ -368,7 +502,7 @@ public class LspContainerManager {
                 throw new RuntimeException("Dockerfile not found: " + dockerfilePath);
             }
             
-            log.info("Building image: {} from {}", imageName, dockerfilePath);
+            log.info("이미지 빌드 중: {} (경로: {})", imageName, dockerfilePath);
             
             // Dockerfile이 있는 디렉토리를 빌드 컨텍스트로 사용
             File buildContext = dockerfileFile.getParentFile();
@@ -379,10 +513,10 @@ public class LspContainerManager {
                 .start()
                 .awaitImageId();
             
-            log.info("Successfully built image: {}", imageName);
-            
+            log.info("이미지 빌드 완료: {}", imageName);
+
         } catch (Exception e) {
-            log.error("Failed to build image: {}", imageName, e);
+            log.error("이미지 빌드 실패: {}", imageName, e);
             throw new RuntimeException("Failed to build LSP image: " + e.getMessage(), e);
         }
     }
@@ -407,12 +541,12 @@ public class LspContainerManager {
         LspContainer container = activeContainers.remove(sessionId);
         
         if (container == null) {
-            log.warn("No container found for session: {}", sessionId);
+            log.warn("세션에 대한 컨테이너를 찾을 수 없음: {}", sessionId);
             return;
         }
-        
+
         try {
-            log.info("Removing LSP container: {} for session: {}", 
+            log.debug("LSP 컨테이너 제거 중: {} (세션: {})",
                     container.getContainerName(), sessionId);
             
             if (container.getStdin() != null) {
@@ -431,31 +565,31 @@ public class LspContainerManager {
                 .withForce(true)
                 .exec();
             
-            log.info("Successfully removed LSP container for session: {}", sessionId);
-            
+            log.debug("LSP 컨테이너 제거 완료 (세션: {})", sessionId);
+
         } catch (Exception e) {
-            log.error("Failed to remove container for session: {}", sessionId, e);
+            log.error("컨테이너 제거 실패 (세션: {})", sessionId, e);
         }
     }
     
     public void removeContainerById(String containerId) {
         try {
-            log.info("Removing container by ID: {}", containerId);
-            
+            log.debug("컨테이너 ID로 제거 중: {}", containerId);
+
             dockerClient.stopContainerCmd(containerId)
                 .withTimeout(5)
                 .exec();
-            
+
             dockerClient.removeContainerCmd(containerId)
                 .withForce(true)
                 .exec();
-            
+
             activeContainers.values().removeIf(c -> c.getContainerId().equals(containerId));
-            
-            log.info("Successfully removed container: {}", containerId);
-            
+
+            log.debug("컨테이너 제거 완료: {}", containerId);
+
         } catch (Exception e) {
-            log.error("Failed to remove container: {}", containerId, e);
+            log.error("컨테이너 제거 실패: {}", containerId, e);
         }
     }
     
@@ -512,13 +646,26 @@ public class LspContainerManager {
     
     @PreDestroy
     public void shutdown() {
-        log.info("Shutting down LSP Container Manager");
-        
+        log.info("LSP 컨테이너 매니저 종료 중");
+
+        // 스케줄러 종료
+        if (maintenanceExecutor != null) {
+            maintenanceExecutor.shutdown();
+            try {
+                if (!maintenanceExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+                    maintenanceExecutor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                maintenanceExecutor.shutdownNow();
+            }
+        }
+
+        // 모든 컨테이너 제거
         List<String> sessions = new ArrayList<>(activeContainers.keySet());
         for (String sessionId : sessions) {
             removeContainer(sessionId);
         }
-        
-        log.info("LSP Container Manager shutdown complete");
+
+        log.info("LSP 컨테이너 매니저 종료 완료");
     }
 }

@@ -33,7 +33,7 @@ public class LspRestController {
         @RequestParam String sessionId
     ) {
         try {
-            log.info("LSP 컨테이너 생성 요청 - language: {}, sessionId: {}", language, sessionId);
+            log.debug("LSP 컨테이너 생성 요청 - language: {}, sessionId: {}", language, sessionId);
             
             LspContainerManager.LspContainer container = containerPool.createContainer(language, sessionId);
             
@@ -69,7 +69,7 @@ public class LspRestController {
     @DeleteMapping("/containers")
     public ResponseEntity<?> removeContainer(@RequestParam String sessionId) {
         try {
-            log.info("LSP 컨테이너 삭제 요청 - sessionId: {}", sessionId);
+            log.debug("LSP 컨테이너 삭제 요청 - sessionId: {}", sessionId);
             
             containerPool.removeContainer(sessionId);
             

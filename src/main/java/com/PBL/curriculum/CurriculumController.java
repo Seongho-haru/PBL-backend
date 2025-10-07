@@ -121,6 +121,12 @@ public class CurriculumController {
                         .body(Map.of("error", "사용자 인증이 필요합니다."));
             }
 
+            // 커리큘럼 존재 여부 먼저 확인
+            Optional<Curriculum> curriculumOpt = curriculumService.getCurriculumById(id);
+            if (curriculumOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
             // 작성자 권한 확인
             if (!curriculumService.canEditCurriculum(id, userId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -134,8 +140,6 @@ public class CurriculumController {
                     request.getIsPublic()
             );
             return ResponseEntity.ok(new CurriculumResponse(curriculum));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
@@ -153,6 +157,12 @@ public class CurriculumController {
                         .body(Map.of("error", "사용자 인증이 필요합니다."));
             }
 
+            // 커리큘럼 존재 여부 먼저 확인
+            Optional<Curriculum> curriculumOpt = curriculumService.getCurriculumById(id);
+            if (curriculumOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
             // 작성자 권한 확인
             if (!curriculumService.canDeleteCurriculum(id, userId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -161,8 +171,9 @@ public class CurriculumController {
 
             curriculumService.deleteCurriculum(id);
             return ResponseEntity.ok(Map.of("message", "커리큘럼이 성공적으로 삭제되었습니다."));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "커리큘럼 삭제 중 오류가 발생했습니다."));
         }
     }
 

@@ -155,6 +155,12 @@ public class LectureController {
                         .body(Map.of("error", "사용자 인증이 필요합니다."));
             }
 
+            // 강의 존재 여부 먼저 확인
+            Optional<Lecture> lectureOpt = lectureService.getLectureById(id);
+            if (lectureOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
             // 작성자 권한 확인
             if (!lectureService.canEditLecture(id, userId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -193,6 +199,12 @@ public class LectureController {
                         .body(Map.of("error", "사용자 인증이 필요합니다."));
             }
 
+            // 강의 존재 여부 먼저 확인
+            Optional<Lecture> lectureOpt = lectureService.getLectureById(id);
+            if (lectureOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
             // 작성자 권한 확인
             if (!lectureService.canDeleteLecture(id, userId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -201,8 +213,6 @@ public class LectureController {
 
             lectureService.deleteLecture(id);
             return ResponseEntity.ok(Map.of("message", "강의가 성공적으로 삭제되었습니다."));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "강의 삭제 중 오류가 발생했습니다."));

@@ -1,5 +1,6 @@
 package com.PBL.curriculum;
 
+import com.PBL.user.User;
 import jakarta.persistence.*;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
@@ -40,6 +41,14 @@ public class Curriculum {
      */
     @Column(nullable = false)
     private Boolean isPublic = false;
+
+    /**
+     * 커리큘럼 작성자
+     * 커리큘럼을 생성한 사용자
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id", nullable = false)
+    private User author;
 
     /**
      * 커리큘럼에 포함된 강의들 (폴더-파일 관계)
@@ -156,6 +165,20 @@ public class Curriculum {
             this.lectures.stream().anyMatch(cl -> cl.getLectureId().equals(lectureId));
     }
 
+    /**
+     * 작성자인지 확인
+     */
+    public boolean isAuthor(User user) {
+        return this.author != null && this.author.equals(user);
+    }
+
+    /**
+     * 작성자인지 확인 (ID로)
+     */
+    public boolean isAuthor(Long userId) {
+        return this.author != null && this.author.getId().equals(userId);
+    }
+
     // === Getter & Setter ===
 
     public Long getId() {
@@ -212,5 +235,13 @@ public class Curriculum {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public User getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(User author) {
+        this.author = author;
     }
 }

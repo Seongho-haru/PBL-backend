@@ -1,0 +1,890 @@
+{
+  "info": {
+    "_postman_id": "pbl-user-lecture-curriculum-integration",
+    "name": "PBL User-Lecture-Curriculum Integration Test",
+    "description": "사용자-강의-커리큘럼 연동 테스트 컬렉션 - 권한 체크 포함",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:2358",
+      "type": "string"
+    },
+    {
+      "key": "userId1",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lectureId1",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lectureId2",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "curriculumId1",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "curriculumId2",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication APIs",
+      "item": [
+        {
+          "name": "1. 사용자 1 회원가입",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"User created successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.user).to.have.property('id');",
+                  "    pm.collectionVariables.set('userId1', jsonData.user.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"김개발\",\n  \"loginId\": \"devkim\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "signup"]
+            }
+          }
+        },
+        {
+          "name": "2. 사용자 2 회원가입",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"User created successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.user).to.have.property('id');",
+                  "    pm.collectionVariables.set('userId2', jsonData.user.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"박학습\",\n  \"loginId\": \"studentpark\",\n  \"password\": \"654321\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "signup"]
+            }
+          }
+        },
+        {
+          "name": "3. 사용자 1 로그인",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Login successful\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.user.id).to.eql(parseInt(pm.collectionVariables.get('userId1')));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginId\": \"devkim\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "4. 아이디 중복 확인",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Login ID is duplicated\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.isDuplicated).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/check/loginId?loginId=devkim",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "check", "loginId"],
+              "query": [
+                {
+                  "key": "loginId",
+                  "value": "devkim"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📚 Lecture APIs (with User Integration)",
+      "item": [
+        {
+          "name": "1. 사용자 1의 마크다운 강의 생성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Lecture created with author\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData.type).to.eql('MARKDOWN');",
+                  "    pm.expect(jsonData.author).to.have.property('id');",
+                  "    pm.expect(jsonData.author.id).to.eql(parseInt(pm.collectionVariables.get('userId1')));",
+                  "    pm.collectionVariables.set('lectureId1', jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Vue.js 기초 강의\",\n  \"description\": \"# Vue.js 입문\\n\\nVue.js의 기본 개념을 배워봅시다.\",\n  \"type\": \"MARKDOWN\",\n  \"category\": \"Frontend\",\n  \"difficulty\": \"기초\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures"]
+            }
+          }
+        },
+        {
+          "name": "2. 사용자 1의 문제 강의 생성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Problem lecture created with author\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData.type).to.eql('PROBLEM');",
+                  "    pm.expect(jsonData.author.id).to.eql(parseInt(pm.collectionVariables.get('userId1')));",
+                  "    pm.collectionVariables.set('lectureId2', jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"자바스크립트 알고리즘 문제\",\n  \"description\": \"배열에서 최댓값을 찾는 문제를 해결해보세요.\",\n  \"type\": \"PROBLEM\",\n  \"category\": \"Algorithm\",\n  \"difficulty\": \"중급\",\n  \"timeLimit\": 30,\n  \"memoryLimit\": 128\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures"]
+            }
+          }
+        },
+        {
+          "name": "3. 사용자 1의 강의 목록 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"User lectures returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(jsonData.length).to.be.at.least(2);",
+                  "    // 모든 강의가 같은 작성자인지 확인",
+                  "    jsonData.forEach(function(lecture) {",
+                  "        pm.expect(lecture.author.id).to.eql(parseInt(pm.collectionVariables.get('userId1')));",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures/user/{{userId1}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures", "user", "{{userId1}}"]
+            }
+          }
+        },
+        {
+          "name": "4. 강의 공개 (작성자 권한)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Lecture published successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('공개');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures/{{lectureId1}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures", "{{lectureId1}}", "publish"]
+            }
+          }
+        },
+        {
+          "name": "5. 공개 강의 조회 (모든 사용자 접근 가능)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Public lectures returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.expect(jsonData[0]).to.have.property('isPublic', true);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures/public",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures", "public"]
+            }
+          }
+        },
+        {
+          "name": "6. 비공개 강의 조회 시도 (권한 없음)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"Access denied message\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('권한');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId2}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures/{{lectureId2}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures", "{{lectureId2}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📖 Curriculum APIs (with User Integration)",
+      "item": [
+        {
+          "name": "1. 사용자 1의 커리큘럼 생성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Curriculum created with author\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData.title).to.eql('웹 개발 마스터 과정');",
+                  "    pm.expect(jsonData.author).to.have.property('id');",
+                  "    pm.expect(jsonData.author.id).to.eql(parseInt(pm.collectionVariables.get('userId1')));",
+                  "    pm.collectionVariables.set('curriculumId1', jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"웹 개발 마스터 과정\",\n  \"description\": \"프론트엔드부터 백엔드까지 전체 웹 개발 학습 과정\",\n  \"isPublic\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums"]
+            }
+          }
+        },
+        {
+          "name": "2. 사용자 2의 커리큘럼 생성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Curriculum created with author\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData.author.id).to.eql(parseInt(pm.collectionVariables.get('userId2')));",
+                  "    pm.collectionVariables.set('curriculumId2', jsonData.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId2}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"데이터베이스 기초\",\n  \"description\": \"SQL과 데이터베이스 설계 기초 과정\",\n  \"isPublic\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums"]
+            }
+          }
+        },
+        {
+          "name": "3. 사용자 1의 커리큘럼 목록 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"User curriculums returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(jsonData.length).to.be.at.least(1);",
+                  "    // 모든 커리큘럼이 같은 작성자인지 확인",
+                  "    jsonData.forEach(function(curriculum) {",
+                  "        pm.expect(curriculum.author.id).to.eql(parseInt(pm.collectionVariables.get('userId1')));",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/user/{{userId1}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "user", "{{userId1}}"]
+            }
+          }
+        },
+        {
+          "name": "4. 커리큘럼에 강의 추가 (작성자 권한)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Lecture added successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('추가');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lectureId\": {{lectureId1}},\n  \"isRequired\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/{{curriculumId1}}/lectures",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "{{curriculumId1}}", "lectures"]
+            }
+          }
+        },
+        {
+          "name": "5. 공개 커리큘럼 조회 (모든 사용자 접근 가능)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Public curriculums returned\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.expect(jsonData[0]).to.have.property('isPublic', true);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId2}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/public",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "public"]
+            }
+          }
+        },
+        {
+          "name": "6. 비공개 커리큘럼 조회 시도 (권한 없음)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"Access denied message\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('권한');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/{{curriculumId2}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "{{curriculumId2}}"]
+            }
+          }
+        },
+        {
+          "name": "7. 다른 사용자의 커리큘럼 수정 시도 (권한 없음)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"Access denied message\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('권한');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"해킹당한 커리큘럼\",\n  \"description\": \"이건 수정되면 안됨\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/{{curriculumId2}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "{{curriculumId2}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Permission & Access Control Tests",
+      "item": [
+        {
+          "name": "1. 강의 수정 권한 체크 (작성자)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Lecture updated successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.title).to.eql('Vue.js 고급 강의');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Vue.js 고급 강의\",\n  \"description\": \"# Vue.js 고급\\n\\nVue.js의 고급 개념을 배워봅시다.\",\n  \"category\": \"Frontend\",\n  \"difficulty\": \"고급\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures/{{lectureId1}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures", "{{lectureId1}}"]
+            }
+          }
+        },
+        {
+          "name": "2. 강의 수정 권한 체크 (권한 없음)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"Access denied message\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('권한');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"해킹당한 강의\",\n  \"description\": \"이건 수정되면 안됨\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures/{{lectureId1}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures", "{{lectureId1}}"]
+            }
+          }
+        },
+        {
+          "name": "3. 강의 삭제 권한 체크 (작성자)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Lecture deleted successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('삭제');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures/{{lectureId2}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures", "{{lectureId2}}"]
+            }
+          }
+        },
+        {
+          "name": "4. 커리큘럼 삭제 권한 체크 (작성자)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Curriculum deleted successfully\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('삭제');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/{{curriculumId1}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "{{curriculumId1}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 package com.PBL.lecture;
 
+import com.PBL.user.User;
 import jakarta.persistence.*;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
@@ -80,6 +81,14 @@ public class Lecture {
      */
     @Column(nullable = false)
     private Boolean isPublic = false;
+
+    /**
+     * 강의 작성자
+     * 강의를 생성한 사용자
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id", nullable = false)
+    private User author;
 
     /**
      * 테스트케이스 목록
@@ -181,6 +190,20 @@ public class Lecture {
         this.isPublic = false;
     }
 
+    /**
+     * 작성자인지 확인
+     */
+    public boolean isAuthor(User user) {
+        return this.author != null && this.author.equals(user);
+    }
+
+    /**
+     * 작성자인지 확인 (ID로)
+     */
+    public boolean isAuthor(Long userId) {
+        return this.author != null && this.author.getId().equals(userId);
+    }
+
     // === Getter & Setter ===
 
     public Long getId() {
@@ -277,6 +300,14 @@ public class Lecture {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public User getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(User author) {
+        this.author = author;
     }
 }
 

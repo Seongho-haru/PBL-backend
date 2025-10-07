@@ -1,4 +1,5 @@
 package com.PBL.lecture;
+import com.PBL.user.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +36,16 @@ public class LectureService {
     }
 
     /**
+     * 강의 생성 (작성자 포함)
+     */
+    @Transactional
+    public Lecture createLecture(Lecture lecture, User author) {
+        lecture.setAuthor(author);
+        validateLecture(lecture);
+        return lectureRepository.save(lecture);
+    }
+
+    /**
      * 강의 생성 (파라미터 버전)
      */
     @Transactional
@@ -43,6 +54,21 @@ public class LectureService {
         Lecture lecture = new Lecture(title, description, type);
         lecture.setCategory(category);
         lecture.setDifficulty(difficulty);
+
+        validateLecture(lecture);
+        return lectureRepository.save(lecture);
+    }
+
+    /**
+     * 강의 생성 (파라미터 버전, 작성자 포함)
+     */
+    @Transactional
+    public Lecture createLecture(String title, String description, LectureType type,
+                                 String category, String difficulty, User author) {
+        Lecture lecture = new Lecture(title, description, type);
+        lecture.setCategory(category);
+        lecture.setDifficulty(difficulty);
+        lecture.setAuthor(author);
 
         validateLecture(lecture);
         return lectureRepository.save(lecture);
@@ -59,6 +85,23 @@ public class LectureService {
         lecture.setDifficulty(difficulty);
         lecture.setTimeLimit(timeLimit);
         lecture.setMemoryLimit(memoryLimit);
+
+        validateProblemLecture(lecture);
+        return lectureRepository.save(lecture);
+    }
+
+    /**
+     * 문제 강의 생성 (시간/메모리 제한 포함, 작성자 포함)
+     */
+    @Transactional
+    public Lecture createProblemLecture(String title, String description, String category,
+                                        String difficulty, Integer timeLimit, Integer memoryLimit, User author) {
+        Lecture lecture = new Lecture(title, description, LectureType.PROBLEM);
+        lecture.setCategory(category);
+        lecture.setDifficulty(difficulty);
+        lecture.setTimeLimit(timeLimit);
+        lecture.setMemoryLimit(memoryLimit);
+        lecture.setAuthor(author);
 
         validateProblemLecture(lecture);
         return lectureRepository.save(lecture);
@@ -252,6 +295,59 @@ public class LectureService {
     public List<Lecture> searchPublicLectures(String title, String category, String difficulty, LectureType type) {
         return lectureRepository.findPublicLecturesBySearchCriteria(title, category, difficulty, type, 
                 type != null ? type.name() : null);
+    }
+
+    // === 권한 체크 메서드 ===
+
+    /**
+     * 강의 조회 권한 체크
+     * 공개 강의는 누구나, 비공개 강의는 작성자만
+     */
+    public boolean canViewLecture(Long lectureId, Long userId) {
+        Optional<Lecture> lectureOpt = lectureRepository.findById(lectureId);
+        if (lectureOpt.isEmpty()) {
+            return false;
+        }
+        
+        Lecture lecture = lectureOpt.get();
+        // 공개 강의이거나 작성자인 경우
+        return lecture.isPublicLecture() || lecture.isAuthor(userId);
+    }
+
+    /**
+     * 강의 수정 권한 체크
+     * 작성자만 수정 가능
+     */
+    public boolean canEditLecture(Long lectureId, Long userId) {
+        Optional<Lecture> lectureOpt = lectureRepository.findById(lectureId);
+        if (lectureOpt.isEmpty()) {
+            return false;
+        }
+        
+        Lecture lecture = lectureOpt.get();
+        return lecture.isAuthor(userId);
+    }
+
+    /**
+     * 강의 삭제 권한 체크
+     * 작성자만 삭제 가능
+     */
+    public boolean canDeleteLecture(Long lectureId, Long userId) {
+        return canEditLecture(lectureId, userId);
+    }
+
+    /**
+     * 사용자의 강의 목록 조회
+     */
+    public List<Lecture> getUserLectures(Long userId) {
+        return lectureRepository.findByAuthorId(userId);
+    }
+
+    /**
+     * 사용자의 공개 강의 목록 조회
+     */
+    public List<Lecture> getUserPublicLectures(Long userId) {
+        return lectureRepository.findByAuthorIdAndIsPublicTrue(userId);
     }
 
     // === 검증 메서드 ===

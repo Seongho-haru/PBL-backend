@@ -175,4 +175,41 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             @Param("type") LectureType type,
             @Param("typeStr") String typeStr
     );
+
+    // === 작성자 관련 메서드 ===
+
+    /**
+     * 작성자 ID로 강의 조회
+     */
+    List<Lecture> findByAuthorId(Long authorId);
+
+    /**
+     * 작성자 ID와 공개 여부로 강의 조회
+     */
+    List<Lecture> findByAuthorIdAndIsPublicTrue(Long authorId);
+
+    /**
+     * 작성자 ID와 강의 유형으로 조회
+     */
+    List<Lecture> findByAuthorIdAndType(Long authorId, LectureType type);
+
+    /**
+     * 작성자 ID와 카테고리로 조회
+     */
+    List<Lecture> findByAuthorIdAndCategory(Long authorId, String category);
+
+    /**
+     * 작성자 ID와 난이도로 조회
+     */
+    List<Lecture> findByAuthorIdAndDifficulty(Long authorId, String difficulty);
+
+    /**
+     * 작성자 ID로 강의 개수 조회
+     */
+    long countByAuthorId(Long authorId);
+
+    /**
+     * 작성자 ID와 공개 여부로 강의 개수 조회
+     */
+    long countByAuthorIdAndIsPublic(Long authorId, Boolean isPublic);
 }

@@ -59,4 +59,46 @@ public interface CurriculumRepository extends JpaRepository<Curriculum, Long> {
      * 공개 커리큘럼에서 제목으로 검색
      */
     List<Curriculum> findByIsPublicTrueAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(String title);
+
+    // === 작성자 관련 메서드 ===
+
+    /**
+     * 작성자 ID로 커리큘럼 조회
+     */
+    List<Curriculum> findByAuthorId(Long authorId);
+
+    /**
+     * 작성자 ID와 공개 여부로 커리큘럼 조회
+     */
+    List<Curriculum> findByAuthorIdAndIsPublicTrue(Long authorId);
+
+    /**
+     * 작성자 ID로 커리큘럼 개수 조회
+     */
+    long countByAuthorId(Long authorId);
+
+    /**
+     * 작성자 ID와 공개 여부로 커리큘럼 개수 조회
+     */
+    long countByAuthorIdAndIsPublic(Long authorId, Boolean isPublic);
+
+    /**
+     * 작성자 ID로 커리큘럼 조회 (강의 포함)
+     */
+    @Query("SELECT DISTINCT c FROM Curriculum c " +
+           "LEFT JOIN FETCH c.lectures cl " +
+           "LEFT JOIN FETCH cl.lecture " +
+           "WHERE c.author.id = :authorId " +
+           "ORDER BY c.createdAt DESC")
+    List<Curriculum> findByAuthorIdWithLectures(@Param("authorId") Long authorId);
+
+    /**
+     * 작성자 ID와 공개 여부로 커리큘럼 조회 (강의 포함)
+     */
+    @Query("SELECT DISTINCT c FROM Curriculum c " +
+           "LEFT JOIN FETCH c.lectures cl " +
+           "LEFT JOIN FETCH cl.lecture " +
+           "WHERE c.author.id = :authorId AND c.isPublic = :isPublic " +
+           "ORDER BY c.createdAt DESC")
+    List<Curriculum> findByAuthorIdAndIsPublicWithLectures(@Param("authorId") Long authorId, @Param("isPublic") Boolean isPublic);
 }

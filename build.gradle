@@ -76,6 +76,14 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers'
     testImplementation 'org.testcontainers:postgresql'
     testImplementation 'org.testcontainers:junit-jupiter'
+
+    //AI 모듈
+    implementation 'dev.langchain4j:langchain4j:1.7.1'
+    //엔트로픽
+//    implementation 'dev.langchain4j:langchain4j-anthropic'
+    //open ai
+    implementation 'dev.langchain4j:langchain4j-spring-boot-starter:1.7.1-beta14'
+    implementation 'dev.langchain4j:langchain4j-open-ai-spring-boot-starter:1.7.1-beta14'
 }
 
 tasks.named('test') {

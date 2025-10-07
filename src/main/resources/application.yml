@@ -35,6 +35,12 @@ spring:
       - classpath:db/migration
       - classpath:db/migration/postgresql
 
+# OpenAI
+langchain4j:
+  open-ai:
+    chat-model:
+      api-key: ??
+      model-name: gpt-4o-mini
   # JobRunr Configuration (Demo Mode)
 org:
   jobrunr:
@@ -211,8 +217,8 @@ judge0:
 
   # Docker Configuration
   docker:
-    #host: "unix:///var/run/docker.sock"
-    host: "npipe:////./pipe/docker_engine"
+    host: "unix:///var/run/docker.sock"
+#    host: "npipe:////./pipe/docker_engine"
     registry-url: "docker.io"
     max-concurrent-containers: 10
     container-timeout: 300

@@ -38,7 +38,7 @@ public class AssistantService {
      * @return Flux<String> 스트림
      */
     public Flux<String> analyAndExplainStream(Object submission, Object problem) {
-        return assisdent.chat(submission.toString(), problem.toString());
+        return assisdent.gradingStrean(submission.toString(), problem.toString());
     }
 
 }

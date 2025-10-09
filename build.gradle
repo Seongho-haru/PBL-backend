@@ -30,6 +30,7 @@ flyway {
 dependencies {
     // Spring Boot Starters
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux' // Flux 지원
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -82,9 +83,13 @@ dependencies {
     implementation 'dev.langchain4j:langchain4j-spring-boot-starter:1.7.1-beta14'
     //open ai
     implementation 'dev.langchain4j:langchain4j-open-ai-spring-boot-starter:1.7.1-beta14'
+    //reactor - Flux 지원
+    implementation 'dev.langchain4j:langchain4j-reactor:1.7.1-beta14'
 
     //벡터 DB - 크로마 DB
-    implementation 'dev.langchain4j:langchain4j-chroma:1.7.1-beta14'
+    implementation('dev.langchain4j:langchain4j-chroma:1.7.1-beta14') {
+        exclude group: 'dev.langchain4j', module: 'langchain4j-http-client-jdk'
+    }
 }
 
 tasks.named('test') {

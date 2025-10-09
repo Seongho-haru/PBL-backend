@@ -37,12 +37,14 @@ spring:
 
 # OpenAI
 langchain4j:
-  chroma:
-    url: localhost:8000
+  http-client:
+    type: spring-rest-client
   chat-model:
     api-key: ??
     model-name: gpt-4o-mini
-# JobRunr Configuration (Demo Mode)
+    embedding-model-name: text-embedding-3-small
+  chroma:
+    url: http://localhost:8000
 org:
   jobrunr:
     background-job-server:
@@ -218,8 +220,8 @@ judge0:
 
   # Docker Configuration
   docker:
-#    host: "unix:///var/run/docker.sock"
-    host: "npipe:////./pipe/docker_engine"
+    host: "unix:///var/run/docker.sock"
+#    host: "npipe:////./pipe/docker_engine"
     registry-url: "docker.io"
     max-concurrent-containers: 10
     container-timeout: 300

@@ -130,5 +130,5 @@ public interface Assisdent {
             위 학습자의 코드를 분석하고, **학습 이력을 바탕으로** 개인화된 피드백과 학습 경로를 제공해주세요.
             검색된 학습 이력(이전 제출, 수강 강의 등)을 적극 활용하여 맞춤형 해설을 작성하세요.
             """)
-    Flux<String> gradingStrean(@V("submission") String submission, @V("problem") String problem);
+    Flux<String> gradingStream(@V("submission") String submission, @V("problem") String problem);
 }

@@ -71,7 +71,7 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     /**
      * 커리큘럼 ID로 완료자 수 조회
      */
-    @Query("SELECT COUNT(e) FROM Enrollment e WHERE e.curriculum.id = :curriculumId AND e.status = 'COMPLETED'")
+    @Query("SELECT COUNT(e) FROM Enrollment e WHERE e.curriculum.id = :curriculumId AND e.status = com.PBL.enrollment.entity.EnrollmentStatus.COMPLETED")
     long countByCurriculumIdAndStatusCompleted(@Param("curriculumId") Long curriculumId);
 
     /**

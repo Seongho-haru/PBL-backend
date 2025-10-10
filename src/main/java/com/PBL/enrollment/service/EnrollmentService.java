@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
 
 /**
  * 수강 관리 서비스
@@ -252,10 +253,66 @@ public class EnrollmentService {
         long completedLectures = lectureProgressRepository.countByEnrollmentAndStatusCompleted(enrollment);
         
         int progressPercentage = totalLectures > 0 ? (int) ((completedLectures * 100) / totalLectures) : 0;
-        enrollment.updateProgress(progressPercentage);
+        
+        // 진도율 업데이트
+        enrollment.setProgressPercentage(progressPercentage);
+        
+        // 모든 강의가 완료되었는지 확인하여 수강 상태 업데이트
+        if (totalLectures > 0 && completedLectures == totalLectures) {
+            // 모든 강의가 완료된 경우 수강 완료 처리
+            enrollment.complete();
+            log.info("수강 완료 - 수강 ID: {}, 사용자 ID: {}, 커리큘럼 ID: {}", 
+                    enrollment.getId(), enrollment.getUser().getId(), enrollment.getCurriculum().getId());
+        }
+        
         enrollmentRepository.save(enrollment);
         
-        log.debug("수강 진도율 업데이트 - 수강 ID: {}, 진도율: {}%", enrollment.getId(), progressPercentage);
+        log.debug("수강 진도율 업데이트 - 수강 ID: {}, 진도율: {}%, 완료 강의: {}/{}", 
+                enrollment.getId(), progressPercentage, completedLectures, totalLectures);
+    }
+
+    /**
+     * 사용자별 특정 강의 완료 상태 조회
+     */
+    public boolean isLectureCompletedByUser(Long userId, Long lectureId) {
+        log.info("사용자 강의 완료 상태 조회 - 사용자 ID: {}, 강의 ID: {}", userId, lectureId);
+        
+        // 사용자의 모든 수강 정보에서 해당 강의의 완료 상태 확인
+        List<Enrollment> userEnrollments = enrollmentRepository.findByUserIdOrderByEnrolledAtDesc(userId);
+        
+        for (Enrollment enrollment : userEnrollments) {
+            Optional<LectureProgress> lectureProgress = lectureProgressRepository
+                    .findByEnrollmentAndLecture(enrollment, lectureService.getLectureById(lectureId)
+                            .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + lectureId)));
+            
+            if (lectureProgress.isPresent() && lectureProgress.get().getStatus() == ProgressStatus.COMPLETED) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * 사용자별 강의 완료 상태 상세 조회
+     */
+    public List<EnrollmentDTOs.LectureProgressResponse> getUserLectureProgress(Long userId, Long lectureId) {
+        log.info("사용자 강의 진도 상세 조회 - 사용자 ID: {}, 강의 ID: {}", userId, lectureId);
+        
+        List<EnrollmentDTOs.LectureProgressResponse> responses = new ArrayList<>();
+        List<Enrollment> userEnrollments = enrollmentRepository.findByUserIdOrderByEnrolledAtDesc(userId);
+        
+        for (Enrollment enrollment : userEnrollments) {
+            Optional<LectureProgress> lectureProgress = lectureProgressRepository
+                    .findByEnrollmentAndLecture(enrollment, lectureService.getLectureById(lectureId)
+                            .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + lectureId)));
+            
+            if (lectureProgress.isPresent()) {
+                responses.add(EnrollmentDTOs.LectureProgressResponse.from(lectureProgress.get()));
+            }
+        }
+        
+        return responses;
     }
 
     /**

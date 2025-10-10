@@ -108,6 +108,13 @@ public class LectureService {
     }
 
     /**
+     * 강의 조회 (기본)
+     */
+    public Optional<Lecture> getLectureById(Long id) {
+        return lectureRepository.findById(id);
+    }
+
+    /**
      * 강의 상세 조회 (테스트케이스 포함)
      */
     public Optional<Lecture> getLectureWithTestCases(Long id) {

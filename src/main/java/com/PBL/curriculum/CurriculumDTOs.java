@@ -45,6 +45,9 @@ public class CurriculumDTOs {
         @Schema(description = "수정 시간")
         private LocalDateTime updatedAt;
 
+        @Schema(description = "작성자 정보")
+        private AuthorInfo author;
+
         // 생성자
         public CurriculumResponse() {}
 
@@ -55,6 +58,19 @@ public class CurriculumDTOs {
             this.isPublic = curriculum.getIsPublic();
             this.createdAt = curriculum.getCreatedAt();
             this.updatedAt = curriculum.getUpdatedAt();
+            
+            // 작성자 정보 설정
+            try {
+                if (curriculum.getAuthor() != null) {
+                    this.author = new AuthorInfo();
+                    this.author.setId(curriculum.getAuthor().getId());
+                    this.author.setUsername(curriculum.getAuthor().getUsername());
+                    this.author.setLoginId(curriculum.getAuthor().getLoginId());
+                }
+            } catch (Exception e) {
+                // Lazy Loading 실패 시 null로 설정
+                this.author = null;
+            }
             
             // Lazy Loading 안전 처리
             try {
@@ -96,6 +112,8 @@ public class CurriculumDTOs {
         public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
         public LocalDateTime getUpdatedAt() { return updatedAt; }
         public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+        public AuthorInfo getAuthor() { return author; }
+        public void setAuthor(AuthorInfo author) { this.author = author; }
     }
 
     /**
@@ -279,6 +297,9 @@ public class CurriculumDTOs {
         @Schema(description = "공개 여부")
         private boolean isPublic = false;
 
+        @Schema(description = "작성자 ID")
+        private Long authorId;
+
         // Getters and Setters
         public String getTitle() { return title; }
         public void setTitle(String title) { this.title = title; }
@@ -286,6 +307,8 @@ public class CurriculumDTOs {
         public void setDescription(String description) { this.description = description; }
         public boolean isPublic() { return isPublic; }
         public void setIsPublic(boolean isPublic) { this.isPublic = isPublic; }
+        public Long getAuthorId() { return authorId; }
+        public void setAuthorId(Long authorId) { this.authorId = authorId; }
     }
 
     /**
@@ -350,5 +373,28 @@ public class CurriculumDTOs {
         // Getters and Setters
         public List<Long> getLectureIds() { return lectureIds; }
         public void setLectureIds(List<Long> lectureIds) { this.lectureIds = lectureIds; }
+    }
+
+    /**
+     * 작성자 정보 DTO
+     */
+    @Schema(description = "작성자 정보")
+    public static class AuthorInfo {
+        @Schema(description = "사용자 ID")
+        private Long id;
+        
+        @Schema(description = "사용자명")
+        private String username;
+        
+        @Schema(description = "로그인 ID")
+        private String loginId;
+
+        // Getters and Setters
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
+        public String getLoginId() { return loginId; }
+        public void setLoginId(String loginId) { this.loginId = loginId; }
     }
 }

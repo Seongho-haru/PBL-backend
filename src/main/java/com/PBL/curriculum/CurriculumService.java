@@ -2,6 +2,7 @@ package com.PBL.curriculum;
 
 import com.PBL.lecture.Lecture;
 import com.PBL.lecture.LectureRepository;
+import com.PBL.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +64,16 @@ public class CurriculumService {
     public Curriculum createCurriculum(String title, String description, boolean isPublic) {
         Curriculum curriculum = new Curriculum(title, description);
         curriculum.setIsPublic(isPublic);
+        return curriculumRepository.save(curriculum);
+    }
+
+    /**
+     * 커리큘럼 생성 (작성자 포함)
+     */
+    public Curriculum createCurriculum(String title, String description, boolean isPublic, User author) {
+        Curriculum curriculum = new Curriculum(title, description);
+        curriculum.setIsPublic(isPublic);
+        curriculum.setAuthor(author);
         return curriculumRepository.save(curriculum);
     }
 
@@ -246,5 +257,58 @@ public class CurriculumService {
         
         curriculum.unpublish();
         curriculumRepository.save(curriculum);
+    }
+
+    // === 권한 체크 메서드 ===
+
+    /**
+     * 커리큘럼 조회 권한 체크
+     * 공개 커리큘럼은 누구나, 비공개 커리큘럼은 작성자만
+     */
+    public boolean canViewCurriculum(Long curriculumId, Long userId) {
+        Optional<Curriculum> curriculumOpt = curriculumRepository.findById(curriculumId);
+        if (curriculumOpt.isEmpty()) {
+            return false;
+        }
+        
+        Curriculum curriculum = curriculumOpt.get();
+        // 공개 커리큘럼이거나 작성자인 경우
+        return curriculum.isPublicCurriculum() || curriculum.isAuthor(userId);
+    }
+
+    /**
+     * 커리큘럼 수정 권한 체크
+     * 작성자만 수정 가능
+     */
+    public boolean canEditCurriculum(Long curriculumId, Long userId) {
+        Optional<Curriculum> curriculumOpt = curriculumRepository.findById(curriculumId);
+        if (curriculumOpt.isEmpty()) {
+            return false;
+        }
+        
+        Curriculum curriculum = curriculumOpt.get();
+        return curriculum.isAuthor(userId);
+    }
+
+    /**
+     * 커리큘럼 삭제 권한 체크
+     * 작성자만 삭제 가능
+     */
+    public boolean canDeleteCurriculum(Long curriculumId, Long userId) {
+        return canEditCurriculum(curriculumId, userId);
+    }
+
+    /**
+     * 사용자의 커리큘럼 목록 조회 (강의 포함)
+     */
+    public List<Curriculum> getUserCurriculums(Long userId) {
+        return curriculumRepository.findByAuthorIdWithLectures(userId);
+    }
+
+    /**
+     * 사용자의 공개 커리큘럼 목록 조회 (강의 포함)
+     */
+    public List<Curriculum> getUserPublicCurriculums(Long userId) {
+        return curriculumRepository.findByAuthorIdAndIsPublicWithLectures(userId, true);
     }
 }

@@ -1,5 +1,7 @@
 package com.PBL.lecture;
 
+import com.PBL.user.User;
+import com.PBL.user.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,9 +26,11 @@ import java.util.Optional;
 public class LectureController {
 
     private final LectureService lectureService;
+    private final UserRepository userRepository;
 
-    public LectureController(LectureService lectureService) {
+    public LectureController(LectureService lectureService, UserRepository userRepository) {
         this.lectureService = lectureService;
+        this.userRepository = userRepository;
     }
 
     // === 기본 CRUD API ===
@@ -37,8 +41,20 @@ public class LectureController {
      */
     @PostMapping
     @Operation(summary = "강의 생성", description = "새로운 강의를 생성합니다. 마크다운 강의 또는 문제 강의를 생성할 수 있습니다.")
-    public ResponseEntity<?> createLecture(@RequestBody CreateLectureRequest request) {
+    public ResponseEntity<?> createLecture(
+            @RequestBody CreateLectureRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         try {
+            // 사용자 권한 확인
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "사용자 인증이 필요합니다."));
+            }
+            
+            // 작성자 정보 확인
+            User author = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+
             Lecture lecture;
 
             if (request.getType() == LectureType.PROBLEM) {
@@ -49,7 +65,8 @@ public class LectureController {
                         request.getCategory(),
                         request.getDifficulty(),
                         request.getTimeLimit(),
-                        request.getMemoryLimit()
+                        request.getMemoryLimit(),
+                        author
                 );
 
                 // 테스트케이스 추가
@@ -67,7 +84,8 @@ public class LectureController {
                         request.getDescription(),
                         request.getType(),
                         request.getCategory(),
-                        request.getDifficulty()
+                        request.getDifficulty(),
+                        author
                 );
             }
 
@@ -102,14 +120,23 @@ public class LectureController {
     @GetMapping("/{id}")
     @Operation(summary = "강의 상세 조회", description = "ID로 특정 강의의 상세 정보를 조회합니다. 문제 강의인 경우 테스트케이스도 포함됩니다.")
     public ResponseEntity<?> getLecture(
-            @Parameter(description = "강의 ID", required = true) @PathVariable Long id) {
-        Optional<Lecture> lecture = lectureService.getLectureWithTestCases(id);
+            @Parameter(description = "강의 ID", required = true) @PathVariable Long id,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        Optional<Lecture> lectureOpt = lectureService.getLectureWithTestCases(id);
 
-        if (lecture.isPresent()) {
-            return ResponseEntity.ok(toLectureResponse(lecture.get()));
-        } else {
+        if (lectureOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+
+        Lecture lecture = lectureOpt.get();
+        
+        // 권한 체크: 공개 강의이거나 작성자인 경우만 조회 가능
+        if (!lecture.isPublicLecture() && (userId == null || !lecture.isAuthor(userId))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "이 강의에 접근할 권한이 없습니다."));
+        }
+
+        return ResponseEntity.ok(toLectureResponse(lecture));
     }
 
     /**
@@ -117,8 +144,29 @@ public class LectureController {
      * PUT /api/lectures/{id}
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateLecture(@PathVariable Long id, @RequestBody CreateLectureRequest request) {
+    public ResponseEntity<?> updateLecture(
+            @PathVariable Long id, 
+            @RequestBody CreateLectureRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         try {
+            // 사용자 권한 확인
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "사용자 인증이 필요합니다."));
+            }
+
+            // 강의 존재 여부 먼저 확인
+            Optional<Lecture> lectureOpt = lectureService.getLectureById(id);
+            if (lectureOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // 작성자 권한 확인
+            if (!lectureService.canEditLecture(id, userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "이 강의를 수정할 권한이 없습니다."));
+            }
+
             Lecture updateData = new Lecture(request.getTitle(), request.getDescription(), request.getType());
             updateData.setCategory(request.getCategory());
             updateData.setDifficulty(request.getDifficulty());
@@ -141,12 +189,30 @@ public class LectureController {
      * DELETE /api/lectures/{id}
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteLecture(@PathVariable Long id) {
+    public ResponseEntity<?> deleteLecture(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         try {
+            // 사용자 권한 확인
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "사용자 인증이 필요합니다."));
+            }
+
+            // 강의 존재 여부 먼저 확인
+            Optional<Lecture> lectureOpt = lectureService.getLectureById(id);
+            if (lectureOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // 작성자 권한 확인
+            if (!lectureService.canDeleteLecture(id, userId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "이 강의를 삭제할 권한이 없습니다."));
+            }
+
             lectureService.deleteLecture(id);
             return ResponseEntity.ok(Map.of("message", "강의가 성공적으로 삭제되었습니다."));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "강의 삭제 중 오류가 발생했습니다."));
@@ -336,6 +402,38 @@ public class LectureController {
         return ResponseEntity.ok(responses);
     }
 
+    // === 사용자별 강의 관리 API ===
+
+    /**
+     * 사용자별 강의 목록 조회
+     * GET /api/lectures/user/{userId}
+     */
+    @GetMapping("/user/{userId}")
+    @Operation(summary = "사용자별 강의 조회", description = "특정 사용자가 작성한 모든 강의를 조회합니다.")
+    public ResponseEntity<List<LectureResponse>> getUserLectures(
+            @Parameter(description = "사용자 ID") @PathVariable Long userId) {
+        List<Lecture> lectures = lectureService.getUserLectures(userId);
+        List<LectureResponse> responses = lectures.stream()
+                .map(this::toLectureResponse)
+                .toList();
+        return ResponseEntity.ok(responses);
+    }
+
+    /**
+     * 사용자별 공개 강의 목록 조회
+     * GET /api/lectures/user/{userId}/public
+     */
+    @GetMapping("/user/{userId}/public")
+    @Operation(summary = "사용자별 공개 강의 조회", description = "특정 사용자가 작성한 공개 강의만 조회합니다.")
+    public ResponseEntity<List<LectureResponse>> getUserPublicLectures(
+            @Parameter(description = "사용자 ID") @PathVariable Long userId) {
+        List<Lecture> lectures = lectureService.getUserPublicLectures(userId);
+        List<LectureResponse> responses = lectures.stream()
+                .map(this::toLectureResponse)
+                .toList();
+        return ResponseEntity.ok(responses);
+    }
+
     // === DTO 변환 메서드 ===
 
     private LectureResponse toLectureResponse(Lecture lecture) {
@@ -351,6 +449,20 @@ public class LectureController {
         response.setIsPublic(lecture.getIsPublic());
         response.setCreatedAt(lecture.getCreatedAt());
         response.setUpdatedAt(lecture.getUpdatedAt());
+
+        // 작성자 정보 설정
+        try {
+            if (lecture.getAuthor() != null) {
+                AuthorInfo authorInfo = new AuthorInfo();
+                authorInfo.setId(lecture.getAuthor().getId());
+                authorInfo.setUsername(lecture.getAuthor().getUsername());
+                authorInfo.setLoginId(lecture.getAuthor().getLoginId());
+                response.setAuthor(authorInfo);
+            }
+        } catch (Exception e) {
+            // Lazy Loading 실패 시 null로 설정
+            response.setAuthor(null);
+        }
 
         // 테스트케이스 안전하게 처리 - Lazy Loading 방지
         try {
@@ -388,6 +500,7 @@ class CreateLectureRequest {
     private Integer timeLimit;
     private Integer memoryLimit;
     private List<TestCaseRequest> testCases;
+    private Long authorId;
 
     // Getters and Setters
     public String getTitle() { return title; }
@@ -406,6 +519,8 @@ class CreateLectureRequest {
     public void setMemoryLimit(Integer memoryLimit) { this.memoryLimit = memoryLimit; }
     public List<TestCaseRequest> getTestCases() { return testCases; }
     public void setTestCases(List<TestCaseRequest> testCases) { this.testCases = testCases; }
+    public Long getAuthorId() { return authorId; }
+    public void setAuthorId(Long authorId) { this.authorId = authorId; }
 }
 
 /**
@@ -425,6 +540,7 @@ class LectureResponse {
     private List<TestCaseResponse> testCases;
     private java.time.LocalDateTime createdAt;
     private java.time.LocalDateTime updatedAt;
+    private AuthorInfo author;
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -453,6 +569,8 @@ class LectureResponse {
     public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
     public java.time.LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(java.time.LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public AuthorInfo getAuthor() { return author; }
+    public void setAuthor(AuthorInfo author) { this.author = author; }
 }
 
 /**
@@ -490,4 +608,20 @@ class TestCaseResponse {
     public void setExpectedOutput(String expectedOutput) { this.expectedOutput = expectedOutput; }
     public Integer getOrderIndex() { return orderIndex; }
     public void setOrderIndex(Integer orderIndex) { this.orderIndex = orderIndex; }
+}
+
+/**
+ * 작성자 정보 DTO
+ */
+class AuthorInfo {
+    private Long id;
+    private String username;
+    private String loginId;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    public String getLoginId() { return loginId; }
+    public void setLoginId(String loginId) { this.loginId = loginId; }
 }

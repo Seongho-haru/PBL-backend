@@ -101,6 +101,8 @@ springdoc:
         url: /api-docs/lectures
       - name: "Curriculum Management APIs"
         url: /api-docs/curriculums
+      - name: "Authentication APIs"
+        url: /api-docs/auth
       - name: "Grading System APIs"
         url: /api-docs/grading
   show-actuator: true
@@ -126,6 +128,12 @@ springdoc:
         - /api/curriculums/**
       packages-to-scan:
         - com.PBL.curriculum
+    - group: "auth"
+      display-name: "Authentication APIs"
+      paths-to-match:
+        - /api/auth/**
+      packages-to-scan:
+        - com.PBL.user
     - group: "grading"
       display-name: "Grading System APIs"
       paths-to-match:

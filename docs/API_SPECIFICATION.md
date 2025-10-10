@@ -2,39 +2,121 @@
 
 ## 📋 개요
 
-- **Base URL**: `http://localhost:2358`
-- **Content-Type**: `application/json`
-- **응답 형식**: JSON
-- **문자 인코딩**: UTF-8
+PBL(Problem-Based Learning) 백엔드 API 명세서입니다. 사용자 인증, 강의 관리, 커리큘럼 관리 기능을 제공합니다.
+
+## 🔗 Base URL
+
+```
+http://localhost:2358
+```
+
+## 🔐 인증 방식
+
+모든 API 요청에 `X-User-Id` 헤더를 포함해야 합니다.
+
+```
+X-User-Id: {사용자ID}
+```
 
 ---
 
-## 🎓 Lecture API (강의 관리)
+## 👤 사용자 관리 API
+
+### 1. 회원가입
+
+**POST** `/api/auth/register`
+
+**Request Body:**
+
+```json
+{
+  "username": "사용자명",
+  "loginId": "로그인ID",
+  "password": "비밀번호"
+}
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "id": 1,
+  "username": "사용자명",
+  "loginId": "로그인ID",
+  "createdAt": "2025-01-01T00:00:00"
+}
+```
+
+**Error Response:**
+
+- `400 Bad Request`: 중복된 로그인ID 또는 유효성 검사 실패
+- `500 Internal Server Error`: 서버 오류
+
+### 2. 로그인
+
+**POST** `/api/auth/login`
+
+**Request Body:**
+
+```json
+{
+  "loginId": "로그인ID",
+  "password": "비밀번호"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "username": "사용자명",
+  "loginId": "로그인ID",
+  "createdAt": "2025-01-01T00:00:00"
+}
+```
+
+**Error Response:**
+
+- `400 Bad Request`: 잘못된 요청
+- `401 Unauthorized`: 로그인 실패 (아이디 없음 또는 비밀번호 틀림)
+
+---
+
+## 📚 강의 관리 API
 
 ### 1. 강의 생성
 
-```http
-POST /api/lectures
-Content-Type: application/json
+**POST** `/api/lectures`
 
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+Content-Type: application/json
+```
+
+**Request Body:**
+
+```json
 {
   "title": "강의 제목",
-  "description": "강의 설명 (마크다운 지원)",
-  "type": "MARKDOWN | PROBLEM",
-  "category": "카테고리명",
-  "difficulty": "난이도",
-  "timeLimit": 5,        // PROBLEM 타입만, 초 단위
-  "memoryLimit": 512,    // PROBLEM 타입만, MB 단위
-  "testCases": [         // PROBLEM 타입만
+  "description": "강의 설명",
+  "type": "MARKDOWN" | "PROBLEM",
+  "category": "카테고리",
+  "difficulty": "기초" | "중급" | "고급",
+  "timeLimit": 30,  // 문제 강의인 경우만
+  "memoryLimit": 128,  // 문제 강의인 경우만
+  "testCases": [  // 문제 강의인 경우만
     {
       "input": "입력값",
-      "expectedOutput": "예상 출력값"
+      "expectedOutput": "예상출력값"
     }
   ]
 }
 ```
 
-**응답 (201 Created)**:
+**Response (201 Created):**
 
 ```json
 {
@@ -42,25 +124,168 @@ Content-Type: application/json
   "title": "강의 제목",
   "description": "강의 설명",
   "type": "MARKDOWN",
-  "category": "카테고리명",
-  "difficulty": "난이도",
+  "category": "카테고리",
+  "difficulty": "기초",
   "timeLimit": null,
   "memoryLimit": null,
   "isPublic": false,
   "testCaseCount": 0,
   "testCases": [],
-  "createdAt": [2025, 10, 6, 4, 47, 47, 871730000],
-  "updatedAt": [2025, 10, 6, 4, 47, 47, 871730000]
+  "author": {
+    "id": 1,
+    "username": "작성자명",
+    "loginId": "작성자로그인ID"
+  },
+  "createdAt": "2025-01-01T00:00:00",
+  "updatedAt": "2025-01-01T00:00:00"
 }
 ```
 
-### 2. 모든 강의 조회
+### 2. 강의 상세 조회
 
-```http
-GET /api/lectures
+**GET** `/api/lectures/{id}`
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
 ```
 
-**응답 (200 OK)**:
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "title": "강의 제목",
+  "description": "강의 설명",
+  "type": "MARKDOWN",
+  "category": "카테고리",
+  "difficulty": "기초",
+  "timeLimit": null,
+  "memoryLimit": null,
+  "isPublic": false,
+  "testCaseCount": 2,
+  "testCases": [
+    {
+      "id": 1,
+      "input": "입력값1",
+      "expectedOutput": "출력값1"
+    }
+  ],
+  "author": {
+    "id": 1,
+    "username": "작성자명",
+    "loginId": "작성자로그인ID"
+  },
+  "createdAt": "2025-01-01T00:00:00",
+  "updatedAt": "2025-01-01T00:00:00"
+}
+```
+
+**Error Response:**
+
+- `401 Unauthorized`: 인증 필요
+- `403 Forbidden`: 비공개 강의 접근 권한 없음
+- `404 Not Found`: 강의 없음
+
+### 3. 강의 수정
+
+**PUT** `/api/lectures/{id}`
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+Content-Type: application/json
+```
+
+**Request Body:**
+
+```json
+{
+  "title": "수정된 제목",
+  "description": "수정된 설명",
+  "type": "MARKDOWN",
+  "category": "수정된 카테고리",
+  "difficulty": "중급",
+  "timeLimit": 60,
+  "memoryLimit": 256
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "title": "수정된 제목",
+  "description": "수정된 설명"
+  // ... 기타 필드들
+}
+```
+
+**Error Response:**
+
+- `401 Unauthorized`: 인증 필요
+- `403 Forbidden`: 수정 권한 없음
+- `404 Not Found`: 강의 없음
+
+### 4. 강의 삭제
+
+**DELETE** `/api/lectures/{id}`
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "message": "강의가 성공적으로 삭제되었습니다."
+}
+```
+
+**Error Response:**
+
+- `401 Unauthorized`: 인증 필요
+- `403 Forbidden`: 삭제 권한 없음
+- `404 Not Found`: 강의 없음
+
+### 5. 강의 공개/비공개 설정
+
+**PUT** `/api/lectures/{id}/publish`
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "title": "강의 제목",
+  "isPublic": true
+  // ... 기타 필드들
+}
+```
+
+### 6. 사용자별 강의 목록 조회
+
+**GET** `/api/lectures/user/{userId}`
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Response (200 OK):**
 
 ```json
 [
@@ -69,193 +294,75 @@ GET /api/lectures
     "title": "강의 제목",
     "description": "강의 설명",
     "type": "MARKDOWN",
-    "category": "카테고리명",
-    "difficulty": "난이도",
+    "category": "카테고리",
+    "difficulty": "기초",
     "isPublic": false,
-    "testCaseCount": 0,
-    "testCases": [],
-    "createdAt": [2025, 10, 6, 4, 47, 47, 871730000],
-    "updatedAt": [2025, 10, 6, 4, 47, 47, 871730000]
+    "author": {
+      "id": 1,
+      "username": "작성자명",
+      "loginId": "작성자로그인ID"
+    },
+    "createdAt": "2025-01-01T00:00:00"
   }
 ]
 ```
 
-### 3. 강의 상세 조회
+### 7. 공개 강의 검색
 
-```http
-GET /api/lectures/{id}
+**GET** `/api/lectures/public/search?title={제목}&category={카테고리}&difficulty={난이도}&type={유형}`
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
 ```
 
-**응답 (200 OK)**: 강의 생성 응답과 동일
-**응답 (404 Not Found)**: 강의를 찾을 수 없음
+**Query Parameters:**
 
-### 4. 강의 수정
-
-```http
-PUT /api/lectures/{id}
-Content-Type: application/json
-
-{
-  "title": "수정된 제목",
-  "description": "수정된 설명",
-  "type": "MARKDOWN",
-  "category": "수정된 카테고리",
-  "difficulty": "수정된 난이도",
-  "timeLimit": 10,
-  "memoryLimit": 256
-}
-```
-
-**응답 (200 OK)**: 수정된 강의 정보
-**응답 (404 Not Found)**: 강의를 찾을 수 없음
-
-### 5. 강의 삭제
-
-```http
-DELETE /api/lectures/{id}
-```
-
-**응답 (200 OK)**:
-
-```json
-{
-  "message": "강의가 성공적으로 삭제되었습니다."
-}
-```
-
-### 6. 강의 검색
-
-```http
-GET /api/lectures/search?title={제목}&category={카테고리}&difficulty={난이도}&type={타입}&page={페이지}&size={크기}
-```
-
-**파라미터**:
-
-- `title` (optional): 제목 검색 (부분 일치)
+- `title` (optional): 제목 검색
 - `category` (optional): 카테고리 필터
 - `difficulty` (optional): 난이도 필터
-- `type` (optional): `MARKDOWN` 또는 `PROBLEM`
-- `page` (optional, default: 0): 페이지 번호
-- `size` (optional, default: 10): 페이지 크기
+- `type` (optional): 강의 유형 필터
 
-**응답 (200 OK)**:
+**Response (200 OK):**
 
 ```json
-{
-  "lectures": [...], // 강의 목록
-  "currentPage": 0,
-  "totalElements": 5,
-  "totalPages": 1,
-  "hasNext": false,
-  "hasPrevious": false
-}
-```
-
-### 7. 유형별 강의 조회
-
-```http
-GET /api/lectures/type/{type}
-```
-
-**type**: `MARKDOWN` 또는 `PROBLEM`
-
-### 8. 최근 강의 조회
-
-```http
-GET /api/lectures/recent
-```
-
-최근 생성된 10개 강의 반환
-
-### 9. 강의 공개
-
-```http
-PUT /api/lectures/{id}/publish
-```
-
-**응답 (200 OK)**:
-
-```json
-{
-  "message": "강의가 공개되었습니다."
-}
-```
-
-### 10. 강의 비공개
-
-```http
-PUT /api/lectures/{id}/unpublish
-```
-
-**응답 (200 OK)**:
-
-```json
-{
-  "message": "강의가 비공개되었습니다."
-}
-```
-
-### 11. 공개 강의 조회
-
-```http
-GET /api/lectures/public
-```
-
-### 12. 공개 강의 검색
-
-```http
-GET /api/lectures/public/search?title={제목}&category={카테고리}&difficulty={난이도}&type={타입}
-```
-
-### 13. 테스트케이스 추가
-
-```http
-POST /api/lectures/{id}/testcases
-Content-Type: application/json
-
-{
-  "input": "입력값",
-  "expectedOutput": "예상 출력값"
-}
-```
-
-### 14. 테스트케이스 전체 삭제
-
-```http
-DELETE /api/lectures/{id}/testcases
-```
-
-### 15. 강의 통계 조회
-
-```http
-GET /api/lectures/stats
-```
-
-**응답 (200 OK)**:
-
-```json
-{
-  "byType": [
-    ["MARKDOWN", 5],
-    ["PROBLEM", 3]
-  ],
-  "byCategory": [
-    ["Java", 3],
-    ["Frontend", 2]
-  ]
-}
+[
+  {
+    "id": 1,
+    "title": "검색된 강의",
+    "description": "강의 설명",
+    "type": "MARKDOWN",
+    "category": "Frontend",
+    "difficulty": "기초",
+    "isPublic": true,
+    "author": {
+      "id": 1,
+      "username": "작성자명",
+      "loginId": "작성자로그인ID"
+    }
+  }
+]
 ```
 
 ---
 
-## 📚 Curriculum API (커리큘럼 관리)
+## 📖 커리큘럼 관리 API
 
 ### 1. 커리큘럼 생성
 
-```http
-POST /api/curriculums
-Content-Type: application/json
+**POST** `/api/curriculums`
 
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+Content-Type: application/json
+```
+
+**Request Body:**
+
+```json
 {
   "title": "커리큘럼 제목",
   "description": "커리큘럼 설명",
@@ -263,7 +370,7 @@ Content-Type: application/json
 }
 ```
 
-**응답 (200 OK)**:
+**Response (200 OK):**
 
 ```json
 {
@@ -274,24 +381,27 @@ Content-Type: application/json
   "totalLectureCount": 0,
   "requiredLectureCount": 0,
   "optionalLectureCount": 0,
-  "createdAt": [2025, 10, 6, 4, 49, 45, 468013000],
-  "updatedAt": [2025, 10, 6, 4, 49, 45, 468013000]
+  "author": {
+    "id": 1,
+    "username": "작성자명",
+    "loginId": "작성자로그인ID"
+  },
+  "createdAt": "2025-01-01T00:00:00",
+  "updatedAt": "2025-01-01T00:00:00"
 }
 ```
 
-### 2. 모든 커리큘럼 조회
+### 2. 커리큘럼 상세 조회
 
-```http
-GET /api/curriculums
+**GET** `/api/curriculums/{id}`
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
 ```
 
-### 3. 커리큘럼 상세 조회
-
-```http
-GET /api/curriculums/{id}
-```
-
-**응답 (200 OK)**:
+**Response (200 OK):**
 
 ```json
 {
@@ -299,36 +409,60 @@ GET /api/curriculums/{id}
   "title": "커리큘럼 제목",
   "description": "커리큘럼 설명",
   "isPublic": true,
+  "totalLectureCount": 2,
+  "requiredLectureCount": 1,
+  "optionalLectureCount": 1,
+  "author": {
+    "id": 1,
+    "username": "작성자명",
+    "loginId": "작성자로그인ID"
+  },
   "lectures": [
     {
       "id": 1,
-      "lectureId": 5,
-      "lectureTitle": "강의 제목",
-      "lectureDescription": "강의 설명",
-      "lectureType": "MARKDOWN",
-      "lectureCategory": "카테고리",
-      "lectureDifficulty": "난이도",
-      "orderIndex": 1,
+      "lecture": {
+        "id": 1,
+        "title": "강의 제목",
+        "description": "강의 설명",
+        "type": "MARKDOWN",
+        "category": "카테고리",
+        "difficulty": "기초",
+        "isPublic": true,
+        "author": {
+          "id": 1,
+          "username": "작성자명",
+          "loginId": "작성자로그인ID"
+        }
+      },
       "isRequired": true,
-      "originalAuthor": "원작자명",
-      "sourceInfo": "출처 정보",
-      "createdAt": [2025, 10, 6, 4, 51, 55, 443008000]
+      "order": 1
     }
   ],
-  "totalLectureCount": 1,
-  "requiredLectureCount": 1,
-  "optionalLectureCount": 0,
-  "createdAt": [2025, 10, 6, 4, 49, 45, 468013000],
-  "updatedAt": [2025, 10, 6, 4, 49, 45, 468013000]
+  "createdAt": "2025-01-01T00:00:00",
+  "updatedAt": "2025-01-01T00:00:00"
 }
 ```
 
-### 4. 커리큘럼 수정
+**Error Response:**
 
-```http
-PUT /api/curriculums/{id}
+- `401 Unauthorized`: 인증 필요
+- `403 Forbidden`: 비공개 커리큘럼 접근 권한 없음
+- `404 Not Found`: 커리큘럼 없음
+
+### 3. 커리큘럼 수정
+
+**PUT** `/api/curriculums/{id}`
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
 Content-Type: application/json
+```
 
+**Request Body:**
+
+```json
 {
   "title": "수정된 제목",
   "description": "수정된 설명",
@@ -336,299 +470,266 @@ Content-Type: application/json
 }
 ```
 
-### 5. 커리큘럼 삭제
-
-```http
-DELETE /api/curriculums/{id}
-```
-
-### 6. 커리큘럼에 강의 추가
-
-```http
-POST /api/curriculums/{id}/lectures
-Content-Type: application/json
-
-{
-  "lectureId": 5,
-  "isRequired": true,
-  "originalAuthor": "원작자명",    // 다른 사용자 공개 강의 링크 시
-  "sourceInfo": "출처 정보"       // 다른 사용자 공개 강의 링크 시
-}
-```
-
-**응답 (200 OK)**:
+**Response (200 OK):**
 
 ```json
 {
-  "message": "강의가 성공적으로 추가되었습니다."
+  "id": 1,
+  "title": "수정된 제목",
+  "description": "수정된 설명",
+  "isPublic": false
+  // ... 기타 필드들
 }
 ```
 
-### 7. 커리큘럼에서 강의 제거
+**Error Response:**
 
-```http
-DELETE /api/curriculums/{curriculumId}/lectures/{lectureId}
+- `401 Unauthorized`: 인증 필요
+- `403 Forbidden`: 수정 권한 없음
+- `404 Not Found`: 커리큘럼 없음
+
+### 4. 커리큘럼 삭제
+
+**DELETE** `/api/curriculums/{id}`
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
 ```
 
-**응답 (200 OK)**:
+**Response (200 OK):**
 
 ```json
 {
-  "message": "강의가 성공적으로 제거되었습니다."
+  "message": "커리큘럼이 성공적으로 삭제되었습니다."
 }
 ```
 
-### 8. 강의 순서 변경
+**Error Response:**
 
-```http
-PUT /api/curriculums/{id}/lectures/reorder
-Content-Type: application/json
+- `401 Unauthorized`: 인증 필요
+- `403 Forbidden`: 삭제 권한 없음
+- `404 Not Found`: 커리큘럼 없음
 
-{
-  "lectureIds": [3, 1, 2]  // 새로운 순서
-}
+### 5. 사용자별 커리큘럼 목록 조회
+
+**GET** `/api/curriculums/user/{userId}`
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
 ```
 
-### 9. 공개 커리큘럼 조회
-
-```http
-GET /api/curriculums/public
-```
-
-### 10. 커리큘럼 공개
-
-```http
-PUT /api/curriculums/{id}/publish
-```
-
-**응답 (200 OK)**:
-
-```json
-{
-  "message": "커리큘럼이 공개되었습니다."
-}
-```
-
-### 11. 커리큘럼 비공개
-
-```http
-PUT /api/curriculums/{id}/unpublish
-```
-
-**응답 (200 OK)**:
-
-```json
-{
-  "message": "커리큘럼이 비공개되었습니다."
-}
-```
-
-### 12. 커리큘럼 검색
-
-```http
-GET /api/curriculums/search?title={제목}
-```
-
-### 13. 공개 커리큘럼 검색
-
-```http
-GET /api/curriculums/public/search?title={제목}
-```
-
-### 14. 공개 강의 조회 (커리큘럼용)
-
-```http
-GET /api/curriculums/lectures/public
-```
-
-**응답 (200 OK)**:
+**Response (200 OK):**
 
 ```json
 [
   {
     "id": 1,
-    "title": "강의 제목",
-    "description": "강의 설명",
-    "type": "MARKDOWN",
-    "category": "카테고리",
-    "difficulty": "난이도",
+    "title": "커리큘럼 제목",
+    "description": "커리큘럼 설명",
     "isPublic": true,
-    "testCaseCount": 0,
-    "createdAt": [2025, 10, 6, 4, 47, 47, 871730000],
-    "updatedAt": [2025, 10, 6, 4, 47, 47, 871730000]
+    "totalLectureCount": 2,
+    "requiredLectureCount": 1,
+    "optionalLectureCount": 1,
+    "author": {
+      "id": 1,
+      "username": "작성자명",
+      "loginId": "작성자로그인ID"
+    },
+    "createdAt": "2025-01-01T00:00:00"
   }
 ]
 ```
 
-### 15. 공개 강의 검색 (커리큘럼용)
+### 6. 공개 커리큘럼 목록 조회
 
-```http
-GET /api/curriculums/lectures/public/search?title={제목}&category={카테고리}&difficulty={난이도}&type={타입}
+**GET** `/api/curriculums/public`
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Response (200 OK):**
+
+```json
+[
+  {
+    "id": 1,
+    "title": "공개 커리큘럼",
+    "description": "커리큘럼 설명",
+    "isPublic": true,
+    "totalLectureCount": 3,
+    "requiredLectureCount": 2,
+    "optionalLectureCount": 1,
+    "author": {
+      "id": 1,
+      "username": "작성자명",
+      "loginId": "작성자로그인ID"
+    },
+    "createdAt": "2025-01-01T00:00:00"
+  }
+]
+```
+
+### 7. 커리큘럼에 강의 추가
+
+**POST** `/api/curriculums/{id}/lectures`
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+Content-Type: application/json
+```
+
+**Request Body:**
+
+```json
+{
+  "lectureId": 1,
+  "isRequired": true,
+  "order": 1
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "message": "강의가 커리큘럼에 추가되었습니다."
+}
+```
+
+### 8. 커리큘럼에서 강의 제거
+
+**DELETE** `/api/curriculums/{curriculumId}/lectures/{lectureId}`
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "message": "강의가 커리큘럼에서 제거되었습니다."
+}
+```
+
+### 9. 커리큘럼 강의 순서 변경
+
+**PUT** `/api/curriculums/{id}/lectures/reorder`
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+Content-Type: application/json
+```
+
+**Request Body:**
+
+```json
+{
+  "lectureOrders": [
+    { "lectureId": 1, "order": 1 },
+    { "lectureId": 2, "order": 2 },
+    { "lectureId": 3, "order": 3 }
+  ]
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "message": "강의 순서가 성공적으로 변경되었습니다."
+}
 ```
 
 ---
 
-## 🔧 공통 응답 형식
+## 🔍 공개 강의 검색 API
 
-### 성공 응답
+### 공개 강의 검색 (커리큘럼 모듈)
 
-- **200 OK**: 요청 성공
-- **201 Created**: 리소스 생성 성공
+**GET** `/api/curriculums/lectures/public/search?title={제목}&category={카테고리}&difficulty={난이도}&type={유형}`
 
-### 에러 응답
+**Headers:**
 
-- **400 Bad Request**: 잘못된 요청
-
-```json
-{
-  "error": "에러 메시지"
-}
+```
+X-User-Id: {사용자ID}
 ```
 
-- **404 Not Found**: 리소스를 찾을 수 없음
+**Response (200 OK):**
 
 ```json
-{
-  "error": "리소스를 찾을 수 없습니다: {id}"
-}
-```
-
-- **500 Internal Server Error**: 서버 내부 오류
-
-```json
-{
-  "error": "서버 내부 오류가 발생했습니다."
-}
+[
+  {
+    "id": 1,
+    "title": "검색된 강의",
+    "description": "강의 설명",
+    "type": "MARKDOWN",
+    "category": "Frontend",
+    "difficulty": "기초",
+    "isPublic": true,
+    "author": {
+      "id": 1,
+      "username": "작성자명",
+      "loginId": "작성자로그인ID"
+    }
+  }
+]
 ```
 
 ---
 
 ## 📝 데이터 타입 정의
 
-### LectureType
+### 강의 유형 (LectureType)
 
 - `MARKDOWN`: 마크다운 강의
 - `PROBLEM`: 문제 강의
 
-### 날짜 형식
+### 난이도 (Difficulty)
 
-배열 형태로 반환: `[year, month, day, hour, minute, second, nanosecond]`
-예: `[2025, 10, 6, 4, 47, 47, 871730000]`
+- `기초`: 초급자용
+- `중급`: 중급자용
+- `고급`: 고급자용
 
-### 테스트케이스 구조
+### HTTP 상태 코드
 
-```json
-{
-  "input": "입력값",
-  "expectedOutput": "예상 출력값",
-  "orderIndex": 1
-}
-```
-
----
-
-## 🔄 데이터 관계
-
-### 강의-커리큘럼 관계
-
-- 한 강의는 여러 커리큘럼에 포함될 수 있음
-- 강의 삭제 시 모든 커리큘럼에서 자동 제거 (CASCADE DELETE)
-- 커리큘럼 삭제 시 연결된 강의는 삭제되지 않음
-
-### 공개 강의 링크
-
-- 다른 사용자의 공개 강의를 커리큘럼에 링크 가능
-- `originalAuthor`: 원작자 정보
-- `sourceInfo`: 출처 정보
+- `200 OK`: 성공
+- `201 Created`: 생성 성공
+- `400 Bad Request`: 잘못된 요청
+- `401 Unauthorized`: 인증 필요
+- `403 Forbidden`: 권한 없음
+- `404 Not Found`: 리소스 없음
+- `500 Internal Server Error`: 서버 오류
 
 ---
 
-## ⚠️ 주의사항
+## 🚨 주의사항
 
-### URL 인코딩
-
-한글 파라미터 사용 시 URL 인코딩 필요:
-
-- `알고리즘` → `%EC%95%8C%EA%B3%A0%EB%A6%AC%EC%A6%98`
-
-### 페이징
-
-- `page`: 0부터 시작
-- `size`: 기본값 10
-- 최대 페이지 크기: 100
-
-### 테스트케이스
-
-- PROBLEM 타입 강의에만 적용
-- 순서는 `orderIndex`로 관리
-- 입력/출력은 문자열 형태
+1. **인증 필수**: 모든 API 요청에 `X-User-Id` 헤더가 필요합니다.
+2. **권한 체크**:
+   - 비공개 강의/커리큘럼은 작성자만 조회 가능
+   - 수정/삭제는 작성자만 가능
+3. **에러 응답**:
+   - 존재하지 않는 리소스: 404 Not Found
+   - 권한이 없는 리소스: 403 Forbidden
+   - 인증이 필요한 경우: 401 Unauthorized
+4. **시퀀스 문제**: 개발 환경에서 더미 데이터 사용 시 ID 충돌이 발생할 수 있습니다.
 
 ---
 
-## 🧪 테스트 예제
+## 📞 문의사항
 
-### Postman 컬렉션 예제
-
-#### 1. 마크다운 강의 생성
-
-```javascript
-POST http://localhost:2358/api/lectures
-{
-  "title": "React 기초 강의",
-  "description": "# React 입문\n\nReact의 기본 개념을 배워봅시다.",
-  "type": "MARKDOWN",
-  "category": "Frontend",
-  "difficulty": "기초"
-}
-```
-
-#### 2. 문제 강의 생성
-
-```javascript
-POST http://localhost:2358/api/lectures
-{
-  "title": "두 수의 합",
-  "description": "두 정수를 입력받아 합을 출력하세요.",
-  "type": "PROBLEM",
-  "category": "수학",
-  "difficulty": "쉬움",
-  "timeLimit": 3,
-  "memoryLimit": 256,
-  "testCases": [
-    {
-      "input": "1 2",
-      "expectedOutput": "3"
-    }
-  ]
-}
-```
-
-#### 3. 커리큘럼 생성 및 강의 추가
-
-```javascript
-// 1. 커리큘럼 생성
-POST http://localhost:2358/api/curriculums
-{
-  "title": "웹 개발 과정",
-  "description": "프론트엔드 개발 학습 과정",
-  "isPublic": true
-}
-
-// 2. 강의 추가
-POST http://localhost:2358/api/curriculums/1/lectures
-{
-  "lectureId": 1,
-  "isRequired": true
-}
-```
-
----
-
-## 📊 API 현황
-
-- **총 API 개수**: 30개
-- **정상 작동**: 28개 (93%)
-- **부분 이슈**: 2개 (한글 URL 인코딩)
-- **미구현**: 0개
-
-모든 핵심 기능이 완성되어 프로덕션 환경에서 사용 가능합니다.
+API 사용 중 문제가 발생하면 백엔드 개발팀에 문의해주세요.

@@ -32,12 +32,12 @@ public interface LectureProgressRepository extends JpaRepository<LectureProgress
     /**
      * 수강별 모든 강의 진도 조회
      */
-    List<LectureProgress> findByEnrollmentOrderByCurriculumLectureOrder(Enrollment enrollment);
+    List<LectureProgress> findByEnrollmentOrderByCurriculumLectureOrderIndex(Enrollment enrollment);
 
     /**
      * 수강 ID로 모든 강의 진도 조회
      */
-    @Query("SELECT lp FROM LectureProgress lp WHERE lp.enrollment.id = :enrollmentId ORDER BY lp.curriculumLecture.order")
+    @Query("SELECT lp FROM LectureProgress lp WHERE lp.enrollment.id = :enrollmentId ORDER BY lp.curriculumLecture.orderIndex")
     List<LectureProgress> findByEnrollmentIdOrderByOrder(@Param("enrollmentId") Long enrollmentId);
 
     /**

@@ -48,14 +48,13 @@ public class EnrollmentService {
         log.info("수강 신청 시작 - 사용자 ID: {}, 커리큘럼 ID: {}", userId, curriculumId);
 
         // 1. 사용자 조회
-        User user = userService.getUserById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+        User user = userService.findUserById(userId);
 
-        // 2. 커리큘럼 조회
-        Curriculum curriculum = curriculumService.getCurriculumById(curriculumId)
+        // 2. 커리큘럼 조회 (권한 체크 포함)
+        Curriculum curriculum = curriculumService.getCurriculumByIdWithPermission(curriculumId, userId)
                 .orElseThrow(() -> new IllegalArgumentException("커리큘럼을 찾을 수 없습니다: " + curriculumId));
 
-        // 3. 수강 가능 여부 검증
+        // 3. 수강 가능 여부 검증 (작성자 체크 포함)
         validateEnrollmentEligibility(user, curriculum);
 
         // 4. 중복 수강 방지
@@ -90,7 +89,7 @@ public class EnrollmentService {
         }
 
         // 2. 강의 진도 삭제
-        List<LectureProgress> lectureProgresses = lectureProgressRepository.findByEnrollment(enrollment);
+        List<LectureProgress> lectureProgresses = lectureProgressRepository.findByEnrollmentIdOrderByOrder(enrollment.getId());
         lectureProgressRepository.deleteAll(lectureProgresses);
 
         // 3. 수강 정보 삭제
@@ -231,7 +230,7 @@ public class EnrollmentService {
      * 강의별 진도 초기화
      */
     private void initializeLectureProgress(Enrollment enrollment, Curriculum curriculum) {
-        List<CurriculumLecture> curriculumLectures = curriculum.getCurriculumLectures();
+        List<CurriculumLecture> curriculumLectures = curriculum.getLectures();
         
         for (CurriculumLecture curriculumLecture : curriculumLectures) {
             LectureProgress lectureProgress = new LectureProgress(

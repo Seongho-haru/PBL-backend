@@ -1,16 +1,436 @@
 {
   "info": {
     "_postman_id": "enrollment-management-collection",
-    "name": "PBL 수강 관리 API",
-    "description": "PBL 백엔드 수강 관리 모듈 API 테스트 컬렉션\n\n## 📋 테스트 시나리오\n\n### 1. 수강 신청/취소\n- 공개 커리큘럼 수강 신청\n- 중복 수강 방지\n- 작성자 수강 불가\n- 수강 취소\n\n### 2. 진도 관리\n- 마크다운 강의 읽기 완료\n- 문제 강의 정답 제출\n- 진도율 자동 계산\n\n### 3. 조회 기능\n- 사용자별 수강 목록\n- 수강 상세 정보\n- 상태별 필터링\n\n### 4. 통계 기능\n- 커리큘럼별 수강자 수\n- 완료자 수 조회\n\n### 5. 권한 체크\n- 본인 수강 정보만 조회 가능\n- X-User-Id 헤더 필수",
+    "name": "PBL 수강 관리 API - 전체 시나리오",
+    "description": "PBL 백엔드 수강 관리 모듈 API 테스트 컬렉션\n\n## 📋 전체 테스트 시나리오\n\n### 1. 사용자 관리\n- 회원가입\n- 로그인\n- 사용자 정보 조회\n\n### 2. 강의/커리큘럼 준비\n- 강의 생성 (마크다운, 문제)\n- 커리큘럼 생성\n- 커리큘럼에 강의 추가\n- 커리큘럼 공개\n\n### 3. 수강 신청/취소\n- 공개 커리큘럼 수강 신청\n- 중복 수강 방지\n- 작성자 수강 불가\n- 수강 취소\n\n### 4. 진도 관리\n- 마크다운 강의 읽기 완료\n- 문제 강의 정답 제출\n- 진도율 자동 계산\n\n### 5. 조회 기능\n- 사용자별 수강 목록\n- 수강 상세 정보\n- 상태별 필터링\n\n### 6. 통계 기능\n- 커리큘럼별 수강자 수\n- 완료자 수 조회\n\n### 7. 권한 체크\n- 본인 수강 정보만 조회 가능\n- X-User-Id 헤더 필수",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "1. 수강 신청/취소",
+      "name": "1. 사용자 관리",
       "item": [
         {
-          "name": "커리큘럼 수강 신청",
+          "name": "회원가입 - 사용자1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('userId1', response.id);",
+                  "    pm.test('사용자1 회원가입 성공', () => {",
+                  "        pm.expect(response.id).to.be.a('number');",
+                  "        pm.expect(response.username).to.eql('테스트사용자1');",
+                  "        pm.expect(response.loginId).to.eql('testuser1');",
+                  "    });",
+                  "} else {",
+                  "    pm.test('사용자1 회원가입 실패', () => {",
+                  "        pm.expect(pm.response.code).to.be.oneOf([400, 409, 500]);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"테스트사용자1\",\n  \"loginId\": \"testuser1\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "signup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "회원가입 - 사용자2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('userId2', response.id);",
+                  "    pm.test('사용자2 회원가입 성공', () => {",
+                  "        pm.expect(response.id).to.be.a('number');",
+                  "        pm.expect(response.username).to.eql('테스트사용자2');",
+                  "        pm.expect(response.loginId).to.eql('testuser2');",
+                  "    });",
+                  "} else {",
+                  "    pm.test('사용자2 회원가입 실패', () => {",
+                  "        pm.expect(pm.response.code).to.be.oneOf([400, 409, 500]);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"테스트사용자2\",\n  \"loginId\": \"testuser2\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signup",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "signup"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "로그인 - 사용자1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.test('사용자1 로그인 성공', () => {",
+                  "        pm.expect(response.user).to.have.property('id');",
+                  "        pm.expect(response.user).to.have.property('username');",
+                  "        pm.expect(response.user.username).to.eql('테스트사용자1');",
+                  "    });",
+                  "} else {",
+                  "    pm.test('사용자1 로그인 실패', () => {",
+                  "        pm.expect(pm.response.code).to.be.oneOf([400, 401, 500]);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loginId\": \"testuser1\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. 강의/커리큘럼 준비",
+      "item": [
+        {
+          "name": "마크다운 강의 생성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('markdownLectureId', response.id);",
+                  "    pm.test('마크다운 강의 생성 성공', () => {",
+                  "        pm.expect(response.id).to.be.a('number');",
+                  "        pm.expect(response.type).to.eql('MARKDOWN');",
+                  "        pm.expect(response.title).to.eql('Vue.js 기초 강의');",
+                  "    });",
+                  "} else {",
+                  "    pm.test('마크다운 강의 생성 실패', () => {",
+                  "        pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Vue.js 기초 강의\",\n  \"description\": \"# Vue.js 입문\\n\\nVue.js의 기본 개념을 배워봅시다.\",\n  \"type\": \"MARKDOWN\",\n  \"category\": \"Frontend\",\n  \"difficulty\": \"기초\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "문제 강의 생성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('problemLectureId', response.id);",
+                  "    pm.test('문제 강의 생성 성공', () => {",
+                  "        pm.expect(response.id).to.be.a('number');",
+                  "        pm.expect(response.type).to.eql('PROBLEM');",
+                  "        pm.expect(response.title).to.eql('JavaScript 배열 문제');",
+                  "    });",
+                  "} else {",
+                  "    pm.test('문제 강의 생성 실패', () => {",
+                  "        pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"JavaScript 배열 문제\",\n  \"description\": \"배열을 다루는 기본 문제를 해결해보세요.\",\n  \"type\": \"PROBLEM\",\n  \"category\": \"Programming\",\n  \"difficulty\": \"중급\",\n  \"testCases\": [\n    {\n      \"input\": \"[1, 2, 3, 4, 5]\",\n      \"expectedOutput\": \"15\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/lectures",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "lectures"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "커리큘럼 생성",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('curriculumId', response.id);",
+                  "    pm.test('커리큘럼 생성 성공', () => {",
+                  "        pm.expect(response.id).to.be.a('number');",
+                  "        pm.expect(response.title).to.eql('프론트엔드 기초 과정');",
+                  "        pm.expect(response.isPublic).to.eql(false);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('커리큘럼 생성 실패', () => {",
+                  "        pm.expect(pm.response.code).to.be.oneOf([400, 500]);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"프론트엔드 기초 과정\",\n  \"description\": \"프론트엔드 개발의 기초를 배우는 커리큘럼입니다.\",\n  \"isPublic\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "커리큘럼에 강의 추가 - 마크다운",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('마크다운 강의 추가 성공', () => {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include('추가');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lectureId\": {{markdownLectureId}},\n  \"orderIndex\": 1,\n  \"isRequired\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/{{curriculumId}}/lectures",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "{{curriculumId}}", "lectures"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "커리큘럼에 강의 추가 - 문제",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('문제 강의 추가 성공', () => {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include('추가');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lectureId\": {{problemLectureId}},\n  \"orderIndex\": 2,\n  \"isRequired\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/{{curriculumId}}/lectures",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "{{curriculumId}}", "lectures"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "커리큘럼 공개",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('커리큘럼 공개 성공', () => {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include('공개');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/curriculums/{{curriculumId}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "curriculums", "{{curriculumId}}", "publish"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. 수강 신청/취소",
+      "item": [
+        {
+          "name": "커리큘럼 수강 신청 (사용자2)",
           "event": [
             {
               "listen": "test",
@@ -29,6 +449,49 @@
                   "        pm.expect(pm.response.code).to.be.oneOf([400, 409, 500]);",
                   "    });",
                   "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId2}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"curriculumId\": {{curriculumId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enrollments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "작성자 수강 신청 시도 (실패)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('작성자 수강 신청 실패', () => {",
+                  "    pm.expect(pm.response.code).to.eql(409);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.error).to.include('본인이 작성한 커리큘럼은 수강할 수 없습니다');",
+                  "});"
                 ],
                 "type": "text/javascript"
               }
@@ -82,7 +545,7 @@
             "header": [
               {
                 "key": "X-User-Id",
-                "value": "{{userId1}}",
+                "value": "{{userId2}}",
                 "type": "text"
               },
               {
@@ -125,7 +588,7 @@
             "header": [
               {
                 "key": "X-User-Id",
-                "value": "{{userId1}}",
+                "value": "{{userId2}}",
                 "type": "text"
               }
             ],
@@ -136,11 +599,61 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "다시 수강 신청",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('enrollmentId', response.id);",
+                  "    pm.test('재수강 신청 성공', () => {",
+                  "        pm.expect(response.id).to.be.a('number');",
+                  "        pm.expect(response.status).to.eql('ENROLLED');",
+                  "    });",
+                  "} else {",
+                  "    pm.test('재수강 신청 실패', () => {",
+                  "        pm.expect(pm.response.code).to.be.oneOf([400, 409, 500]);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId2}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"curriculumId\": {{curriculumId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enrollments"]
+            }
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "2. 진도 관리",
+      "name": "4. 진도 관리",
       "item": [
         {
           "name": "마크다운 강의 읽기 완료",
@@ -164,7 +677,7 @@
             "header": [
               {
                 "key": "X-User-Id",
-                "value": "{{userId1}}",
+                "value": "{{userId2}}",
                 "type": "text"
               }
             ],
@@ -205,7 +718,7 @@
             "header": [
               {
                 "key": "X-User-Id",
-                "value": "{{userId1}}",
+                "value": "{{userId2}}",
                 "type": "text"
               }
             ],
@@ -227,7 +740,7 @@
       ]
     },
     {
-      "name": "3. 조회 기능",
+      "name": "5. 조회 기능",
       "item": [
         {
           "name": "사용자별 수강 목록 조회",
@@ -256,14 +769,14 @@
             "header": [
               {
                 "key": "X-User-Id",
-                "value": "{{userId1}}",
+                "value": "{{userId2}}",
                 "type": "text"
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/enrollments/user/{{userId1}}",
+              "raw": "{{baseUrl}}/api/enrollments/user/{{userId2}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "enrollments", "user", "{{userId1}}"]
+              "path": ["api", "enrollments", "user", "{{userId2}}"]
             }
           },
           "response": []
@@ -293,14 +806,14 @@
             "header": [
               {
                 "key": "X-User-Id",
-                "value": "{{userId1}}",
+                "value": "{{userId2}}",
                 "type": "text"
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/enrollments/user/{{userId1}}?status=ENROLLED",
+              "raw": "{{baseUrl}}/api/enrollments/user/{{userId2}}/status?status=ENROLLED",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "enrollments", "user", "{{userId1}}"],
+              "path": ["api", "enrollments", "user", "{{userId2}}", "status"],
               "query": [
                 {
                   "key": "status",
@@ -339,7 +852,7 @@
             "header": [
               {
                 "key": "X-User-Id",
-                "value": "{{userId1}}",
+                "value": "{{userId2}}",
                 "type": "text"
               }
             ],
@@ -354,7 +867,7 @@
       ]
     },
     {
-      "name": "4. 통계 기능",
+      "name": "6. 통계 기능",
       "item": [
         {
           "name": "커리큘럼별 수강자 수 조회",
@@ -431,7 +944,7 @@
       ]
     },
     {
-      "name": "5. 권한 체크",
+      "name": "7. 권한 체크",
       "item": [
         {
           "name": "다른 사용자 수강 목록 조회 시도 (실패)",
@@ -486,9 +999,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/enrollments/user/{{userId1}}",
+              "raw": "{{baseUrl}}/api/enrollments/user/{{userId2}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "enrollments", "user", "{{userId1}}"]
+              "path": ["api", "enrollments", "user", "{{userId2}}"]
             }
           },
           "response": []
@@ -496,7 +1009,7 @@
       ]
     },
     {
-      "name": "6. 에러 케이스",
+      "name": "8. 에러 케이스",
       "item": [
         {
           "name": "존재하지 않는 커리큘럼 수강 신청 (실패)",
@@ -520,7 +1033,7 @@
             "header": [
               {
                 "key": "X-User-Id",
-                "value": "{{userId1}}",
+                "value": "{{userId2}}",
                 "type": "text"
               },
               {
@@ -561,7 +1074,7 @@
             "header": [
               {
                 "key": "X-User-Id",
-                "value": "{{userId1}}",
+                "value": "{{userId2}}",
                 "type": "text"
               }
             ],
@@ -582,12 +1095,12 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "// 환경 변수 초기화 (필요시)",
+          "// 환경 변수 초기화",
           "if (!pm.environment.get('baseUrl')) {",
           "    pm.environment.set('baseUrl', 'http://localhost:2358');",
           "}",
           "",
-          "// 테스트용 사용자 ID 설정 (실제 값으로 변경 필요)",
+          "// 테스트용 사용자 ID 초기화 (동적으로 설정됨)",
           "if (!pm.environment.get('userId1')) {",
           "    pm.environment.set('userId1', '1');",
           "}",
@@ -595,17 +1108,18 @@
           "    pm.environment.set('userId2', '2');",
           "}",
           "",
-          "// 테스트용 커리큘럼 ID 설정 (실제 값으로 변경 필요)",
+          "// 테스트용 ID 초기화 (동적으로 설정됨)",
           "if (!pm.environment.get('curriculumId')) {",
           "    pm.environment.set('curriculumId', '1');",
           "}",
-          "",
-          "// 테스트용 강의 ID 설정 (실제 값으로 변경 필요)",
           "if (!pm.environment.get('markdownLectureId')) {",
           "    pm.environment.set('markdownLectureId', '1');",
           "}",
           "if (!pm.environment.get('problemLectureId')) {",
           "    pm.environment.set('problemLectureId', '2');",
+          "}",
+          "if (!pm.environment.get('enrollmentId')) {",
+          "    pm.environment.set('enrollmentId', '1');",
           "}"
         ]
       }

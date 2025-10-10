@@ -35,9 +35,9 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     List<Enrollment> findByUserOrderByEnrolledAtDesc(User user);
 
     /**
-     * 사용자 ID로 수강 목록 조회
+     * 사용자 ID로 수강 목록 조회 (User, Curriculum 엔티티 포함)
      */
-    @Query("SELECT e FROM Enrollment e WHERE e.user.id = :userId ORDER BY e.enrolledAt DESC")
+    @Query("SELECT e FROM Enrollment e LEFT JOIN FETCH e.user LEFT JOIN FETCH e.curriculum WHERE e.user.id = :userId ORDER BY e.enrolledAt DESC")
     List<Enrollment> findByUserIdOrderByEnrolledAtDesc(@Param("userId") Long userId);
 
     /**
@@ -46,9 +46,9 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     List<Enrollment> findByUserAndStatusOrderByEnrolledAtDesc(User user, EnrollmentStatus status);
 
     /**
-     * 사용자 ID와 상태로 수강 목록 조회
+     * 사용자 ID와 상태로 수강 목록 조회 (User, Curriculum 엔티티 포함)
      */
-    @Query("SELECT e FROM Enrollment e WHERE e.user.id = :userId AND e.status = :status ORDER BY e.enrolledAt DESC")
+    @Query("SELECT e FROM Enrollment e LEFT JOIN FETCH e.user LEFT JOIN FETCH e.curriculum WHERE e.user.id = :userId AND e.status = :status ORDER BY e.enrolledAt DESC")
     List<Enrollment> findByUserIdAndStatusOrderByEnrolledAtDesc(@Param("userId") Long userId, @Param("status") EnrollmentStatus status);
 
     /**

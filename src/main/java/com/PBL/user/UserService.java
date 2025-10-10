@@ -117,13 +117,22 @@ public class UserService {
     // === 사용자 조회 ===
 
     /**
-     * ID로 사용자 조회
+     * ID로 사용자 조회 (DTO 반환)
      */
     @Transactional(readOnly = true)
     public UserDTOs.UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         return new UserDTOs.UserResponse(user);
+    }
+
+    /**
+     * ID로 사용자 조회 (엔티티 반환)
+     */
+    @Transactional(readOnly = true)
+    public User findUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
     }
 
     /**

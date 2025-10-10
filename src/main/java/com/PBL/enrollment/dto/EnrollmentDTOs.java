@@ -134,7 +134,7 @@ public class EnrollmentDTOs {
             response.setStatus(lectureProgress.getStatus());
             response.setStartedAt(lectureProgress.getStartedAt());
             response.setCompletedAt(lectureProgress.getCompletedAt());
-            response.setOrder(lectureProgress.getCurriculumLecture().getOrder());
+            response.setOrder(lectureProgress.getCurriculumLecture().getOrderIndex());
             response.setIsRequired(lectureProgress.getCurriculumLecture().getIsRequired());
             return response;
         }

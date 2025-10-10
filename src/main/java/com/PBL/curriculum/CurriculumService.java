@@ -59,6 +59,26 @@ public class CurriculumService {
     }
 
     /**
+     * ID로 커리큘럼 상세 조회 (권한 체크 포함)
+     * 공개 커리큘럼은 누구나, 비공개 커리큘럼은 작성자만 조회 가능
+     */
+    @Transactional(readOnly = true)
+    public Optional<Curriculum> getCurriculumByIdWithPermission(Long id, Long userId) {
+        Optional<Curriculum> curriculumOpt = curriculumRepository.findByIdWithLectures(id);
+        if (curriculumOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        Curriculum curriculum = curriculumOpt.get();
+        // 공개 커리큘럼이거나 작성자인 경우
+        if (curriculum.isPublicCurriculum() || curriculum.isAuthor(userId)) {
+            return curriculumOpt;
+        }
+        
+        return Optional.empty();
+    }
+
+    /**
      * 커리큘럼 생성
      */
     public Curriculum createCurriculum(String title, String description, boolean isPublic) {

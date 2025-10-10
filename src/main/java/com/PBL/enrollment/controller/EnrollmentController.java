@@ -173,9 +173,9 @@ public class EnrollmentController {
 
     /**
      * 사용자별 수강 상태별 목록 조회
-     * GET /api/enrollments/user/{userId}?status={status}
+     * GET /api/enrollments/user/{userId}/status
      */
-    @GetMapping("/user/{userId}")
+    @GetMapping("/user/{userId}/status")
     public ResponseEntity<?> getUserEnrollmentsByStatus(
             @RequestHeader("X-User-Id") Long currentUserId,
             @PathVariable Long userId,

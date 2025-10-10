@@ -1,0 +1,621 @@
+{
+  "info": {
+    "_postman_id": "enrollment-management-collection",
+    "name": "PBL 수강 관리 API",
+    "description": "PBL 백엔드 수강 관리 모듈 API 테스트 컬렉션\n\n## 📋 테스트 시나리오\n\n### 1. 수강 신청/취소\n- 공개 커리큘럼 수강 신청\n- 중복 수강 방지\n- 작성자 수강 불가\n- 수강 취소\n\n### 2. 진도 관리\n- 마크다운 강의 읽기 완료\n- 문제 강의 정답 제출\n- 진도율 자동 계산\n\n### 3. 조회 기능\n- 사용자별 수강 목록\n- 수강 상세 정보\n- 상태별 필터링\n\n### 4. 통계 기능\n- 커리큘럼별 수강자 수\n- 완료자 수 조회\n\n### 5. 권한 체크\n- 본인 수강 정보만 조회 가능\n- X-User-Id 헤더 필수",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. 수강 신청/취소",
+      "item": [
+        {
+          "name": "커리큘럼 수강 신청",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('enrollmentId', response.id);",
+                  "    pm.test('수강 신청 성공', () => {",
+                  "        pm.expect(response.id).to.be.a('number');",
+                  "        pm.expect(response.status).to.eql('ENROLLED');",
+                  "        pm.expect(response.progressPercentage).to.eql(0);",
+                  "    });",
+                  "} else {",
+                  "    pm.test('수강 신청 실패', () => {",
+                  "        pm.expect(pm.response.code).to.be.oneOf([400, 409, 500]);",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"curriculumId\": {{curriculumId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enrollments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "중복 수강 신청 시도 (실패)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('중복 수강 신청 실패', () => {",
+                  "    pm.expect(pm.response.code).to.eql(409);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.error).to.include('이미 수강 중');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"curriculumId\": {{curriculumId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enrollments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "수강 취소",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('수강 취소 성공', () => {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include('취소');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments/{{enrollmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enrollments", "{{enrollmentId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. 진도 관리",
+      "item": [
+        {
+          "name": "마크다운 강의 읽기 완료",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('마크다운 강의 읽기 완료', () => {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include('읽기 완료');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments/{{enrollmentId}}/lectures/{{markdownLectureId}}/read",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "enrollments",
+                "{{enrollmentId}}",
+                "lectures",
+                "{{markdownLectureId}}",
+                "read"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "문제 강의 정답 제출",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('문제 강의 정답 제출', () => {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.message).to.include('해결');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments/{{enrollmentId}}/lectures/{{problemLectureId}}/solve",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "enrollments",
+                "{{enrollmentId}}",
+                "lectures",
+                "{{problemLectureId}}",
+                "solve"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. 조회 기능",
+      "item": [
+        {
+          "name": "사용자별 수강 목록 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('사용자 수강 목록 조회 성공', () => {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array');",
+                  "    if (response.length > 0) {",
+                  "        pm.expect(response[0]).to.have.property('id');",
+                  "        pm.expect(response[0]).to.have.property('status');",
+                  "        pm.expect(response[0]).to.have.property('progressPercentage');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments/user/{{userId1}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enrollments", "user", "{{userId1}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "수강 상태별 목록 조회 (수강중)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('수강중 목록 조회 성공', () => {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array');",
+                  "    response.forEach(item => {",
+                  "        pm.expect(item.status).to.eql('ENROLLED');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments/user/{{userId1}}?status=ENROLLED",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enrollments", "user", "{{userId1}}"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ENROLLED"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "수강 상세 정보 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('수강 상세 정보 조회 성공', () => {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('id');",
+                  "    pm.expect(response).to.have.property('lectures');",
+                  "    pm.expect(response.lectures).to.be.an('array');",
+                  "    if (response.lectures.length > 0) {",
+                  "        pm.expect(response.lectures[0]).to.have.property('status');",
+                  "        pm.expect(response.lectures[0]).to.have.property('order');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments/{{enrollmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enrollments", "{{enrollmentId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. 통계 기능",
+      "item": [
+        {
+          "name": "커리큘럼별 수강자 수 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('수강자 수 조회 성공', () => {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('curriculumId');",
+                  "    pm.expect(response).to.have.property('enrollmentCount');",
+                  "    pm.expect(response.enrollmentCount).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments/curriculum/{{curriculumId}}/count",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "enrollments",
+                "curriculum",
+                "{{curriculumId}}",
+                "count"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "커리큘럼별 완료자 수 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('완료자 수 조회 성공', () => {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('curriculumId');",
+                  "    pm.expect(response).to.have.property('completedCount');",
+                  "    pm.expect(response.completedCount).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments/curriculum/{{curriculumId}}/completed-count",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "enrollments",
+                "curriculum",
+                "{{curriculumId}}",
+                "completed-count"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. 권한 체크",
+      "item": [
+        {
+          "name": "다른 사용자 수강 목록 조회 시도 (실패)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('권한 없음 - 403 Forbidden', () => {",
+                  "    pm.expect(pm.response.code).to.eql(403);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.error).to.include('본인의 수강 목록만');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments/user/{{userId2}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enrollments", "user", "{{userId2}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "X-User-Id 헤더 없이 요청 (실패)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('헤더 없음 - 400 Bad Request', () => {",
+                  "    pm.expect(pm.response.code).to.eql(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments/user/{{userId1}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enrollments", "user", "{{userId1}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. 에러 케이스",
+      "item": [
+        {
+          "name": "존재하지 않는 커리큘럼 수강 신청 (실패)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('존재하지 않는 커리큘럼 - 400 Bad Request', () => {",
+                  "    pm.expect(pm.response.code).to.eql(400);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.error).to.include('커리큘럼을 찾을 수 없습니다');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"curriculumId\": 99999\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enrollments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "존재하지 않는 수강 정보 조회 (실패)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('존재하지 않는 수강 정보 - 404 Not Found', () => {",
+                  "    pm.expect(pm.response.code).to.eql(404);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{userId1}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enrollments/99999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "enrollments", "99999"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// 환경 변수 초기화 (필요시)",
+          "if (!pm.environment.get('baseUrl')) {",
+          "    pm.environment.set('baseUrl', 'http://localhost:2358');",
+          "}",
+          "",
+          "// 테스트용 사용자 ID 설정 (실제 값으로 변경 필요)",
+          "if (!pm.environment.get('userId1')) {",
+          "    pm.environment.set('userId1', '1');",
+          "}",
+          "if (!pm.environment.get('userId2')) {",
+          "    pm.environment.set('userId2', '2');",
+          "}",
+          "",
+          "// 테스트용 커리큘럼 ID 설정 (실제 값으로 변경 필요)",
+          "if (!pm.environment.get('curriculumId')) {",
+          "    pm.environment.set('curriculumId', '1');",
+          "}",
+          "",
+          "// 테스트용 강의 ID 설정 (실제 값으로 변경 필요)",
+          "if (!pm.environment.get('markdownLectureId')) {",
+          "    pm.environment.set('markdownLectureId', '1');",
+          "}",
+          "if (!pm.environment.get('problemLectureId')) {",
+          "    pm.environment.set('problemLectureId', '2');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:2358",
+      "type": "string"
+    }
+  ]
+}

@@ -1,11 +1,14 @@
 package com.PBL.ai.controller;
 
 import com.PBL.ai.dto.GradingRequest;
+import com.PBL.ai.dto.StreamResponse;
 import com.PBL.ai.service.AssistantService;
 import com.PBL.lab.grading.entity.Grading;
 import com.PBL.lab.grading.service.GradingService;
 import com.PBL.lecture.Lecture;
 import com.PBL.lecture.LectureService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -21,29 +24,64 @@ class AssistantController {
     private final GradingService gradingService;
     private final LectureService lectureService;
     private final AssistantService assistantService;
+    private final ObjectMapper objectMapper;
 
     //1. 코드 실행/제출 에대한 해설
     //2. 커리큘럼 생성 또는 조합
 
     /**
-     * 코딩테스트 해설 보기 (스트리밍 방식)
+     * 코딩테스트 해설 보기 (JSON 스트리밍 방식)
      * @param request 제출 토큰 및 문제 ID
-     * @return Flux<String> - 실시간 스트리밍 응답
+     * @return Flux<String> - SSE로 JSON 문자열 스트리밍
      */
     @PostMapping(value = "/chat/grading", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> gradingStream(@RequestBody GradingRequest request) {
-        // 1. 제출한 토큰을 활용해서 채점 정보 가져오기
-        Grading grading = gradingService.findByToken(request.getGradingToken());
+        try {
+            // 1. 제출한 토큰을 활용해서 채점 정보 가져오기
+            Grading grading = gradingService.findByToken(request.getGradingToken());
 
-        // 2. 문제 정보 가져오기
-        Lecture lecture = lectureService.getLecture(request.getProblemId())
-                .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + request.getProblemId()));
+            // 2. 문제 정보 가져오기
+            Lecture lecture = lectureService.getLecture(request.getProblemId())
+                    .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + request.getProblemId()));
 
-        // 3. AI 분석 및 해설 생성 (스트리밍) - Spring이 자동으로 SSE 처리!
-        return assistantService.analyAndExplainStream(grading, lecture)
-                .doOnNext(token -> log.debug("토큰 전송: {}", token))
-                .doOnComplete(() -> log.info("스트리밍 완료"))
-                .doOnError(error -> log.error("스트리밍 에러", error));
+            // 3. AI 분석 및 해설 생성 (스트리밍) - 각 청크를 JSON 문자열로 변환
+            return assistantService.analyAndExplainStream(grading, lecture)
+                    .map(content -> {
+                        try {
+                            // 텍스트를 JSON DTO로 변환 후 문자열로 직렬화
+                            StreamResponse response = StreamResponse.content(content);
+                            return objectMapper.writeValueAsString(response);
+                        } catch (JsonProcessingException e) {
+                            log.error("JSON 직렬화 실패", e);
+                            return "{\"type\":\"error\",\"error_message\":\"JSON 변환 실패\"}";
+                        }
+                    })
+                    .concatWith(Flux.defer(() -> {
+                        try {
+                            // 마지막에 완료 신호
+                            return Flux.just(objectMapper.writeValueAsString(StreamResponse.complete()));
+                        } catch (JsonProcessingException e) {
+                            return Flux.just("{\"type\":\"complete\"}");
+                        }
+                    }))
+                    .doOnNext(json -> log.debug("JSON 응답 전송: {}", json))
+                    .doOnComplete(() -> log.info("스트리밍 완료"))
+                    .doOnError(error -> log.error("스트리밍 에러", error))
+                    .onErrorResume(error -> {
+                        try {
+                            return Flux.just(objectMapper.writeValueAsString(StreamResponse.error(error.getMessage())));
+                        } catch (JsonProcessingException e) {
+                            return Flux.just("{\"type\":\"error\",\"error_message\":\"" + error.getMessage() + "\"}");
+                        }
+                    });
+        } catch (Exception e) {
+            log.error("요청 처리 실패", e);
+            try {
+                return Flux.just(objectMapper.writeValueAsString(StreamResponse.error(e.getMessage())));
+            } catch (JsonProcessingException ex) {
+                return Flux.just("{\"type\":\"error\",\"error_message\":\"" + e.getMessage() + "\"}");
+            }
+        }
     }
 
 

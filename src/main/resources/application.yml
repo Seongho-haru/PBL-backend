@@ -27,6 +27,13 @@ spring:
         queue-capacity: 50
         keep-alive: 60s
 
+  # File Upload Configuration
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+      enabled: true
+
   # Flyway Configuration - DISABLED for demo
   flyway:
     enabled: true
@@ -105,6 +112,8 @@ springdoc:
         url: /api-docs/auth
       - name: "Grading System APIs"
         url: /api-docs/grading
+      - name: "S3 Image Management APIs"
+        url: /api-docs/s3
   show-actuator: true
   packages-to-scan: com.PBL # 전체 PBL 패키지 자동 스캔
   group-configs:
@@ -138,6 +147,12 @@ springdoc:
       display-name: "Grading System APIs"
       paths-to-match:
         - /grading/**
+    - group: "s3"
+      display-name: "S3 Image Management APIs"
+      paths-to-match:
+        - /api/s3/**
+      packages-to-scan:
+        - com.PBL.s3
 
 # Logging Configuration
 logging:
@@ -300,3 +315,12 @@ judge0:
     mode: false
   features:
     enable-submission-delete: true
+
+# S3 (MinIO) 설정
+s3:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin123
+  bucket-name: pbl-images
+  region: us-east-1
+  base-url: http://localhost:9000

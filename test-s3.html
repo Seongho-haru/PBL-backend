@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S3 이미지 업로드 테스트</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        cursor: pointer;
+        margin-right: 10px;
+        margin-bottom: 10px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .result {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 5px;
+      }
+      .image-preview {
+        max-width: 300px;
+        margin-top: 10px;
+      }
+      .image-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+      .image-item {
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+      }
+      .image-item img {
+        max-width: 100%;
+        height: auto;
+        margin-bottom: 10px;
+      }
+      .image-item button {
+        padding: 5px 10px;
+        font-size: 12px;
+        margin: 2px;
+      }
+      .error {
+        color: red;
+        margin-top: 10px;
+      }
+      .success {
+        color: green;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>S3 이미지 업로드 테스트</h1>
+
+      <!-- 이미지 업로드 폼 -->
+      <div class="form-group">
+        <h2>이미지 업로드</h2>
+        <form id="uploadForm">
+          <div class="form-group">
+            <label for="userId">사용자 ID:</label>
+            <input type="number" id="userId" value="1" required />
+          </div>
+          <div class="form-group">
+            <label for="imageFile">이미지 파일:</label>
+            <input type="file" id="imageFile" accept="image/*" required />
+          </div>
+          <div class="form-group">
+            <label for="folder">폴더 (선택사항):</label>
+            <input
+              type="text"
+              id="folder"
+              placeholder="예: lectures, curriculums"
+            />
+          </div>
+          <button type="submit">이미지 업로드</button>
+        </form>
+      </div>
+
+      <!-- 결과 표시 -->
+      <div id="result" class="result" style="display: none">
+        <h3>업로드 결과</h3>
+        <div id="resultContent"></div>
+      </div>
+
+      <!-- 관리 기능 -->
+      <div class="form-group">
+        <h2>관리 기능</h2>
+        <button onclick="setBucketPolicy()">버킷 정책 설정 (공개 읽기)</button>
+        <button onclick="getStats()">통계 조회</button>
+      </div>
+
+      <!-- 통계 결과 -->
+      <div id="statsResult" class="result" style="display: none">
+        <h3>통계 정보</h3>
+        <div id="statsContent"></div>
+      </div>
+
+      <!-- 이미지 목록 -->
+      <div class="form-group">
+        <h2>이미지 목록</h2>
+        <button onclick="loadImageList()">이미지 목록 새로고침</button>
+        <div id="imageList" class="image-list"></div>
+      </div>
+    </div>
+
+    <script>
+      const BASE_URL = "http://localhost:2358";
+
+      // 이미지 업로드
+      document
+        .getElementById("uploadForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const userId = document.getElementById("userId").value;
+          const imageFile = document.getElementById("imageFile").files[0];
+          const folder = document.getElementById("folder").value;
+
+          if (!imageFile) {
+            showError("이미지 파일을 선택해주세요.");
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append("file", imageFile);
+          if (folder) {
+            formData.append("folder", folder);
+          }
+
+          try {
+            const response = await fetch(`${BASE_URL}/api/s3/upload`, {
+              method: "POST",
+              headers: {
+                "X-User-Id": userId,
+              },
+              body: formData,
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+              showResult(result);
+              loadImageList(); // 목록 새로고침
+            } else {
+              showError(result.error || "업로드 실패");
+            }
+          } catch (error) {
+            showError("업로드 중 오류 발생: " + error.message);
+          }
+        });
+
+      // 결과 표시
+      function showResult(result) {
+        const resultDiv = document.getElementById("result");
+        const contentDiv = document.getElementById("resultContent");
+
+        contentDiv.innerHTML = `
+          <div class="success">업로드 성공!</div>
+          <p><strong>ID:</strong> ${result.id}</p>
+          <p><strong>원본 파일명:</strong> ${result.originalFilename}</p>
+          <p><strong>저장 파일명:</strong> ${result.storedFilename}</p>
+          <p><strong>이미지 URL:</strong> <a href="${result.imageUrl}" target="_blank">${result.imageUrl}</a></p>
+          <p><strong>파일 크기:</strong> ${result.fileSize} bytes</p>
+          <p><strong>업로드 시간:</strong> ${result.uploadedAt}</p>
+          <div class="image-preview">
+            <img src="${result.imageUrl}" alt="업로드된 이미지" onerror="this.style.display='none'">
+          </div>
+        `;
+
+        resultDiv.style.display = "block";
+      }
+
+      // 에러 표시
+      function showError(message) {
+        const resultDiv = document.getElementById("result");
+        const contentDiv = document.getElementById("resultContent");
+
+        contentDiv.innerHTML = `<div class="error">${message}</div>`;
+        resultDiv.style.display = "block";
+      }
+
+      // 버킷 정책 설정
+      async function setBucketPolicy() {
+        try {
+          const response = await fetch(
+            `${BASE_URL}/api/s3/admin/set-public-policy`,
+            {
+              method: "POST",
+            }
+          );
+
+          const result = await response.json();
+
+          if (response.ok) {
+            alert("버킷 정책이 공개 읽기로 설정되었습니다.");
+          } else {
+            alert("버킷 정책 설정 실패: " + result.error);
+          }
+        } catch (error) {
+          alert("버킷 정책 설정 중 오류 발생: " + error.message);
+        }
+      }
+
+      // 통계 조회
+      async function getStats() {
+        try {
+          const response = await fetch(`${BASE_URL}/api/s3/stats`);
+          const result = await response.json();
+
+          if (response.ok) {
+            const statsDiv = document.getElementById("statsResult");
+            const contentDiv = document.getElementById("statsContent");
+
+            contentDiv.innerHTML = `
+              <p><strong>총 이미지 수:</strong> ${result.totalImages}</p>
+              <p><strong>총 파일 크기:</strong> ${result.totalFileSize} bytes</p>
+              <p><strong>평균 파일 크기:</strong> ${result.averageFileSize} bytes</p>
+              <p><strong>사용자별 이미지 수:</strong> ${result.imagesByUser}</p>
+            `;
+
+            statsDiv.style.display = "block";
+          } else {
+            alert("통계 조회 실패: " + result.error);
+          }
+        } catch (error) {
+          alert("통계 조회 중 오류 발생: " + error.message);
+        }
+      }
+
+      // 이미지 목록 로드
+      async function loadImageList() {
+        try {
+          const response = await fetch(`${BASE_URL}/api/s3/stats`);
+          const stats = await response.json();
+
+          if (response.ok) {
+            // 통계에서 총 이미지 수만 가져와서 간단한 목록 표시
+            const listDiv = document.getElementById("imageList");
+            listDiv.innerHTML = `
+              <div class="image-item">
+                <p><strong>총 이미지 수:</strong> ${stats.totalImages}</p>
+                <p><strong>총 파일 크기:</strong> ${stats.totalFileSize} bytes</p>
+                <p><em>개별 이미지 목록은 API에서 제거되었습니다.</em></p>
+                <p><em>이미지는 URL로 직접 접근하세요.</em></p>
+              </div>
+            `;
+          } else {
+            document.getElementById(
+              "imageList"
+            ).innerHTML = `<div class="error">이미지 목록 로드 실패: ${stats.error}</div>`;
+          }
+        } catch (error) {
+          document.getElementById(
+            "imageList"
+          ).innerHTML = `<div class="error">이미지 목록 로드 중 오류 발생: ${error.message}</div>`;
+        }
+      }
+
+      // 페이지 로드 시 이미지 목록 로드
+      window.onload = function () {
+        loadImageList();
+      };
+    </script>
+  </body>
+</html>

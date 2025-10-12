@@ -43,7 +43,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
     "com.PBL.lab",        // 기존 Judge0 패키지
     "com.PBL.lecture",    // Lecture 패키지
     "com.PBL.curriculum", // Curriculum 패키지
-    "com.PBL.user"        // User 패키지
+    "com.PBL.user",       // User 패키지
+    "com.PBL.s3"          // S3 패키지
 })
 public class PBLApplication {
 

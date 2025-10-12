@@ -1,5 +1,5 @@
 -- 샘플 커리큘럼 데이터 삽입
--- V27__Insert_sample_curriculums.sql
+-- V28__Insert_sample_curriculums.sql
 
 -- 샘플 강사 사용자 추가 (커리큘럼 작성자로 사용)
 INSERT INTO users (username, login_id, password) VALUES

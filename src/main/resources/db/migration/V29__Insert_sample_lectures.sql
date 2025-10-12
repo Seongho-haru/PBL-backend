@@ -1,5 +1,5 @@
 -- 샘플 강의 데이터 삽입 및 커리큘럼 연결
--- V28__Insert_sample_lectures.sql
+-- V29__Insert_sample_lectures.sql
 
 -- 커리큘럼 1 (알고리즘) 강의들
 INSERT INTO lectures (title, description, type, category, difficulty, is_public, author_id, created_at, updated_at) VALUES

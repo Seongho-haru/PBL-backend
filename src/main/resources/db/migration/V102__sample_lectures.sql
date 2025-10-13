@@ -1,5 +1,5 @@
 -- 샘플 강의 데이터 삽입 및 커리큘럼 연결
--- V29__Insert_sample_lectures.sql
+-- V102__sample_lectures.sql
 
 -- ============================================
 -- 커리큘럼 1: Introduction To Algorithms

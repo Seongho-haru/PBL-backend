@@ -1,4 +1,5 @@
-version: "3.8"
+# OCI 서버용 Docker Compose
+# 사용법: docker-compose -f docker-compose.prod.yml up -d
 
 # Default logging configuration
 x-logging: &default-logging
@@ -9,56 +10,48 @@ x-logging: &default-logging
       max-file: "3"
 
 services:
-  # Watchtower for automatic container updates
+  # Watchtower - 자동 업데이트
   watchtower:
     image: containrrr/watchtower:latest
     container_name: watchtower
     restart: unless-stopped
-    environment:
-      - WATCHTOWER_POLL_INTERVAL=300 # Check every 5 minutes
-      - WATCHTOWER_CLEANUP=true # Remove old images
-      - WATCHTOWER_INCLUDE_STOPPED=true
-      - WATCHTOWER_REVIVE_STOPPED=true
-      - WATCHTOWER_NOTIFICATIONS=slack
-      - WATCHTOWER_NOTIFICATION_SLACK_HOOK_URL=${SLACK_WEBHOOK_URL}
-      - WATCHTOWER_NOTIFICATION_SLACK_IDENTIFIER=watchtower-pbl
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: --interval 300 --cleanup --include-stopped --revive-stopped
     <<: *default-logging
 
-  # PBL Backend Application (로컬 개발용 - gradlew bootRun 사용)
-  # pbl-backend:
-  #   image: ${REGISTRY:-icn.ocir.io}/${OCI_NAMESPACE}/pbl-backend:latest
-  #   container_name: pbl-backend
-  #   restart: unless-stopped
-  #   environment:
-  #     - SPRING_PROFILES_ACTIVE=production
-  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/judge0
-  #     - SPRING_DATASOURCE_USERNAME=judge0
-  #     - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
-  #     - SPRING_REDIS_HOST=redis
-  #     - SPRING_REDIS_PORT=6379
-  #     - SPRING_REDIS_PASSWORD=${REDIS_PASSWORD}
-  #     - MINIO_ENDPOINT=http://minio:9000
-  #     - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
-  #     - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
-  #     - CHROMA_HOST=chromadb
-  #     - CHROMA_PORT=8000
-  #   ports:
-  #     - "2358:2358"
-  #   depends_on:
-  #     - db
-  #     - redis
-  #     - chromadb
-  #     - minio
-  #   <<: *default-logging
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:2358/health"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 60s
+  # PBL Backend Application
+  pbl-backend:
+    image: icn.ocir.io/axhpzvebxinb/pbl-backend:latest
+    container_name: pbl-backend
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/judge0
+      - SPRING_DATASOURCE_USERNAME=judge0
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-judge0pass}
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin123}
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+    ports:
+      - "2358:2358"
+    depends_on:
+      - db
+      - redis
+      - chromadb
+      - minio
+    <<: *default-logging
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:2358/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # PostgreSQL Database
   db:
@@ -153,6 +146,7 @@ volumes:
     driver: local
   minio_data:
     driver: local
+
 networks:
   default:
     name: judge0-network

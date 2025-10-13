@@ -18,7 +18,7 @@ COPY src ./src
 RUN gradle build -x test --no-daemon
 
 # Production stage
-FROM eclipse-temurin:17-jdk-alpine AS production
+FROM openjdk:17-jdk-alpine AS production
 
 # Install required packages
 RUN apk add --no-cache \

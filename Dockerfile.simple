@@ -1,0 +1,25 @@
+# Simple Dockerfile for ARM64 testing
+FROM openjdk:17-jdk-alpine
+
+# Install required packages
+RUN apk add --no-cache curl bash
+
+# Set working directory
+WORKDIR /app
+
+# Copy JAR file (assume it's built locally)
+COPY build/libs/*.jar app.jar
+
+# Expose port
+EXPOSE 2358
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:2358/health || exit 1
+
+# Environment variables
+ENV JAVA_OPTS="-Xmx1g -Xms512m" \
+    SPRING_PROFILES_ACTIVE="production"
+
+# Entry point
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

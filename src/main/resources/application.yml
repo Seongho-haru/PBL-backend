@@ -9,14 +9,14 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate   # 운영은 validate 또는 none 권장 (현재 none이라면 그대로 유지도 OK)
+      ddl-auto: validate # 운영은 validate 또는 none 권장 (현재 none이라면 그대로 유지도 OK)
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
   flyway:
     enabled: true
-    clean-disabled: true   # 운영 안전장치 권장
+    clean-disabled: true # 운영 안전장치 권장
     locations:
       - classpath:db/migration
       - classpath:db/migration/postgresql
@@ -41,12 +41,7 @@ spring:
       enabled: true
 
   # Flyway Configuration - DISABLED for demo
-  flyway:
-    enabled: true
-    clean-disabled: false
-    locations:
-      - classpath:db/migration
-      - classpath:db/migration/postgresql
+  # (중복 flyway 블록 제거됨)
 
 # OpenAI
 langchain4j:

@@ -6,6 +6,7 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +62,7 @@ public class Curriculum {
      * 0.0 ~ 5.0
      */
     @Column(precision = 3, scale = 2)
-    private Double averageRating = 0.0;
+    private BigDecimal averageRating = BigDecimal.ZERO;
 
     /**
      * 수강생 수
@@ -289,11 +290,11 @@ public class Curriculum {
         this.summary = summary;
     }
 
-    public Double getAverageRating() {
+    public BigDecimal getAverageRating() {
         return averageRating;
     }
 
-    public void setAverageRating(Double averageRating) {
+    public void setAverageRating(BigDecimal averageRating) {
         this.averageRating = averageRating;
     }
 

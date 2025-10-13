@@ -51,41 +51,16 @@ Judge0는 온라인 코드 실행을 위한 강력한 API입니다. 이 프로�
 git clone [repository-url]
 cd PBL-backend
 
-# 환경 설정 파일 생성
-cp env.prod.example .env.prod
-# .env.prod 파일을 열어서 데이터베이스 비밀번호 등 필요한 값들을 설정하세요
+# 환경별 설정 파일 생성
+# Windows: cp env.windows.example .env
+# Mac/Linux: cp env.unix.example .env
 
-# 로컬 개발 환경 실행
+# 인프라 실행
 docker-compose up -d
+
+# 애플리케이션 실행 (개발용)
+./gradlew bootRun
 ```
-
-#### OCI 프로덕션 배포
-
-```bash
-# OCI 인스턴스에서 실행
-git clone [repository-url]
-cd PBL-backend
-
-# 환경 설정 (선택사항 - 기본값으로도 실행 가능)
-cp env.prod.example .env.prod
-nano .env.prod  # OCI 설정 입력 (REGISTRY, OCI_NAMESPACE만 필수)
-
-# OCI 레지스트리 로그인
-docker login iad.ocir.io
-
-# 빠른 배포
-chmod +x scripts/quick-deploy.sh
-./scripts/quick-deploy.sh
-```
-
-### 🔄 자동 배포 (Watchtower)
-
-GitHub에 푸시하면 자동으로 OCI에 배포됩니다:
-
-1. **GitHub Actions**가 자동으로 이미지를 빌드하고 OCI Container Registry에 푸시
-2. **Watchtower**가 5분마다 새 이미지를 확인하고 자동으로 컨테이너 재시작
-
-자세한 설정 방법은 [OCI 배포 가이드](docs/OCI_DEPLOYMENT_GUIDE.md)를 참조하세요.
 
 ### 환경 설정
 

@@ -11,7 +11,7 @@ ADD COLUMN summary VARCHAR(500);
 
 -- 평균 별점 필드 추가 (0.0 ~ 5.0)
 ALTER TABLE curriculums 
-ADD COLUMN average_rating DECIMAL(3,2) DEFAULT 0.0;
+ADD COLUMN average_rating DECIMAL(3,2) DEFAULT 0.00;
 
 -- 수강생 수 필드 추가
 ALTER TABLE curriculums 
@@ -27,7 +27,7 @@ UPDATE curriculums
 SET 
     difficulty = '기초',
     summary = SUBSTRING(description, 1, 100),
-    average_rating = 0.0,
+    average_rating = 0.00,
     student_count = 0
 WHERE difficulty IS NULL;
 

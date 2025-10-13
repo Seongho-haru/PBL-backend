@@ -27,38 +27,38 @@ services:
     command: --interval 300 --cleanup --include-stopped --revive-stopped
     <<: *default-logging
 
-  # PBL Backend Application
-  pbl-backend:
-    image: ${REGISTRY:-iad.ocir.io}/${OCI_NAMESPACE}/pbl-backend:latest
-    container_name: pbl-backend
-    restart: unless-stopped
-    environment:
-      - SPRING_PROFILES_ACTIVE=production
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/judge0
-      - SPRING_DATASOURCE_USERNAME=judge0
-      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
-      - SPRING_REDIS_HOST=redis
-      - SPRING_REDIS_PORT=6379
-      - SPRING_REDIS_PASSWORD=${REDIS_PASSWORD}
-      - MINIO_ENDPOINT=http://minio:9000
-      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
-      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
-      - CHROMA_HOST=chromadb
-      - CHROMA_PORT=8000
-    ports:
-      - "2358:2358"
-    depends_on:
-      - db
-      - redis
-      - chromadb
-      - minio
-    <<: *default-logging
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:2358/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+  # PBL Backend Application (로컬 개발용 - 주석 처리)
+  # pbl-backend:
+  #   image: ${REGISTRY:-icn.ocir.io}/${OCI_NAMESPACE}/pbl-backend:latest
+  #   container_name: pbl-backend
+  #   restart: unless-stopped
+  #   environment:
+  #     - SPRING_PROFILES_ACTIVE=production
+  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/judge0
+  #     - SPRING_DATASOURCE_USERNAME=judge0
+  #     - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+  #     - SPRING_REDIS_HOST=redis
+  #     - SPRING_REDIS_PORT=6379
+  #     - SPRING_REDIS_PASSWORD=${REDIS_PASSWORD}
+  #     - MINIO_ENDPOINT=http://minio:9000
+  #     - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
+  #     - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+  #     - CHROMA_HOST=chromadb
+  #     - CHROMA_PORT=8000
+  #   ports:
+  #     - "2358:2358"
+  #   depends_on:
+  #     - db
+  #     - redis
+  #     - chromadb
+  #     - minio
+  #   <<: *default-logging
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:2358/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 60s
 
   # PostgreSQL Database
   db:

@@ -243,8 +243,7 @@ judge0:
 
   # Docker Configuration
   docker:
-    #host: "unix:///var/run/docker.sock"
-    host: "npipe:////./pipe/docker_engine"
+    host: ${DOCKER_HOST:unix:///var/run/docker.sock}
     registry-url: "docker.io"
     max-concurrent-containers: 10
     container-timeout: 300
@@ -324,3 +323,14 @@ s3:
   bucket-name: pbl-images
   region: us-east-1
   base-url: http://localhost:9000
+
+---
+# Windows Profile
+spring:
+  config:
+    activate:
+      on-profile: windows
+
+judge0:
+  docker:
+    host: "npipe:////./pipe/docker_engine" # Windows Docker Desktop

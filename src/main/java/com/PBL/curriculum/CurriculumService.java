@@ -375,7 +375,7 @@ public class CurriculumService {
     /**
      * 커리큘럼의 평균 별점 업데이트
      */
-    public void updateAverageRating(Long curriculumId, Double newRating) {
+    public void updateAverageRating(Long curriculumId, java.math.BigDecimal newRating) {
         Curriculum curriculum = curriculumRepository.findById(curriculumId)
                 .orElseThrow(() -> new RuntimeException("커리큘럼을 찾을 수 없습니다: " + curriculumId));
         

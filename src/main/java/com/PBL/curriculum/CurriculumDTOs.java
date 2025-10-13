@@ -55,7 +55,7 @@ public class CurriculumDTOs {
         private String summary;
 
         @Schema(description = "평균 별점")
-        private Double averageRating;
+        private java.math.BigDecimal averageRating;
 
         @Schema(description = "수강생 수")
         private Integer studentCount;
@@ -134,8 +134,8 @@ public class CurriculumDTOs {
         public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
         public String getSummary() { return summary; }
         public void setSummary(String summary) { this.summary = summary; }
-        public Double getAverageRating() { return averageRating; }
-        public void setAverageRating(Double averageRating) { this.averageRating = averageRating; }
+        public java.math.BigDecimal getAverageRating() { return averageRating; }
+        public void setAverageRating(java.math.BigDecimal averageRating) { this.averageRating = averageRating; }
         public Integer getStudentCount() { return studentCount; }
         public void setStudentCount(Integer studentCount) { this.studentCount = studentCount; }
     }
@@ -185,7 +185,7 @@ public class CurriculumDTOs {
         private String summary;
 
         @Schema(description = "평균 별점")
-        private Double averageRating;
+        private java.math.BigDecimal averageRating;
 
         @Schema(description = "수강생 수")
         private Integer studentCount;
@@ -252,8 +252,8 @@ public class CurriculumDTOs {
         public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
         public String getSummary() { return summary; }
         public void setSummary(String summary) { this.summary = summary; }
-        public Double getAverageRating() { return averageRating; }
-        public void setAverageRating(Double averageRating) { this.averageRating = averageRating; }
+        public java.math.BigDecimal getAverageRating() { return averageRating; }
+        public void setAverageRating(java.math.BigDecimal averageRating) { this.averageRating = averageRating; }
         public Integer getStudentCount() { return studentCount; }
         public void setStudentCount(Integer studentCount) { this.studentCount = studentCount; }
     }

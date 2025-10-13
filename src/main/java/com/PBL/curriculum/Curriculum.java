@@ -43,6 +43,34 @@ public class Curriculum {
     private Boolean isPublic = false;
 
     /**
+     * 커리큘럼 난이도
+     * 기초, 중급, 고급, 전문가
+     */
+    @Column(length = 20)
+    private String difficulty;
+
+    /**
+     * 커리큘럼 간단 소개
+     * 목록에서 보여줄 짧은 설명
+     */
+    @Column(length = 500)
+    private String summary;
+
+    /**
+     * 평균 별점
+     * 0.0 ~ 5.0
+     */
+    @Column(precision = 3, scale = 2)
+    private Double averageRating = 0.0;
+
+    /**
+     * 수강생 수
+     * 현재 수강 중인 학생 수
+     */
+    @Column
+    private Integer studentCount = 0;
+
+    /**
      * 커리큘럼 작성자
      * 커리큘럼을 생성한 사용자
      */
@@ -243,5 +271,37 @@ public class Curriculum {
 
     public void setAuthor(User author) {
         this.author = author;
+    }
+
+    public String getDifficulty() {
+        return difficulty;
+    }
+
+    public void setDifficulty(String difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public Double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(Double averageRating) {
+        this.averageRating = averageRating;
+    }
+
+    public Integer getStudentCount() {
+        return studentCount;
+    }
+
+    public void setStudentCount(Integer studentCount) {
+        this.studentCount = studentCount;
     }
 }

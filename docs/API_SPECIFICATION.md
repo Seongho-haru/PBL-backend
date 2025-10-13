@@ -7,7 +7,7 @@ PBL(Problem-Based Learning) 백엔드 API 명세서입니다. 사용자 인증, 
 ## 🔗 Base URL
 
 ```
-http://localhost:2358
+http://114.201.56.70:2358
 ```
 
 ## 🔐 인증 방식
@@ -366,7 +366,9 @@ Content-Type: application/json
 {
   "title": "커리큘럼 제목",
   "description": "커리큘럼 설명",
-  "isPublic": true
+  "isPublic": true,
+  "difficulty": "기초",
+  "summary": "커리큘럼 간단 소개"
 }
 ```
 
@@ -378,6 +380,10 @@ Content-Type: application/json
   "title": "커리큘럼 제목",
   "description": "커리큘럼 설명",
   "isPublic": true,
+  "difficulty": "기초",
+  "summary": "커리큘럼 간단 소개",
+  "averageRating": 0.0,
+  "studentCount": 0,
   "totalLectureCount": 0,
   "requiredLectureCount": 0,
   "optionalLectureCount": 0,
@@ -409,6 +415,10 @@ X-User-Id: {사용자ID}
   "title": "커리큘럼 제목",
   "description": "커리큘럼 설명",
   "isPublic": true,
+  "difficulty": "기초",
+  "summary": "커리큘럼 간단 소개",
+  "averageRating": 4.5,
+  "studentCount": 15,
   "totalLectureCount": 2,
   "requiredLectureCount": 1,
   "optionalLectureCount": 1,
@@ -531,6 +541,10 @@ X-User-Id: {사용자ID}
     "title": "커리큘럼 제목",
     "description": "커리큘럼 설명",
     "isPublic": true,
+    "difficulty": "기초",
+    "summary": "커리큘럼 간단 소개",
+    "averageRating": 4.5,
+    "studentCount": 15,
     "totalLectureCount": 2,
     "requiredLectureCount": 1,
     "optionalLectureCount": 1,
@@ -563,6 +577,10 @@ X-User-Id: {사용자ID}
     "title": "공개 커리큘럼",
     "description": "커리큘럼 설명",
     "isPublic": true,
+    "difficulty": "중급",
+    "summary": "공개 커리큘럼 간단 소개",
+    "averageRating": 4.2,
+    "studentCount": 25,
     "totalLectureCount": 3,
     "requiredLectureCount": 2,
     "optionalLectureCount": 1,

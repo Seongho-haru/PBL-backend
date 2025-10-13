@@ -98,6 +98,19 @@ public class CurriculumService {
     }
 
     /**
+     * 커리큘럼 생성 (작성자 및 메타데이터 포함)
+     */
+    public Curriculum createCurriculum(String title, String description, boolean isPublic, User author, 
+                                     String difficulty, String summary) {
+        Curriculum curriculum = new Curriculum(title, description);
+        curriculum.setIsPublic(isPublic);
+        curriculum.setAuthor(author);
+        curriculum.setDifficulty(difficulty);
+        curriculum.setSummary(summary);
+        return curriculumRepository.save(curriculum);
+    }
+
+    /**
      * 커리큘럼 수정
      */
     public Curriculum updateCurriculum(Long id, String title, String description, Boolean isPublic) {
@@ -330,5 +343,43 @@ public class CurriculumService {
      */
     public List<Curriculum> getUserPublicCurriculums(Long userId) {
         return curriculumRepository.findByAuthorIdAndIsPublicWithLectures(userId, true);
+    }
+
+    // === 수강생 수 관리 ===
+
+    /**
+     * 커리큘럼의 수강생 수 증가
+     */
+    public void incrementStudentCount(Long curriculumId) {
+        Curriculum curriculum = curriculumRepository.findById(curriculumId)
+                .orElseThrow(() -> new RuntimeException("커리큘럼을 찾을 수 없습니다: " + curriculumId));
+        
+        curriculum.setStudentCount(curriculum.getStudentCount() + 1);
+        curriculumRepository.save(curriculum);
+    }
+
+    /**
+     * 커리큘럼의 수강생 수 감소
+     */
+    public void decrementStudentCount(Long curriculumId) {
+        Curriculum curriculum = curriculumRepository.findById(curriculumId)
+                .orElseThrow(() -> new RuntimeException("커리큘럼을 찾을 수 없습니다: " + curriculumId));
+        
+        int currentCount = curriculum.getStudentCount();
+        if (currentCount > 0) {
+            curriculum.setStudentCount(currentCount - 1);
+            curriculumRepository.save(curriculum);
+        }
+    }
+
+    /**
+     * 커리큘럼의 평균 별점 업데이트
+     */
+    public void updateAverageRating(Long curriculumId, Double newRating) {
+        Curriculum curriculum = curriculumRepository.findById(curriculumId)
+                .orElseThrow(() -> new RuntimeException("커리큘럼을 찾을 수 없습니다: " + curriculumId));
+        
+        curriculum.setAverageRating(newRating);
+        curriculumRepository.save(curriculum);
     }
 }

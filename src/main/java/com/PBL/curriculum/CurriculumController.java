@@ -100,7 +100,9 @@ public class CurriculumController {
                     request.getTitle(),
                     request.getDescription(),
                     request.isPublic(),
-                    author
+                    author,
+                    request.getDifficulty(),
+                    request.getSummary()
             );
             return ResponseEntity.ok(new CurriculumResponse(curriculum));
         } catch (Exception e) {

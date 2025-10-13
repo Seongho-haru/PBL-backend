@@ -6,7 +6,7 @@
 
 ## 🔗 기본 정보
 
-- **Base URL**: `http://localhost:2358`
+- **Base URL**: `http://114.201.56.70:2358`
 - **API Prefix**: `/api/s3`
 - **Content-Type**: `multipart/form-data` (업로드), `application/json` (기타)
 

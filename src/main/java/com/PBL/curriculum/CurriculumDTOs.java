@@ -48,6 +48,18 @@ public class CurriculumDTOs {
         @Schema(description = "작성자 정보")
         private AuthorInfo author;
 
+        @Schema(description = "커리큘럼 난이도")
+        private String difficulty;
+
+        @Schema(description = "커리큘럼 간단 소개")
+        private String summary;
+
+        @Schema(description = "평균 별점")
+        private Double averageRating;
+
+        @Schema(description = "수강생 수")
+        private Integer studentCount;
+
         // 생성자
         public CurriculumResponse() {}
 
@@ -56,6 +68,10 @@ public class CurriculumDTOs {
             this.title = curriculum.getTitle();
             this.description = curriculum.getDescription();
             this.isPublic = curriculum.getIsPublic();
+            this.difficulty = curriculum.getDifficulty();
+            this.summary = curriculum.getSummary();
+            this.averageRating = curriculum.getAverageRating();
+            this.studentCount = curriculum.getStudentCount();
             this.createdAt = curriculum.getCreatedAt();
             this.updatedAt = curriculum.getUpdatedAt();
             
@@ -114,6 +130,14 @@ public class CurriculumDTOs {
         public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
         public AuthorInfo getAuthor() { return author; }
         public void setAuthor(AuthorInfo author) { this.author = author; }
+        public String getDifficulty() { return difficulty; }
+        public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
+        public String getSummary() { return summary; }
+        public void setSummary(String summary) { this.summary = summary; }
+        public Double getAverageRating() { return averageRating; }
+        public void setAverageRating(Double averageRating) { this.averageRating = averageRating; }
+        public Integer getStudentCount() { return studentCount; }
+        public void setStudentCount(Integer studentCount) { this.studentCount = studentCount; }
     }
 
     /**
@@ -151,6 +175,21 @@ public class CurriculumDTOs {
         @Schema(description = "수정 시간")
         private LocalDateTime updatedAt;
 
+        @Schema(description = "작성자 정보")
+        private AuthorInfo author;
+
+        @Schema(description = "커리큘럼 난이도")
+        private String difficulty;
+
+        @Schema(description = "커리큘럼 간단 소개")
+        private String summary;
+
+        @Schema(description = "평균 별점")
+        private Double averageRating;
+
+        @Schema(description = "수강생 수")
+        private Integer studentCount;
+
         // 생성자
         public CurriculumDetailResponse() {}
 
@@ -159,6 +198,10 @@ public class CurriculumDTOs {
             this.title = curriculum.getTitle();
             this.description = curriculum.getDescription();
             this.isPublic = curriculum.getIsPublic();
+            this.difficulty = curriculum.getDifficulty();
+            this.summary = curriculum.getSummary();
+            this.averageRating = curriculum.getAverageRating();
+            this.studentCount = curriculum.getStudentCount();
             this.lectures = curriculum.getLectures().stream()
                     .map(CurriculumLectureResponse::new)
                     .collect(Collectors.toList());
@@ -167,6 +210,19 @@ public class CurriculumDTOs {
             this.optionalLectureCount = curriculum.getOptionalLectureCount();
             this.createdAt = curriculum.getCreatedAt();
             this.updatedAt = curriculum.getUpdatedAt();
+            
+            // 작성자 정보 설정
+            try {
+                if (curriculum.getAuthor() != null) {
+                    this.author = new AuthorInfo();
+                    this.author.setId(curriculum.getAuthor().getId());
+                    this.author.setUsername(curriculum.getAuthor().getUsername());
+                    this.author.setLoginId(curriculum.getAuthor().getLoginId());
+                }
+            } catch (Exception e) {
+                // Lazy Loading 실패 시 null로 설정
+                this.author = null;
+            }
         }
 
         // Getters and Setters
@@ -190,6 +246,16 @@ public class CurriculumDTOs {
         public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
         public LocalDateTime getUpdatedAt() { return updatedAt; }
         public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+        public AuthorInfo getAuthor() { return author; }
+        public void setAuthor(AuthorInfo author) { this.author = author; }
+        public String getDifficulty() { return difficulty; }
+        public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
+        public String getSummary() { return summary; }
+        public void setSummary(String summary) { this.summary = summary; }
+        public Double getAverageRating() { return averageRating; }
+        public void setAverageRating(Double averageRating) { this.averageRating = averageRating; }
+        public Integer getStudentCount() { return studentCount; }
+        public void setStudentCount(Integer studentCount) { this.studentCount = studentCount; }
     }
 
     /**
@@ -300,6 +366,12 @@ public class CurriculumDTOs {
         @Schema(description = "작성자 ID")
         private Long authorId;
 
+        @Schema(description = "커리큘럼 난이도")
+        private String difficulty;
+
+        @Schema(description = "커리큘럼 간단 소개")
+        private String summary;
+
         // Getters and Setters
         public String getTitle() { return title; }
         public void setTitle(String title) { this.title = title; }
@@ -309,6 +381,10 @@ public class CurriculumDTOs {
         public void setIsPublic(boolean isPublic) { this.isPublic = isPublic; }
         public Long getAuthorId() { return authorId; }
         public void setAuthorId(Long authorId) { this.authorId = authorId; }
+        public String getDifficulty() { return difficulty; }
+        public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
+        public String getSummary() { return summary; }
+        public void setSummary(String summary) { this.summary = summary; }
     }
 
     /**

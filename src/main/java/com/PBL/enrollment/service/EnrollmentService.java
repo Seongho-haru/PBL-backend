@@ -10,7 +10,6 @@ import com.PBL.enrollment.entity.LectureProgress;
 import com.PBL.enrollment.entity.ProgressStatus;
 import com.PBL.enrollment.repository.EnrollmentRepository;
 import com.PBL.enrollment.repository.LectureProgressRepository;
-import com.PBL.lecture.Lecture;
 import com.PBL.lecture.LectureService;
 import com.PBL.user.User;
 import com.PBL.user.UserService;
@@ -70,6 +69,9 @@ public class EnrollmentService {
         // 6. 강의별 진도 초기화
         initializeLectureProgress(enrollment, curriculum);
 
+        // 7. 커리큘럼 수강생 수 증가
+        curriculumService.incrementStudentCount(curriculumId);
+
         log.info("수강 신청 완료 - 수강 ID: {}", enrollment.getId());
         return enrollment;
     }
@@ -94,7 +96,11 @@ public class EnrollmentService {
         lectureProgressRepository.deleteAll(lectureProgresses);
 
         // 3. 수강 정보 삭제
+        Long curriculumId = enrollment.getCurriculum().getId();
         enrollmentRepository.delete(enrollment);
+
+        // 4. 커리큘럼 수강생 수 감소
+        curriculumService.decrementStudentCount(curriculumId);
 
         log.info("수강 취소 완료 - 수강 ID: {}", enrollmentId);
     }

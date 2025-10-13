@@ -22,7 +22,7 @@ services:
 
   # PBL Backend Application
   pbl-backend:
-    image: icn.ocir.io/axhpzvebxinb/pbl-backend:latest
+    image: pbl-backend:latest
     container_name: pbl-backend
     restart: unless-stopped
     environment:

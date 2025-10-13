@@ -1,5 +1,5 @@
 # Multi-stage build for Judge0 Spring Boot application
-FROM gradle:8.5-jdk17-alpine AS builder
+FROM --platform=${BUILD_PLATFORM:-linux/amd64} gradle:8.5-jdk17-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -18,7 +18,7 @@ COPY src ./src
 RUN gradle build -x test --no-daemon
 
 # Production stage
-FROM eclipse-temurin:17-jdk-alpine AS production
+FROM --platform=${BUILD_PLATFORM:-linux/amd64} eclipse-temurin:17-jdk-alpine AS production
 
 # Install required packages
 RUN apk add --no-cache \

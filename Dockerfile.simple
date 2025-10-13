@@ -1,5 +1,5 @@
 # Simple Dockerfile for ARM64 testing
-FROM openjdk:17-jdk-alpine
+FROM amazoncorretto:17-alpine
 
 # Install required packages
 RUN apk add --no-cache curl bash

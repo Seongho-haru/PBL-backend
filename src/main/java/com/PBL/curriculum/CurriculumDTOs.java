@@ -3,6 +3,7 @@ package com.PBL.curriculum;
 import com.PBL.lecture.Lecture;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -55,7 +56,7 @@ public class CurriculumDTOs {
         private String summary;
 
         @Schema(description = "평균 별점")
-        private java.math.BigDecimal averageRating;
+        private BigDecimal averageRating;
 
         @Schema(description = "수강생 수")
         private Integer studentCount;
@@ -134,8 +135,8 @@ public class CurriculumDTOs {
         public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
         public String getSummary() { return summary; }
         public void setSummary(String summary) { this.summary = summary; }
-        public java.math.BigDecimal getAverageRating() { return averageRating; }
-        public void setAverageRating(java.math.BigDecimal averageRating) { this.averageRating = averageRating; }
+        public BigDecimal getAverageRating() { return averageRating; }
+        public void setAverageRating(BigDecimal averageRating) { this.averageRating = averageRating; }
         public Integer getStudentCount() { return studentCount; }
         public void setStudentCount(Integer studentCount) { this.studentCount = studentCount; }
     }
@@ -185,7 +186,7 @@ public class CurriculumDTOs {
         private String summary;
 
         @Schema(description = "평균 별점")
-        private java.math.BigDecimal averageRating;
+        private BigDecimal averageRating;
 
         @Schema(description = "수강생 수")
         private Integer studentCount;
@@ -252,8 +253,8 @@ public class CurriculumDTOs {
         public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
         public String getSummary() { return summary; }
         public void setSummary(String summary) { this.summary = summary; }
-        public java.math.BigDecimal getAverageRating() { return averageRating; }
-        public void setAverageRating(java.math.BigDecimal averageRating) { this.averageRating = averageRating; }
+        public BigDecimal getAverageRating() { return averageRating; }
+        public void setAverageRating(BigDecimal averageRating) { this.averageRating = averageRating; }
         public Integer getStudentCount() { return studentCount; }
         public void setStudentCount(Integer studentCount) { this.studentCount = studentCount; }
     }

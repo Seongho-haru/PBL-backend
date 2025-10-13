@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -375,10 +376,10 @@ public class CurriculumService {
     /**
      * 커리큘럼의 평균 별점 업데이트
      */
-    public void updateAverageRating(Long curriculumId, java.math.BigDecimal newRating) {
+    public void updateAverageRating(Long curriculumId, BigDecimal newRating) {
         Curriculum curriculum = curriculumRepository.findById(curriculumId)
                 .orElseThrow(() -> new RuntimeException("커리큘럼을 찾을 수 없습니다: " + curriculumId));
-        
+
         curriculum.setAverageRating(newRating);
         curriculumRepository.save(curriculum);
     }

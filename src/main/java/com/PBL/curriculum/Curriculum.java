@@ -62,7 +62,7 @@ public class Curriculum {
      * 0.0 ~ 5.0
      */
     @Column(precision = 3, scale = 2)
-    private BigDecimal averageRating = BigDecimal.ZERO;
+    private BigDecimal averageRating = BigDecimal.valueOf(0.0);
 
     /**
      * 수강생 수

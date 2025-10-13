@@ -2,18 +2,24 @@ spring:
   application:
     name: judge0-spring
   datasource:
-    url: jdbc:postgresql://localhost:5432/judge0
+    url: jdbc:postgresql://judge0-db:5432/judge0
     username: judge0
     password: ${POSTGRES_PASSWORD:judge0pass}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate   # 운영은 validate 또는 none 권장 (현재 none이라면 그대로 유지도 OK)
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-    open-in-view: false
+
+  flyway:
+    enabled: true
+    clean-disabled: true   # 운영 안전장치 권장
+    locations:
+      - classpath:db/migration
+      - classpath:db/migration/postgresql
   # Cache Configuration (Simple in-memory)
   cache:
     type: simple
@@ -51,7 +57,7 @@ langchain4j:
     model-name: gpt-4o-mini
     embedding-model-name: text-embedding-3-small
   chroma:
-    url: http://localhost:8000
+    url: http://chromadb:8000
 org:
   jobrunr:
     background-job-server:
@@ -77,9 +83,9 @@ server:
 management:
   endpoints:
     web:
+      base-path: /actuator
       exposure:
         include: health,info,metrics,prometheus
-      base-path: /actuator
   endpoint:
     health:
       show-details: always
@@ -317,12 +323,12 @@ judge0:
 
 # S3 (MinIO) 설정
 s3:
-  endpoint: http://localhost:9000
+  endpoint: http://minio:9000
   access-key: minioadmin
   secret-key: minioadmin123
   bucket-name: pbl-images
   region: us-east-1
-  base-url: http://localhost:9000
+  base-url: http://minio:9000
 
 ---
 # Windows Profile

@@ -1,5 +1,6 @@
 # Multi-stage build for Judge0 Spring Boot application
-FROM gradle:8.5-jdk17-alpine AS builder
+# (ARM64 호환: alpine 변형 대신 multi-arch 태그 사용)
+FROM gradle:8.5-jdk17 AS builder
 
 # Set working directory
 WORKDIR /app
@@ -17,8 +18,8 @@ COPY src ./src
 # Build application
 RUN gradle build -x test --no-daemon
 
-# Production stage
-FROM amazoncorretto:17-alpine AS production
+# Production stage (ARM64 호환 alpine JRE)
+FROM eclipse-temurin:17-jre-alpine AS production
 
 # Install required packages
 RUN apk add --no-cache \
@@ -40,12 +41,11 @@ WORKDIR /app
 # Copy built JAR from builder stage
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-# Copy additional configuration files if needed
-COPY --from=builder /app/src/main/resources/application.yml application.yml
+# (보통 application.yml은 JAR에 포함됩니다. 외부로 덮어쓸 때만 사용하세요)
+# COPY --from=builder /app/src/main/resources/application.yml application.yml
 
 # Create necessary directories
-RUN mkdir -p /app/logs && \
-    mkdir -p /app/tmp && \
+RUN mkdir -p /app/logs /app/tmp && \
     chown -R judge0:judge0 /app
 
 # Expose port

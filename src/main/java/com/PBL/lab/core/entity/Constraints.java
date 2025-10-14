@@ -197,8 +197,10 @@ public class Constraints {
      * - 프로젝트 제출 시 포함되는 추가 파일들
      * - ZIP, TAR 등 압축된 바이너리 형태로 저장
      * - 다중 파일 프로젝트 지원
+     *
+     * Note: @Lob를 제거함 - PostgreSQL에서 byte[]에 @Lob를 사용하면
+     * oid 타입으로 매핑되어 bytea와 충돌함. columnDefinition만으로 충분.
      */
-    @Lob
     @Column(name = "additional_files", columnDefinition = "bytea")
     private byte[] additionalFiles;
 

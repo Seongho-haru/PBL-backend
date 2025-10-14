@@ -103,5 +103,5 @@ INSERT INTO languages (id, name, compile_cmd, run_cmd, source_file, is_archived)
 -- Set sequence to continue from the highest ID
 SELECT setval('languages_id_seq', (SELECT MAX(id) FROM languages));
 
-INSERT INTO submission_constraints (id, number_of_runs, cpu_time_limit, cpu_extra_time, wall_time_limit, memory_limit, stack_limit, max_processes_and_or_threads, enable_per_process_and_thread_time_limit, enable_per_process_and_thread_memory_limit, max_file_size, compiler_options, command_line_arguments, redirect_stderr_to_stdout, callback_url, additional_files, enable_network) VALUES
-(1, 1, 5.0, 1.0, 10.0, 128000, 64000, 60, false, false, 1024, NULL, NULL, false, NULL, NULL, false);
+INSERT INTO submission_constraints ( number_of_runs, cpu_time_limit, cpu_extra_time, wall_time_limit, memory_limit, stack_limit, max_processes_and_or_threads, enable_per_process_and_thread_time_limit, enable_per_process_and_thread_memory_limit, max_file_size, compiler_options, command_line_arguments, redirect_stderr_to_stdout, callback_url, additional_files, enable_network) VALUES
+(1, 5.0, 1.0, 10.0, 128000, 64000, 60, false, false, 1024, NULL, NULL, false, NULL, NULL, false);

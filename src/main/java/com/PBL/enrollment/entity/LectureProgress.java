@@ -1,7 +1,7 @@
 package com.PBL.enrollment.entity;
 
 import com.PBL.curriculum.CurriculumLecture;
-import com.PBL.lecture.Lecture;
+import com.PBL.lecture.entity.Lecture;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

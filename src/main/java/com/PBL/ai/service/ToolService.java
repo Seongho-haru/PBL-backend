@@ -8,10 +8,9 @@ import com.PBL.lab.grading.service.GradingService;
 import com.PBL.lab.judge0.dto.SubmissionResponse;
 import com.PBL.lab.judge0.entity.Submission;
 import com.PBL.lab.judge0.service.SubmissionService;
-import com.PBL.lecture.Lecture;
+import com.PBL.lecture.entity.Lecture;
 import com.PBL.lecture.LectureService;
 import com.PBL.lecture.LectureType;
-import com.PBL.user.User;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.AllArgsConstructor;
@@ -148,26 +147,26 @@ public class ToolService {
     @Tool("강의 ID로 강의의 기본 정보를 조회합니다. 제목, 설명, 타입, 카테고리, 난이도 등을 확인할 수 있습니다.")
     public Lecture getLecture(@P("조회할 강의 ID") Long lectureId) {
         log.debug("🔧 [도구 호출] getLecture - 파라미터: lectureId={}", lectureId);
-        Lecture result = lectureService.getLecture(lectureId)
+        Lecture result = lectureService.findLectureEntity(lectureId)
                 .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + lectureId));
         log.debug("✅ [도구 결과] getLecture - 강의명: {}, 타입: {}", result.getTitle(), result.getType());
         return result;
     }
 
-    @Tool("강의 ID로 테스트케이스를 포함한 상세 정보를 조회합니다. 문제 타입 강의의 입출력 예제와 테스트 케이스를 확인할 수 있습니다.")
-    public Lecture getLectureWithTestCases(@P("조회할 강의 ID") Long lectureId) {
-        log.debug("🔧 [도구 호출] getLectureWithTestCases - 파라미터: lectureId={}", lectureId);
-        Lecture result = lectureService.getLectureWithTestCases(lectureId)
-                .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + lectureId));
-        log.debug("✅ [도구 결과] getLectureWithTestCases - 테스트케이스 수: {}", 
-            result.getTestCases() != null ? result.getTestCases().size() : 0);
-        return result;
-    }
+    // @Tool("강의 ID로 테스트케이스를 포함한 상세 정보를 조회합니다. 문제 타입 강의의 입출력 예제와 테스트 케이스를 확인할 수 있습니다.")
+    // public Lecture getLectureWithTestCases(@P("조회할 강의 ID") Long lectureId) {
+    //     log.debug("🔧 [도구 호출] getLectureWithTestCases - 파라미터: lectureId={}", lectureId);
+    //     Lecture result = lectureService.findLectureEntityWithTestCases(lectureId)
+    //             .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + lectureId));
+    //     log.debug("✅ [도구 결과] getLectureWithTestCases - 테스트케이스 수: {}",
+    //         result.getTestCases() != null ? result.getTestCases().size() : 0);
+    //     return result;
+    // }
 
     @Tool("강의 제목으로 검색합니다. 부분 일치로 검색되며, 대소문자를 구분하지 않습니다.")
     public List<Lecture> searchLecturesByTitle(@P("검색할 강의 제목 (부분 일치)") String title) {
         log.debug("🔧 [도구 호출] searchLecturesByTitle - 파라미터: title={}", title);
-        List<Lecture> result = lectureService.searchLecturesByTitle(title);
+        List<Lecture> result = lectureService.findLectureEntitiesByTitle(title);
         log.debug("✅ [도구 결과] searchLecturesByTitle - 검색 결과: {}개", result.size());
         return result;
     }
@@ -175,7 +174,7 @@ public class ToolService {
     @Tool("카테고리별로 강의를 조회합니다. 예: '알고리즘', '자료구조', '웹개발', 'Python 기초' 등")
     public List<Lecture> getLecturesByCategory(@P("조회할 카테고리") String category) {
         log.debug("🔧 [도구 호출] getLecturesByCategory - 파라미터: category={}", category);
-        List<Lecture> result = lectureService.getLecturesByCategory(category);
+        List<Lecture> result = lectureService.findLectureEntitiesByCategory(category);
         log.debug("✅ [도구 결과] getLecturesByCategory - 강의 수: {}개", result.size());
         return result;
     }
@@ -185,7 +184,7 @@ public class ToolService {
         log.debug("🔧 [도구 호출] getLecturesByType - 파라미터: type={}", type);
         try {
             LectureType lectureType = LectureType.valueOf(type.toUpperCase());
-            List<Lecture> result = lectureService.getLecturesByType(lectureType);
+            List<Lecture> result = lectureService.findLectureEntitiesByType(lectureType);
             log.debug("✅ [도구 결과] getLecturesByType - 강의 수: {}개", result.size());
             return result;
         } catch (IllegalArgumentException e) {
@@ -197,7 +196,7 @@ public class ToolService {
     @Tool("최근에 생성된 강의 10개를 조회합니다. 새로운 강의를 추천할 때 유용합니다.")
     public List<Lecture> getRecentLectures() {
         log.debug("🔧 [도구 호출] getRecentLectures");
-        List<Lecture> result = lectureService.getRecentLectures();
+        List<Lecture> result = lectureService.findRecentLectureEntities();
         log.debug("✅ [도구 결과] getRecentLectures - 강의 수: {}개", result.size());
         return result;
     }
@@ -205,7 +204,7 @@ public class ToolService {
     @Tool("공개된 모든 강의를 조회합니다. 학생들이 접근 가능한 강의 목록입니다.")
     public List<Lecture> getPublicLectures() {
         log.debug("🔧 [도구 호출] getPublicLectures");
-        List<Lecture> result = lectureService.getPublicLectures();
+        List<Lecture> result = lectureService.findPublicLectureEntities();
         log.debug("✅ [도구 결과] getPublicLectures - 강의 수: {}개", result.size());
         return result;
     }
@@ -216,7 +215,7 @@ public class ToolService {
             @P("카테고리 (선택)") String category,
             @P("난이도: EASY, MEDIUM, HARD 등 (선택)") String difficulty,
             @P("강의 타입: THEORY, PRACTICE, PROBLEM (선택)") String type) {
-        log.debug("🔧 [도구 호출] searchPublicLectures - 파라미터: title={}, category={}, difficulty={}, type={}", 
+        log.debug("🔧 [도구 호출] searchPublicLectures - 파라미터: title={}, category={}, difficulty={}, type={}",
             title, category, difficulty, type);
         LectureType lectureType = null;
         if (type != null && !type.trim().isEmpty()) {
@@ -226,7 +225,7 @@ public class ToolService {
                 log.warn("⚠️ [도구 경고] searchPublicLectures - 잘못된 타입 무시: {}", type);
             }
         }
-        List<Lecture> result = lectureService.searchPublicLectures(title, category, difficulty, lectureType);
+        List<Lecture> result = lectureService.findPublicLectureEntitiesBySearch(title, category, difficulty, lectureType);
         log.debug("✅ [도구 결과] searchPublicLectures - 검색 결과: {}개", result.size());
         return result;
     }

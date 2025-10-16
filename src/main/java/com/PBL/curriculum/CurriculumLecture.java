@@ -1,6 +1,6 @@
 package com.PBL.curriculum;
 
-import com.PBL.lecture.Lecture;
+import com.PBL.lecture.entity.Lecture;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 

@@ -1,16 +1,17 @@
 package com.PBL.lecture;
 
+import com.PBL.lecture.dto.*;
+import com.PBL.lecture.entity.Lecture;
 import com.PBL.user.User;
 import com.PBL.user.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.data.domain.Page;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +23,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/lectures")
 @CrossOrigin(origins = "*") // 개발용 CORS 설정
+@Slf4j
 @Tag(name = "Lectures", description = "강의 관리 API - 마크다운 강의와 문제 강의를 통합 관리")
 public class LectureController {
 
@@ -50,50 +52,19 @@ public class LectureController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("error", "사용자 인증이 필요합니다."));
             }
-            
+
             // 작성자 정보 확인
             User author = userRepository.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
 
-            Lecture lecture;
-
-            if (request.getType() == LectureType.PROBLEM) {
-                // 문제 강의 생성
-                lecture = lectureService.createProblemLecture(
-                        request.getTitle(),
-                        request.getDescription(),
-                        request.getCategory(),
-                        request.getDifficulty(),
-                        request.getTimeLimit(),
-                        request.getMemoryLimit(),
-                        author
-                );
-
-                // 테스트케이스 추가
-                if (request.getTestCases() != null && !request.getTestCases().isEmpty()) {
-                    for (TestCaseRequest testCase : request.getTestCases()) {
-                        lectureService.addTestCase(lecture.getId(), testCase.getInput(), testCase.getExpectedOutput());
-                    }
-                    // 테스트케이스 포함해서 다시 조회
-                    lecture = lectureService.getLectureWithTestCases(lecture.getId()).orElse(lecture);
-                }
-            } else {
-                // 마크다운 강의 생성
-                lecture = lectureService.createLecture(
-                        request.getTitle(),
-                        request.getDescription(),
-                        request.getType(),
-                        request.getCategory(),
-                        request.getDifficulty(),
-                        author
-                );
-            }
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(toLectureResponse(lecture));
+            // Service에서 트랜잭션 내 생성 및 DTO 변환 (LazyInitializationException 방지)
+            LectureResponse response = lectureService.createLectureWithResponse(request, author);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
+            log.info("Exception: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "강의 생성 중 오류가 발생했습니다."));
         }
@@ -106,10 +77,8 @@ public class LectureController {
     @GetMapping
     @Operation(summary = "모든 강의 조회", description = "시스템에 등록된 모든 강의를 최신순으로 조회합니다.")
     public ResponseEntity<List<LectureResponse>> getAllLectures() {
-        List<Lecture> lectures = lectureService.getAllLectures();
-        List<LectureResponse> responses = lectures.stream()
-                .map(this::toLectureResponse)
-                .toList();
+        // Service에서 트랜잭션 내 DTO 변환된 결과를 받음 (LazyInitializationException 방지)
+        List<LectureResponse> responses = lectureService.getAllLectures();
         return ResponseEntity.ok(responses);
     }
 
@@ -122,21 +91,16 @@ public class LectureController {
     public ResponseEntity<?> getLecture(
             @Parameter(description = "강의 ID", required = true) @PathVariable Long id,
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
-        Optional<Lecture> lectureOpt = lectureService.getLectureWithTestCases(id);
-
-        if (lectureOpt.isEmpty()) {
+        try {
+            // Service에서 트랜잭션 내 권한 체크 및 DTO 변환 (LazyInitializationException 방지)
+            LectureResponse response = lectureService.getLecture(id, userId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
-        }
-
-        Lecture lecture = lectureOpt.get();
-        
-        // 권한 체크: 공개 강의이거나 작성자인 경우만 조회 가능
-        if (!lecture.isPublicLecture() && (userId == null || !lecture.isAuthor(userId))) {
+        } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "이 강의에 접근할 권한이 없습니다."));
+                    .body(Map.of("error", e.getMessage()));
         }
-
-        return ResponseEntity.ok(toLectureResponse(lecture));
     }
 
     /**
@@ -145,7 +109,7 @@ public class LectureController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<?> updateLecture(
-            @PathVariable Long id, 
+            @PathVariable Long id,
             @RequestBody CreateLectureRequest request,
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         try {
@@ -155,26 +119,15 @@ public class LectureController {
                         .body(Map.of("error", "사용자 인증이 필요합니다."));
             }
 
-            // 강의 존재 여부 먼저 확인
-            Optional<Lecture> lectureOpt = lectureService.getLectureById(id);
-            if (lectureOpt.isEmpty()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            // 작성자 권한 확인
+            // 작성자 권한 확인 (내부적으로 강의 존재 여부도 체크함)
             if (!lectureService.canEditLecture(id, userId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "이 강의를 수정할 권한이 없습니다."));
+                        .body(Map.of("error", "이 강의를 수정할 권한이 없거나 강의가 존재하지 않습니다."));
             }
 
-            Lecture updateData = new Lecture(request.getTitle(), request.getDescription(), request.getType());
-            updateData.setCategory(request.getCategory());
-            updateData.setDifficulty(request.getDifficulty());
-            updateData.setTimeLimit(request.getTimeLimit());
-            updateData.setMemoryLimit(request.getMemoryLimit());
-
-            Lecture updatedLecture = lectureService.updateLecture(id, updateData);
-            return ResponseEntity.ok(toLectureResponse(updatedLecture));
+            // Service에서 트랜잭션 내 수정 및 DTO 변환
+            LectureResponse response = lectureService.updateLectureWithResponse(id, request, userId);
+            return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -200,7 +153,7 @@ public class LectureController {
             }
 
             // 강의 존재 여부 먼저 확인
-            Optional<Lecture> lectureOpt = lectureService.getLectureById(id);
+            Optional<Lecture> lectureOpt = lectureService.findLectureEntity(id);
             if (lectureOpt.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
@@ -234,21 +187,8 @@ public class LectureController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<Lecture> lecturesPage = lectureService.searchLectures(title, category, difficulty, type, page, size);
-
-        List<LectureResponse> responses = lecturesPage.getContent().stream()
-                .map(this::toLectureResponse)
-                .toList();
-
-        Map<String, Object> response = Map.of(
-                "lectures", responses,
-                "currentPage", lecturesPage.getNumber(),
-                "totalElements", lecturesPage.getTotalElements(),
-                "totalPages", lecturesPage.getTotalPages(),
-                "hasNext", lecturesPage.hasNext(),
-                "hasPrevious", lecturesPage.hasPrevious()
-        );
-
+        // Service에서 트랜잭션 내 DTO 변환된 결과를 받음
+        Map<String, Object> response = lectureService.searchLectures(title, category, difficulty, type, page, size);
         return ResponseEntity.ok(response);
     }
 
@@ -258,10 +198,8 @@ public class LectureController {
      */
     @GetMapping("/type/{type}")
     public ResponseEntity<List<LectureResponse>> getLecturesByType(@PathVariable LectureType type) {
-        List<Lecture> lectures = lectureService.getLecturesByType(type);
-        List<LectureResponse> responses = lectures.stream()
-                .map(this::toLectureResponse)
-                .toList();
+        // Service에서 트랜잭션 내 DTO 변환된 결과를 받음
+        List<LectureResponse> responses = lectureService.getLecturesByType(type);
         return ResponseEntity.ok(responses);
     }
 
@@ -271,10 +209,8 @@ public class LectureController {
      */
     @GetMapping("/recent")
     public ResponseEntity<List<LectureResponse>> getRecentLectures() {
-        List<Lecture> lectures = lectureService.getRecentLectures();
-        List<LectureResponse> responses = lectures.stream()
-                .map(this::toLectureResponse)
-                .toList();
+        // Service에서 트랜잭션 내 DTO 변환된 결과를 받음
+        List<LectureResponse> responses = lectureService.getRecentLectures(10);
         return ResponseEntity.ok(responses);
     }
 
@@ -285,10 +221,23 @@ public class LectureController {
      * POST /api/lectures/{id}/testcases
      */
     @PostMapping("/{id}/testcases")
-    public ResponseEntity<?> addTestCase(@PathVariable Long id, @RequestBody TestCaseRequest request) {
+    public ResponseEntity<?> addTestCase(
+            @PathVariable Long id,
+            @RequestBody TestCaseRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         try {
-            Lecture lecture = lectureService.addTestCase(id, request.getInput(), request.getExpectedOutput());
-            return ResponseEntity.ok(toLectureResponse(lecture));
+            // 사용자 권한 확인
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "사용자 인증이 필요합니다."));
+            }
+
+            // Service에서 트랜잭션 내 권한 체크, 추가 및 DTO 변환
+            LectureResponse response = lectureService.addTestCase(id, request, userId);
+            return ResponseEntity.ok(response);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -299,10 +248,22 @@ public class LectureController {
      * DELETE /api/lectures/{id}/testcases
      */
     @DeleteMapping("/{id}/testcases")
-    public ResponseEntity<?> clearTestCases(@PathVariable Long id) {
+    public ResponseEntity<?> clearTestCases(
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         try {
-            Lecture lecture = lectureService.clearTestCases(id);
-            return ResponseEntity.ok(toLectureResponse(lecture));
+            // 사용자 권한 확인
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "사용자 인증이 필요합니다."));
+            }
+
+            // Service에서 트랜잭션 내 권한 체크, 삭제 및 DTO 변환
+            LectureResponse response = lectureService.clearTestCases(id, userId);
+            return ResponseEntity.ok(response);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -375,12 +336,12 @@ public class LectureController {
      */
     @GetMapping("/public")
     @Operation(summary = "공개 강의 조회", description = "모든 공개 강의를 최신순으로 조회합니다.")
-    public ResponseEntity<List<LectureResponse>> getPublicLectures() {
-        List<Lecture> lectures = lectureService.getPublicLectures();
-        List<LectureResponse> responses = lectures.stream()
-                .map(this::toLectureResponse)
-                .toList();
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<Map<String, Object>> getPublicLectures(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        // Service에서 트랜잭션 내 DTO 변환된 결과를 받음
+        Map<String, Object> response = lectureService.getPublicLectures(page, size);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -389,17 +350,17 @@ public class LectureController {
      */
     @GetMapping("/public/search")
     @Operation(summary = "공개 강의 검색", description = "공개 강의 중에서 조건에 맞는 강의를 검색합니다.")
-    public ResponseEntity<List<LectureResponse>> searchPublicLectures(
+    public ResponseEntity<Map<String, Object>> searchPublicLectures(
             @Parameter(description = "제목 검색") @RequestParam(required = false) String title,
             @Parameter(description = "카테고리 필터") @RequestParam(required = false) String category,
             @Parameter(description = "난이도 필터") @RequestParam(required = false) String difficulty,
-            @Parameter(description = "강의 유형 필터") @RequestParam(required = false) LectureType type) {
-        
-        List<Lecture> lectures = lectureService.searchPublicLectures(title, category, difficulty, type);
-        List<LectureResponse> responses = lectures.stream()
-                .map(this::toLectureResponse)
-                .toList();
-        return ResponseEntity.ok(responses);
+            @Parameter(description = "강의 유형 필터") @RequestParam(required = false) LectureType type,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        // Service에서 트랜잭션 내 DTO 변환된 결과를 받음
+        Map<String, Object> response = lectureService.searchPublicLectures(title, category, difficulty, type, page, size);
+        return ResponseEntity.ok(response);
     }
 
     // === 사용자별 강의 관리 API ===
@@ -412,10 +373,8 @@ public class LectureController {
     @Operation(summary = "사용자별 강의 조회", description = "특정 사용자가 작성한 모든 강의를 조회합니다.")
     public ResponseEntity<List<LectureResponse>> getUserLectures(
             @Parameter(description = "사용자 ID") @PathVariable Long userId) {
-        List<Lecture> lectures = lectureService.getUserLectures(userId);
-        List<LectureResponse> responses = lectures.stream()
-                .map(this::toLectureResponse)
-                .toList();
+        // Service에서 트랜잭션 내 DTO 변환된 결과를 받음
+        List<LectureResponse> responses = lectureService.getUserLectures(userId);
         return ResponseEntity.ok(responses);
     }
 
@@ -427,201 +386,9 @@ public class LectureController {
     @Operation(summary = "사용자별 공개 강의 조회", description = "특정 사용자가 작성한 공개 강의만 조회합니다.")
     public ResponseEntity<List<LectureResponse>> getUserPublicLectures(
             @Parameter(description = "사용자 ID") @PathVariable Long userId) {
-        List<Lecture> lectures = lectureService.getUserPublicLectures(userId);
-        List<LectureResponse> responses = lectures.stream()
-                .map(this::toLectureResponse)
-                .toList();
+        // Service에서 트랜잭션 내 DTO 변환된 결과를 받음
+        List<LectureResponse> responses = lectureService.getUserPublicLectures(userId);
         return ResponseEntity.ok(responses);
     }
 
-    // === DTO 변환 메서드 ===
-
-    private LectureResponse toLectureResponse(Lecture lecture) {
-        LectureResponse response = new LectureResponse();
-        response.setId(lecture.getId());
-        response.setTitle(lecture.getTitle());
-        response.setDescription(lecture.getDescription());
-        response.setType(lecture.getType());
-        response.setCategory(lecture.getCategory());
-        response.setDifficulty(lecture.getDifficulty());
-        response.setTimeLimit(lecture.getTimeLimit());
-        response.setMemoryLimit(lecture.getMemoryLimit());
-        response.setIsPublic(lecture.getIsPublic());
-        response.setCreatedAt(lecture.getCreatedAt());
-        response.setUpdatedAt(lecture.getUpdatedAt());
-
-        // 작성자 정보 설정
-        try {
-            if (lecture.getAuthor() != null) {
-                AuthorInfo authorInfo = new AuthorInfo();
-                authorInfo.setId(lecture.getAuthor().getId());
-                authorInfo.setUsername(lecture.getAuthor().getUsername());
-                authorInfo.setLoginId(lecture.getAuthor().getLoginId());
-                response.setAuthor(authorInfo);
-            }
-        } catch (Exception e) {
-            // Lazy Loading 실패 시 null로 설정
-            response.setAuthor(null);
-        }
-
-        // 테스트케이스 안전하게 처리 - Lazy Loading 방지
-        try {
-            if (lecture.getTestCases() != null) {
-                response.setTestCaseCount(lecture.getTestCases().size());
-                List<TestCaseResponse> testCases = lecture.getTestCases().stream()
-                        .map(tc -> new TestCaseResponse(tc.getInput(), tc.getExpectedOutput(), tc.getOrderIndex()))
-                        .toList();
-                response.setTestCases(testCases);
-            } else {
-                response.setTestCaseCount(0);
-                response.setTestCases(new ArrayList<>());
-            }
-        } catch (Exception e) {
-            // Lazy Loading 실패 시 기본값으로 설정
-            response.setTestCaseCount(0);
-            response.setTestCases(new ArrayList<>());
-        }
-
-        return response;
-    }
-}
-
-// === Request/Response DTO 클래스들 ===
-
-/**
- * 강의 생성/수정 요청 DTO
- */
-class CreateLectureRequest {
-    private String title;
-    private String description;
-    private LectureType type;
-    private String category;
-    private String difficulty;
-    private Integer timeLimit;
-    private Integer memoryLimit;
-    private List<TestCaseRequest> testCases;
-    private Long authorId;
-
-    // Getters and Setters
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    public LectureType getType() { return type; }
-    public void setType(LectureType type) { this.type = type; }
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
-    public String getDifficulty() { return difficulty; }
-    public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
-    public Integer getTimeLimit() { return timeLimit; }
-    public void setTimeLimit(Integer timeLimit) { this.timeLimit = timeLimit; }
-    public Integer getMemoryLimit() { return memoryLimit; }
-    public void setMemoryLimit(Integer memoryLimit) { this.memoryLimit = memoryLimit; }
-    public List<TestCaseRequest> getTestCases() { return testCases; }
-    public void setTestCases(List<TestCaseRequest> testCases) { this.testCases = testCases; }
-    public Long getAuthorId() { return authorId; }
-    public void setAuthorId(Long authorId) { this.authorId = authorId; }
-}
-
-/**
- * 강의 응답 DTO
- */
-class LectureResponse {
-    private Long id;
-    private String title;
-    private String description;
-    private LectureType type;
-    private String category;
-    private String difficulty;
-    private Integer timeLimit;
-    private Integer memoryLimit;
-    private Boolean isPublic;
-    private int testCaseCount;
-    private List<TestCaseResponse> testCases;
-    private java.time.LocalDateTime createdAt;
-    private java.time.LocalDateTime updatedAt;
-    private AuthorInfo author;
-
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    public LectureType getType() { return type; }
-    public void setType(LectureType type) { this.type = type; }
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
-    public String getDifficulty() { return difficulty; }
-    public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
-    public Integer getTimeLimit() { return timeLimit; }
-    public void setTimeLimit(Integer timeLimit) { this.timeLimit = timeLimit; }
-    public Integer getMemoryLimit() { return memoryLimit; }
-    public void setMemoryLimit(Integer memoryLimit) { this.memoryLimit = memoryLimit; }
-    public Boolean getIsPublic() { return isPublic; }
-    public void setIsPublic(Boolean isPublic) { this.isPublic = isPublic; }
-    public int getTestCaseCount() { return testCaseCount; }
-    public void setTestCaseCount(int testCaseCount) { this.testCaseCount = testCaseCount; }
-    public List<TestCaseResponse> getTestCases() { return testCases; }
-    public void setTestCases(List<TestCaseResponse> testCases) { this.testCases = testCases; }
-    public java.time.LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public java.time.LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(java.time.LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-    public AuthorInfo getAuthor() { return author; }
-    public void setAuthor(AuthorInfo author) { this.author = author; }
-}
-
-/**
- * 테스트케이스 요청 DTO
- */
-class TestCaseRequest {
-    private String input;
-    private String expectedOutput;
-
-    public String getInput() { return input; }
-    public void setInput(String input) { this.input = input; }
-    public String getExpectedOutput() { return expectedOutput; }
-    public void setExpectedOutput(String expectedOutput) { this.expectedOutput = expectedOutput; }
-}
-
-/**
- * 테스트케이스 응답 DTO
- */
-class TestCaseResponse {
-    private String input;
-    private String expectedOutput;
-    private Integer orderIndex;
-
-    public TestCaseResponse() {}
-
-    public TestCaseResponse(String input, String expectedOutput, Integer orderIndex) {
-        this.input = input;
-        this.expectedOutput = expectedOutput;
-        this.orderIndex = orderIndex;
-    }
-
-    public String getInput() { return input; }
-    public void setInput(String input) { this.input = input; }
-    public String getExpectedOutput() { return expectedOutput; }
-    public void setExpectedOutput(String expectedOutput) { this.expectedOutput = expectedOutput; }
-    public Integer getOrderIndex() { return orderIndex; }
-    public void setOrderIndex(Integer orderIndex) { this.orderIndex = orderIndex; }
-}
-
-/**
- * 작성자 정보 DTO
- */
-class AuthorInfo {
-    private Long id;
-    private String username;
-    private String loginId;
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
-    public String getLoginId() { return loginId; }
-    public void setLoginId(String loginId) { this.loginId = loginId; }
 }

@@ -1,5 +1,13 @@
 package com.PBL.lecture;
+import com.PBL.lab.core.entity.Constraints;
+import com.PBL.lecture.dto.CreateLectureRequest;
+import com.PBL.lecture.dto.LectureResponse;
+import com.PBL.lecture.dto.TestCaseRequest;
+import com.PBL.lecture.entity.Lecture;
+import com.PBL.lecture.entity.TestCase;
+import com.PBL.lecture.repository.LectureRepository;
 import com.PBL.user.User;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -8,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -15,6 +24,7 @@ import java.util.Optional;
  * 강의의 생성, 조회, 수정, 삭제 및 비즈니스 로직 처리
  */
 @Service
+@Slf4j
 @Transactional(readOnly = true)
 public class LectureService {
 
@@ -27,133 +37,99 @@ public class LectureService {
     // === 기본 CRUD ===
 
     /**
-     * 강의 생성
+     * 강의 생성 (CreateLectureRequest 사용)
      */
     @Transactional
-    public Lecture createLecture(Lecture lecture) {
-        validateLecture(lecture);
+    public Lecture createLecture(CreateLectureRequest createLectureRequest, User author) {
+        Lecture lecture = Lecture.from(createLectureRequest,author);
         return lectureRepository.save(lecture);
     }
 
     /**
-     * 강의 생성 (작성자 포함)
-     */
-    @Transactional
-    public Lecture createLecture(Lecture lecture, User author) {
-        lecture.setAuthor(author);
-        validateLecture(lecture);
-        return lectureRepository.save(lecture);
-    }
-
-    /**
-     * 강의 생성 (파라미터 버전)
-     */
-    @Transactional
-    public Lecture createLecture(String title, String description, LectureType type,
-                                 String category, String difficulty) {
-        Lecture lecture = new Lecture(title, description, type);
-        lecture.setCategory(category);
-        lecture.setDifficulty(difficulty);
-
-        validateLecture(lecture);
-        return lectureRepository.save(lecture);
-    }
-
-    /**
-     * 강의 생성 (파라미터 버전, 작성자 포함)
-     */
-    @Transactional
-    public Lecture createLecture(String title, String description, LectureType type,
-                                 String category, String difficulty, User author) {
-        Lecture lecture = new Lecture(title, description, type);
-        lecture.setCategory(category);
-        lecture.setDifficulty(difficulty);
-        lecture.setAuthor(author);
-
-        validateLecture(lecture);
-        return lectureRepository.save(lecture);
-    }
-
-    /**
-     * 문제 강의 생성 (시간/메모리 제한 포함)
-     */
-    @Transactional
-    public Lecture createProblemLecture(String title, String description, String category,
-                                        String difficulty, Integer timeLimit, Integer memoryLimit) {
-        Lecture lecture = new Lecture(title, description, LectureType.PROBLEM);
-        lecture.setCategory(category);
-        lecture.setDifficulty(difficulty);
-        lecture.setTimeLimit(timeLimit);
-        lecture.setMemoryLimit(memoryLimit);
-
-        validateProblemLecture(lecture);
-        return lectureRepository.save(lecture);
-    }
-
-    /**
-     * 문제 강의 생성 (시간/메모리 제한 포함, 작성자 포함)
-     */
-    @Transactional
-    public Lecture createProblemLecture(String title, String description, String category,
-                                        String difficulty, Integer timeLimit, Integer memoryLimit, User author) {
-        Lecture lecture = new Lecture(title, description, LectureType.PROBLEM);
-        lecture.setCategory(category);
-        lecture.setDifficulty(difficulty);
-        lecture.setTimeLimit(timeLimit);
-        lecture.setMemoryLimit(memoryLimit);
-        lecture.setAuthor(author);
-
-        validateProblemLecture(lecture);
-        return lectureRepository.save(lecture);
-    }
-
-    /**
-     * 강의 조회 (기본)
-     */
-    public Optional<Lecture> getLectureById(Long id) {
-        return lectureRepository.findById(id);
-    }
-
-    /**
-     * 강의 상세 조회 (테스트케이스 포함)
-     */
-    public Optional<Lecture> getLectureWithTestCases(Long id) {
-        return lectureRepository.findByIdWithTestCases(id);
-    }
-
-    /**
-     * 강의 조회
+     * AI ToolService용 Entity 조회 (기본)
      */
     public Optional<Lecture> getLecture(Long id) {
         return lectureRepository.findById(id);
     }
 
     /**
-     * 모든 강의 조회 (최신순)
-     * N+1 쿼리 문제 해결을 위해 최적화된 쿼리 사용
+     * AI ToolService용 Entity 조회 (테스트케이스 포함)
      */
-    public List<Lecture> getAllLectures() {
-        return lectureRepository.findAllByOrderByCreatedAtDesc();
+    public Optional<Lecture> getLectureWithTestCases(Long id) {
+        return lectureRepository.findByIdWithTestCases(id);
     }
 
     /**
-     * 강의 수정
+     * 강의 Entity 조회 (Enrollment용)
+     * getLecture(id)의 별칭 메소드
+     */
+    public Optional<Lecture> getLectureById(Long id) {
+        return getLecture(id);
+    }
+
+    /**
+     * 강의 Entity 조회 (Controller, AI Tool용)
+     * getLecture(id)의 별칭 메소드
+     */
+    public Optional<Lecture> findLectureEntity(Long id) {
+        return getLecture(id);
+    }
+
+    /**
+     * 강의 수정 (권한 체크 포함)
+     * - 부분 업데이트 지원 (null이 아닌 필드만 업데이트)
+     * - Constraints, TestCase 포함 전체 업데이트
      */
     @Transactional
-    public Lecture updateLecture(Long id, Lecture updatedLecture) {
+    public Lecture updateLecture(Long id, CreateLectureRequest request, Long userId) {
         Lecture existingLecture = lectureRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + id));
 
-        // 기본 정보 업데이트
-        existingLecture.setTitle(updatedLecture.getTitle());
-        existingLecture.setDescription(updatedLecture.getDescription());
-        existingLecture.setCategory(updatedLecture.getCategory());
-        existingLecture.setDifficulty(updatedLecture.getDifficulty());
+        // 권한 체크: 작성자만 수정 가능
+        if (!existingLecture.isAuthor(userId)) {
+            throw new AccessDeniedException("이 강의를 수정할 권한이 없습니다.");
+        }
 
-        // 문제 타입인 경우 제한시간 업데이트
-        if (existingLecture.isProblemType()) {
-            existingLecture.setTimeLimit(updatedLecture.getTimeLimit());
-            existingLecture.setMemoryLimit(updatedLecture.getMemoryLimit());
+        // 기본 필드 업데이트 (null이 아닐 때만)
+        if (request.getTitle() != null) {
+            existingLecture.setTitle(request.getTitle());
+        }
+        if (request.getDescription() != null) {
+            existingLecture.setDescription(request.getDescription());
+        }
+        if (request.getType() != null) {
+            existingLecture.setType(request.getType());
+        }
+        if (request.getDifficulty() != null) {
+            existingLecture.setDifficulty(request.getDifficulty());
+        }
+        if (request.getCategory() != null) {
+            existingLecture.setCategory(request.getCategory());
+        }
+        if (request.getIsPublic() != null) {
+            existingLecture.setIsPublic(request.getIsPublic());
+        }
+
+        // Constraints 업데이트
+        if (request.getConstraints() != null) {
+            Constraints constraints = Constraints.build(request.getConstraints());
+            existingLecture.setConstraints(constraints);
+        }
+
+        // TestCase 업데이트 (기존 테스트케이스 삭제 후 새로 추가)
+        if (request.getTestCases() != null) {
+            // 기존 테스트케이스 제거
+            existingLecture.getTestCases().clear();
+
+            // 새 테스트케이스 추가 (양방향 관계 설정)
+            List<TestCase> newTestCases = request.getTestCases().stream()
+                    .map(dto -> TestCase.builder()
+                            .input(dto.getInput())
+                            .expectedOutput(dto.getExpectedOutput())
+                            .lecture(existingLecture)  // 양방향 관계 설정
+                            .build())
+                    .toList();
+            existingLecture.getTestCases().addAll(newTestCases);
         }
 
         validateLecture(existingLecture);
@@ -174,70 +150,130 @@ public class LectureService {
     // === 검색 및 필터링 ===
 
     /**
-     * 유형별 강의 조회
+     * AI ToolService용 카테고리별 강의 Entity 조회
      */
-    public List<Lecture> getLecturesByType(LectureType type) {
-        return lectureRepository.findByType(type);
-    }
-
-    /**
-     * 카테고리별 강의 조회
-     */
-    public List<Lecture> getLecturesByCategory(String category) {
+    public List<Lecture> findLectureEntitiesByCategory(String category) {
         return lectureRepository.findByCategory(category);
     }
 
     /**
-     * 제목으로 강의 검색
+     * AI ToolService용 제목 검색 Entity 조회
      */
-    public List<Lecture> searchLecturesByTitle(String title) {
+    public List<Lecture> findLectureEntitiesByTitle(String title) {
         return lectureRepository.findByTitleContainingIgnoreCase(title);
     }
 
     /**
-     * 복합 검색 (페이징)
+     * 복합 검색 (페이징, DTO 반환)
+     * 트랜잭션 내부에서 검색 및 변환 수행
      */
-    public Page<Lecture> searchLectures(String title, String category, String difficulty,
+    @Transactional(readOnly = true)
+    public Map<String, Object> searchLectures(String title, String category, String difficulty,
                                         LectureType type, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return lectureRepository.findBySearchCriteria(title, category, difficulty, type, pageable);
+        Pageable pageable = PageRequest.of(page, size);
+        String typeStr = type != null ? type.name() : null;
+        Page<Lecture> lecturesPage = lectureRepository.findBySearchCriteria(title, category, difficulty, type, typeStr, pageable);
+
+        // 트랜잭션 내부에서 DTO 변환
+        List<LectureResponse> responses = lecturesPage.getContent().stream()
+                .map(LectureResponse::from)
+                .toList();
+
+        return Map.of(
+                "lectures", responses,
+                "currentPage", lecturesPage.getNumber(),
+                "totalElements", lecturesPage.getTotalElements(),
+                "totalPages", lecturesPage.getTotalPages(),
+                "hasNext", lecturesPage.hasNext(),
+                "hasPrevious", lecturesPage.hasPrevious()
+        );
     }
 
     /**
-     * 최근 강의 조회 (10개)
+     * AI ToolService용 타입별 강의 Entity 조회
      */
-    public List<Lecture> getRecentLectures() {
+    public List<Lecture> findLectureEntitiesByType(LectureType type) {
+        return lectureRepository.findByType(type);
+    }
+
+    /**
+     * 타입별 강의 조회 (DTO 반환)
+     * 트랜잭션 내부에서 조회 및 변환 수행
+     */
+    @Transactional(readOnly = true)
+    public List<LectureResponse> getLecturesByType(LectureType type) {
+        List<Lecture> lectures = lectureRepository.findByType(type);
+        // 트랜잭션 내부에서 DTO 변환
+        return lectures.stream()
+                .map(LectureResponse::from)
+                .toList();
+    }
+
+    /**
+     * AI ToolService용 최근 강의 Entity 조회
+     */
+    public List<Lecture> findRecentLectureEntities() {
         return lectureRepository.findTop10ByOrderByCreatedAtDesc();
+    }
+
+    /**
+     * 최근 강의 조회 (DTO 반환)
+     * 트랜잭션 내부에서 조회 및 변환 수행
+     */
+    @Transactional(readOnly = true)
+    public List<LectureResponse> getRecentLectures(int limit) {
+        Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<Lecture> lectures = lectureRepository.findAll(pageable).getContent();
+        // 트랜잭션 내부에서 DTO 변환
+        return lectures.stream()
+                .map(LectureResponse::from)
+                .toList();
     }
 
     // === 테스트케이스 관리 ===
 
     /**
-     * 테스트케이스 추가
+     * 테스트케이스 추가 (DTO 반환, 권한 체크 포함)
+     * 트랜잭션 내부에서 권한 체크, 추가 및 변환 수행
      */
     @Transactional
-    public Lecture addTestCase(Long lectureId, String input, String expectedOutput) {
+    public LectureResponse addTestCase(Long lectureId, TestCaseRequest testCaseRequest, Long userId) {
         Lecture lecture = lectureRepository.findByIdWithTestCases(lectureId)
                 .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + lectureId));
+
+        // 권한 체크: 작성자만 테스트케이스 추가 가능
+        if (!lecture.isAuthor(userId)) {
+            throw new AccessDeniedException("이 강의를 수정할 권한이 없습니다.");
+        }
 
         if (!lecture.isProblemType()) {
             throw new IllegalArgumentException("문제 타입 강의에만 테스트케이스를 추가할 수 있습니다.");
         }
 
-        lecture.addTestCase(input, expectedOutput);
-        return lectureRepository.save(lecture);
+        lecture.addTestCase(testCaseRequest.getInput(), testCaseRequest.getExpectedOutput());
+        lecture = lectureRepository.save(lecture);
+        // 트랜잭션 내부에서 DTO 변환
+        return LectureResponse.from(lecture);
     }
 
     /**
-     * 모든 테스트케이스 제거
+     * 모든 테스트케이스 제거 (DTO 반환, 권한 체크 포함)
+     * 트랜잭션 내부에서 권한 체크, 삭제 및 변환 수행
      */
     @Transactional
-    public Lecture clearTestCases(Long lectureId) {
+    public LectureResponse clearTestCases(Long lectureId, Long userId) {
         Lecture lecture = lectureRepository.findByIdWithTestCases(lectureId)
                 .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + lectureId));
 
+        // 권한 체크: 작성자만 테스트케이스 삭제 가능
+        if (!lecture.isAuthor(userId)) {
+            throw new AccessDeniedException("이 강의를 수정할 권한이 없습니다.");
+        }
+
         lecture.clearTestCases();
-        return lectureRepository.save(lecture);
+        lecture = lectureRepository.save(lecture);
+        // 트랜잭션 내부에서 DTO 변환
+        return LectureResponse.from(lecture);
     }
 
     // === 통계 및 유틸리티 ===
@@ -272,7 +308,7 @@ public class LectureService {
     public void publishLecture(Long id) {
         Lecture lecture = lectureRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + id));
-        
+
         lecture.makePublic();
         lectureRepository.save(lecture);
     }
@@ -284,24 +320,73 @@ public class LectureService {
     public void unpublishLecture(Long id) {
         Lecture lecture = lectureRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + id));
-        
+
         lecture.makePrivate();
         lectureRepository.save(lecture);
     }
 
     /**
-     * 모든 공개 강의 조회
+     * AI ToolService용 공개 강의 Entity 조회
      */
-    public List<Lecture> getPublicLectures() {
+    public List<Lecture> findPublicLectureEntities() {
         return lectureRepository.findByIsPublicTrueOrderByCreatedAtDesc();
     }
 
     /**
-     * 공개 강의 검색
+     * AI ToolService용 공개 강의 검색 Entity 조회 (검색 조건)
      */
-    public List<Lecture> searchPublicLectures(String title, String category, String difficulty, LectureType type) {
-        return lectureRepository.findPublicLecturesBySearchCriteria(title, category, difficulty, type, 
+    public List<Lecture> findPublicLectureEntitiesBySearch(String title, String category, String difficulty, LectureType type) {
+        return lectureRepository.findPublicLecturesBySearchCriteria(title, category, difficulty, type,
                 type != null ? type.name() : null);
+    }
+
+    /**
+     * 모든 공개 강의 조회 (페이징, DTO 반환)
+     * 트랜잭션 내부에서 조회 및 변환 수행
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getPublicLectures(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
+        Page<Lecture> lecturesPage = lectureRepository.findByIsPublicTrue(pageable);
+
+        // 트랜잭션 내부에서 DTO 변환
+        List<LectureResponse> responses = lecturesPage.getContent().stream()
+                .map(LectureResponse::from)
+                .toList();
+
+        return Map.of(
+                "lectures", responses,
+                "currentPage", lecturesPage.getNumber(),
+                "totalElements", lecturesPage.getTotalElements(),
+                "totalPages", lecturesPage.getTotalPages(),
+                "hasNext", lecturesPage.hasNext(),
+                "hasPrevious", lecturesPage.hasPrevious()
+        );
+    }
+
+    /**
+     * 공개 강의 검색 (페이징, DTO 반환)
+     * 트랜잭션 내부에서 검색 및 변환 수행
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> searchPublicLectures(String title, String category, String difficulty, LectureType type, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        String typeStr = type != null ? type.name() : null;
+        Page<Lecture> lecturesPage = lectureRepository.findPublicLecturesBySearchCriteria(title, category, difficulty, type, typeStr, pageable);
+
+        // 트랜잭션 내부에서 DTO 변환
+        List<LectureResponse> responses = lecturesPage.getContent().stream()
+                .map(LectureResponse::from)
+                .toList();
+
+        return Map.of(
+                "lectures", responses,
+                "currentPage", lecturesPage.getNumber(),
+                "totalElements", lecturesPage.getTotalElements(),
+                "totalPages", lecturesPage.getTotalPages(),
+                "hasNext", lecturesPage.hasNext(),
+                "hasPrevious", lecturesPage.hasPrevious()
+        );
     }
 
     // === 권한 체크 메서드 ===
@@ -344,17 +429,29 @@ public class LectureService {
     }
 
     /**
-     * 사용자의 강의 목록 조회
+     * 사용자의 강의 목록 조회 (DTO 반환)
+     * 트랜잭션 내부에서 조회 및 변환 수행
      */
-    public List<Lecture> getUserLectures(Long userId) {
-        return lectureRepository.findByAuthorId(userId);
+    @Transactional(readOnly = true)
+    public List<LectureResponse> getUserLectures(Long userId) {
+        List<Lecture> lectures = lectureRepository.findByAuthorId(userId);
+        // 트랜잭션 내부에서 DTO 변환
+        return lectures.stream()
+                .map(LectureResponse::from)
+                .toList();
     }
 
     /**
-     * 사용자의 공개 강의 목록 조회
+     * 사용자의 공개 강의 목록 조회 (DTO 반환)
+     * 트랜잭션 내부에서 조회 및 변환 수행
      */
-    public List<Lecture> getUserPublicLectures(Long userId) {
-        return lectureRepository.findByAuthorIdAndIsPublicTrue(userId);
+    @Transactional(readOnly = true)
+    public List<LectureResponse> getUserPublicLectures(Long userId) {
+        List<Lecture> lectures = lectureRepository.findByAuthorIdAndIsPublicTrue(userId);
+        // 트랜잭션 내부에서 DTO 변환
+        return lectures.stream()
+                .map(LectureResponse::from)
+                .toList();
     }
 
     // === 검증 메서드 ===
@@ -375,31 +472,60 @@ public class LectureService {
             throw new IllegalArgumentException("강의 유형은 필수입니다.");
         }
 
-        // 문제 타입 추가 검증
-        if (lecture.isProblemType()) {
-            validateProblemLecture(lecture);
-        }
+    }
+
+    // === Controller용 DTO 변환 메서드 ===
+
+    /**
+     * 모든 강의 조회 후 DTO로 변환
+     * 트랜잭션 내부에서 Lazy Loading된 컬렉션을 안전하게 변환
+     */
+    @Transactional(readOnly = true)
+    public List<LectureResponse> getAllLectures() {
+        List<Lecture> lectures = lectureRepository.findAllWithTestCases();
+        // 트랜잭션 내부에서 DTO 변환 → testCases JOIN FETCH로 미리 로딩
+        return lectures.stream()
+                .map(LectureResponse::from)
+                .toList();
     }
 
     /**
-     * 문제 강의 추가 검증
+     * 강의 조회 후 DTO로 변환 (권한 체크 포함)
+     * 트랜잭션 내부에서 권한 체크 및 DTO 변환 수행
      */
-    private void validateProblemLecture(Lecture lecture) {
-        if (lecture.getTimeLimit() != null && lecture.getTimeLimit() <= 0) {
-            throw new IllegalArgumentException("시간 제한은 0보다 커야 합니다.");
+    @Transactional(readOnly = true)
+    public LectureResponse getLecture(Long id, Long userId) {
+        Lecture lecture = lectureRepository.findByIdWithTestCases(id)
+                .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + id));
+        // 트랜잭션 내부에서 권한 체크
+        if (!lecture.isPublicLecture() && (userId == null || !lecture.isAuthor(userId))) {
+            throw new AccessDeniedException("이 강의에 접근할 권한이 없습니다.");
         }
 
-        if (lecture.getMemoryLimit() != null && lecture.getMemoryLimit() <= 0) {
-            throw new IllegalArgumentException("메모리 제한은 0보다 커야 합니다.");
-        }
+        // 트랜잭션 내부에서 DTO 변환
+        return LectureResponse.from(lecture);
+    }
 
-        // 최대 제한값 체크
-        if (lecture.getTimeLimit() != null && lecture.getTimeLimit() > 300) {
-            throw new IllegalArgumentException("시간 제한은 300초를 초과할 수 없습니다.");
-        }
+    /**
+     * 강의 생성 후 DTO로 변환
+     * 트랜잭션 내부에서 생성 및 변환 수행
+     */
+    @Transactional
+    public LectureResponse createLectureWithResponse(CreateLectureRequest request, User author) {
+        Lecture lecture = Lecture.from(request, author);
+        lecture = lectureRepository.save(lecture);
+        // 트랜잭션 내부에서 DTO 변환
+        return LectureResponse.from(lecture);
+    }
 
-        if (lecture.getMemoryLimit() != null && lecture.getMemoryLimit() > 1024) {
-            throw new IllegalArgumentException("메모리 제한은 1024MB를 초과할 수 없습니다.");
-        }
+    /**
+     * 강의 수정 (DTO 반환)
+     * 트랜잭션 내부에서 수정 및 변환 수행
+     */
+    @Transactional
+    public LectureResponse updateLectureWithResponse(Long id, CreateLectureRequest request, Long userId) {
+        Lecture lecture = updateLecture(id, request, userId);
+        // 트랜잭션 내부에서 DTO 변환
+        return LectureResponse.from(lecture);
     }
 }

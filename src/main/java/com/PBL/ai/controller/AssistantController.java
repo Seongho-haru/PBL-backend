@@ -5,7 +5,7 @@ import com.PBL.ai.dto.StreamResponse;
 import com.PBL.ai.service.AssistantService;
 import com.PBL.lab.grading.entity.Grading;
 import com.PBL.lab.grading.service.GradingService;
-import com.PBL.lecture.Lecture;
+import com.PBL.lecture.entity.Lecture;
 import com.PBL.lecture.LectureService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

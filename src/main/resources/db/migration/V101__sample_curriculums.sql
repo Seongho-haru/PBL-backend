@@ -5,6 +5,9 @@
 -- 샘플 강사 사용자 추가 (커리큘럼 작성자)
 -- ============================================
 INSERT INTO users (username, login_id, password) VALUES
+('테스트사용자1', 'testuser1', 'password123'),
+('테스트사용자2', 'testuser2', 'password123'),
+('개발자', 'developer', 'dev123'),
 ('김유희', 'kim.yuhee', 'password123'),
 ('이서준', 'lee.seojun', 'password123'),
 ('박가은', 'park.gaeun', 'password123'),

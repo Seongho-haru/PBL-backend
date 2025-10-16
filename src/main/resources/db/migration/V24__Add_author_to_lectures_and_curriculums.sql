@@ -1,7 +1,7 @@
 -- Add author_id to lectures table
 ALTER TABLE lectures ADD COLUMN author_id BIGINT;
-ALTER TABLE lectures ADD CONSTRAINT fk_lectures_author 
-    FOREIGN KEY (author_id) REFERENCES users(id);
+ALTER TABLE lectures ADD CONSTRAINT fk_lectures_author
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE;
 
 -- Add author_id to curriculums table  
 ALTER TABLE curriculums ADD COLUMN author_id BIGINT;

@@ -1,10 +1,10 @@
 package com.PBL.lab.core.entity;
 
+import com.PBL.lab.core.dto.ConstraintsResponse;
+import com.PBL.lecture.entity.Lecture;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
 
 import java.math.BigDecimal;
 
@@ -25,7 +25,9 @@ import java.math.BigDecimal;
 @Table(name = "submission_constraints")
 @Data
 @EqualsAndHashCode
-@ToString(exclude = {"additionalFiles"})
+@NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class Constraints {
 
     /**
@@ -48,6 +50,7 @@ public class Constraints {
     @DecimalMin("1")
     @DecimalMax("20")
     @Column(name = "number_of_runs")
+    @Builder.Default
     private Integer numberOfRuns = 1;
 
     /**
@@ -60,6 +63,7 @@ public class Constraints {
     @DecimalMin("0.0")
     @DecimalMax("15.0")
     @Column(name = "cpu_time_limit", precision = 10, scale = 6)
+    @Builder.Default
     private BigDecimal cpuTimeLimit = BigDecimal.valueOf(5.0);
 
     /**
@@ -72,6 +76,7 @@ public class Constraints {
     @DecimalMin("0.0")
     @DecimalMax("5.0")
     @Column(name = "cpu_extra_time", precision = 10, scale = 6)
+    @Builder.Default
     private BigDecimal cpuExtraTime = BigDecimal.valueOf(1.0);
 
     /**
@@ -84,6 +89,7 @@ public class Constraints {
     @DecimalMin("1.0")
     @DecimalMax("20.0")
     @Column(name = "wall_time_limit", precision = 10, scale = 6)
+    @Builder.Default
     private BigDecimal wallTimeLimit = BigDecimal.valueOf(10.0);
 
     /**
@@ -96,6 +102,7 @@ public class Constraints {
     @Min(2048)
     @Max(512000)
     @Column(name = "memory_limit")
+    @Builder.Default
     private Integer memoryLimit = 128000; // KB
 
     /**
@@ -108,6 +115,7 @@ public class Constraints {
     @Min(0)
     @Max(128000)
     @Column(name = "stack_limit")
+    @Builder.Default
     private Integer stackLimit = 64000; // KB
 
     /**
@@ -120,6 +128,7 @@ public class Constraints {
     @Min(1)
     @Max(120)
     @Column(name = "max_processes_and_or_threads")
+    @Builder.Default
     private Integer maxProcessesAndOrThreads = 60;
 
     /**
@@ -129,6 +138,7 @@ public class Constraints {
      * - 멀티프로세싱 환경에서 개별 프로세스 제어
      */
     @Column(name = "enable_per_process_and_thread_time_limit")
+    @Builder.Default
     private Boolean enablePerProcessAndThreadTimeLimit = false;
 
     /**
@@ -138,6 +148,7 @@ public class Constraints {
      * - 멀티프로세싱 환경에서 개별 프로세스 메모리 제어
      */
     @Column(name = "enable_per_process_and_thread_memory_limit")
+    @Builder.Default
     private Boolean enablePerProcessAndThreadMemoryLimit = false;
 
     /**
@@ -150,6 +161,7 @@ public class Constraints {
     @Min(0)
     @Max(4096)
     @Column(name = "max_file_size")
+    @Builder.Default
     private Integer maxFileSize = 1024; // KB
 
     // ========== 고급 실행 옵션 (Advanced Execution Options) ==========
@@ -181,6 +193,7 @@ public class Constraints {
      * - 디버깅이나 로그 통합 시 유용
      */
     @Column(name = "redirect_stderr_to_stdout")
+    @Builder.Default
     private Boolean redirectStderrToStdout = false;
 
     /**
@@ -211,6 +224,38 @@ public class Constraints {
      * - 외부 API 호출이나 네트워크 통신이 필요한 경우에만 활성화
      */
     @Column(name = "enable_network")
+    @Builder.Default
     private Boolean enableNetwork = false;
 
+    /**
+     * ConstraintsResponse DTO를 Constraints 엔티티로 변환
+     *
+     * @param constraintsResponse 변환할 DTO 객체
+     * @return 변환된 Constraints 엔티티
+     */
+    public static Constraints build(ConstraintsResponse constraintsResponse) {
+        if (constraintsResponse == null) {
+            return null;
+        }
+
+        return Constraints.builder()
+                .numberOfRuns(constraintsResponse.getNumberOfRuns())
+                .cpuTimeLimit(constraintsResponse.getCpuTimeLimit())
+                .cpuExtraTime(constraintsResponse.getCpuExtraTime())
+                .wallTimeLimit(constraintsResponse.getWallTimeLimit())
+                .memoryLimit(constraintsResponse.getMemoryLimit())
+                .stackLimit(constraintsResponse.getStackLimit())
+                .maxProcessesAndOrThreads(constraintsResponse.getMaxProcessesAndOrThreads())
+                .enablePerProcessAndThreadTimeLimit(constraintsResponse.getEnablePerProcessAndThreadTimeLimit())
+                .enablePerProcessAndThreadMemoryLimit(constraintsResponse.getEnablePerProcessAndThreadMemoryLimit())
+                .maxFileSize(constraintsResponse.getMaxFileSize())
+                .compilerOptions(constraintsResponse.getCompilerOptions())
+                .commandLineArguments(constraintsResponse.getCommandLineArguments())
+                .redirectStderrToStdout(constraintsResponse.getRedirectStderrToStdout())
+                .callbackUrl(constraintsResponse.getCallbackUrl())
+                .additionalFiles(constraintsResponse.getAdditionalFiles() != null ?
+                        java.util.Base64.getDecoder().decode(constraintsResponse.getAdditionalFiles()) : null)
+                .enableNetwork(constraintsResponse.getEnableNetwork())
+                .build();
+    }
 }

@@ -4,7 +4,6 @@ import com.PBL.lab.core.entity.Language;
 import com.PBL.lab.core.entity.Constraints;
 import com.PBL.lab.grading.dto.GradingRequest;
 import com.PBL.lab.grading.entity.Grading;
-import com.PBL.lab.judge0.entity.*;
 import com.PBL.lab.core.enums.Status;
 import com.PBL.lab.grading.repository.GradingRepository;
 import com.PBL.lab.core.repository.ConstraintsRepository;
@@ -13,7 +12,7 @@ import com.PBL.lab.core.service.ConfigService;
 import com.PBL.lab.core.service.LanguageService;
 import com.PBL.lab.judge0.service.SubmissionService;
 import com.PBL.lab.core.service.ExecutionResult;
-import com.PBL.lecture.TestCase;
+import com.PBL.lecture.entity.TestCase;
 import com.PBL.lecture.repository.TestCaseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 

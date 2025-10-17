@@ -4,6 +4,7 @@ import com.PBL.lab.core.dto.ConstraintsResponse;
 import com.PBL.lab.core.entity.Constraints;
 import com.PBL.lecture.LectureType;
 import com.PBL.lecture.entity.Lecture;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)  // 클래스 레벨
 public class LectureResponse {
     private Long id;
     private String title;
@@ -30,7 +32,7 @@ public class LectureResponse {
     private String difficulty;
     private ConstraintsResponse constraints;
     private Boolean isPublic;
-    private int testCaseCount;
+    private Integer testCaseCount;
     private List<TestCaseResponse> testCases;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

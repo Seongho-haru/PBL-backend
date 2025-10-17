@@ -265,17 +265,37 @@ public class Lecture {
         this.type = type;
     }
 
-    public static Lecture from(CreateLectureRequest lecture, User author) {
-        return Lecture.builder()
-                .title(lecture.getTitle())
-                .description(lecture.getDescription())
-                .type(lecture.getType())
-                .category(lecture.getCategory())
-                .difficulty(lecture.getDifficulty())
-                .isPublic(lecture.getIsPublic() != null ? lecture.getIsPublic() : false)
-                .testCases(new ArrayList<>())
+    public static Lecture from(CreateLectureRequest request, User author) {
+        Lecture lecture = Lecture.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .type(request.getType())
+                .category(request.getCategory())
+                .difficulty(request.getDifficulty())
+                .isPublic(request.getIsPublic() != null ? request.getIsPublic() : false)
                 .author(author)
+                .testCases(new ArrayList<>())
                 .build();
+
+        // TestCase 처리
+        if (request.getTestCases() != null) {
+            for (int i = 1; i <=request.getTestCases().size(); i++) {
+                TestCase testCase = TestCase.builder()
+                        .input(request.getTestCases().get(i-1).getInput())
+                        .expectedOutput(request.getTestCases().get(i-1).getExpectedOutput())
+                        .orderIndex(i)
+                        .lecture(lecture)
+                        .build();
+                lecture.getTestCases().add(testCase);
+            }
+        }
+
+        // Constraints 처리
+        if (request.getConstraints() != null) {
+            lecture.setConstraints(Constraints.build(request.getConstraints()));
+        }
+
+        return lecture;
     }
 
     // ============================================================

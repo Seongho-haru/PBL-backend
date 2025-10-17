@@ -46,7 +46,6 @@ public class Constraints {
      * - 기본값: 1회, 최대: 20회
      * - 성능 측정의 정확도를 높이기 위해 사용
      */
-    @NotNull
     @DecimalMin("1")
     @DecimalMax("20")
     @Column(name = "number_of_runs")
@@ -72,7 +71,6 @@ public class Constraints {
      * - 기본값: 1초, 최대: 5초
      * - cpuTimeLimit에 추가로 제공되는 시간
      */
-    @NotNull
     @DecimalMin("0.0")
     @DecimalMax("5.0")
     @Column(name = "cpu_extra_time", precision = 10, scale = 6)
@@ -85,7 +83,6 @@ public class Constraints {
      * - 기본값: 10초, 최대: 20초
      * - 이 시간을 초과하면 강제 종료
      */
-    @NotNull
     @DecimalMin("1.0")
     @DecimalMax("20.0")
     @Column(name = "wall_time_limit", precision = 10, scale = 6)
@@ -111,7 +108,6 @@ public class Constraints {
      * - 기본값: 64MB (64000KB), 최대: 128MB (128000KB)
      * - 재귀 호출이나 큰 지역 변수 사용 시 중요
      */
-    @NotNull
     @Min(0)
     @Max(128000)
     @Column(name = "stack_limit")
@@ -124,7 +120,6 @@ public class Constraints {
      * - 기본값: 60개, 최대: 120개
      * - 멀티프로세싱, 멀티스레딩 프로그램의 리소스 제한
      */
-    @NotNull
     @Min(1)
     @Max(120)
     @Column(name = "max_processes_and_or_threads")
@@ -157,7 +152,6 @@ public class Constraints {
      * - 기본값: 1MB (1024KB), 최대: 4MB (4096KB)
      * - 파일 출력이 많은 프로그램의 리소스 제한
      */
-    @NotNull
     @Min(0)
     @Max(4096)
     @Column(name = "max_file_size")
@@ -239,23 +233,23 @@ public class Constraints {
         }
 
         return Constraints.builder()
-                .numberOfRuns(constraintsResponse.getNumberOfRuns())
-                .cpuTimeLimit(constraintsResponse.getCpuTimeLimit())
-                .cpuExtraTime(constraintsResponse.getCpuExtraTime())
-                .wallTimeLimit(constraintsResponse.getWallTimeLimit())
-                .memoryLimit(constraintsResponse.getMemoryLimit())
-                .stackLimit(constraintsResponse.getStackLimit())
-                .maxProcessesAndOrThreads(constraintsResponse.getMaxProcessesAndOrThreads())
-                .enablePerProcessAndThreadTimeLimit(constraintsResponse.getEnablePerProcessAndThreadTimeLimit())
-                .enablePerProcessAndThreadMemoryLimit(constraintsResponse.getEnablePerProcessAndThreadMemoryLimit())
-                .maxFileSize(constraintsResponse.getMaxFileSize())
+                .numberOfRuns(constraintsResponse.getNumberOfRuns() != null ? constraintsResponse.getNumberOfRuns() : 1)
+                .cpuTimeLimit(constraintsResponse.getCpuTimeLimit() != null ? constraintsResponse.getCpuTimeLimit() : BigDecimal.valueOf(5.0))
+                .cpuExtraTime(constraintsResponse.getCpuExtraTime() != null ? constraintsResponse.getCpuExtraTime() : BigDecimal.valueOf(1.0))
+                .wallTimeLimit(constraintsResponse.getWallTimeLimit() != null ? constraintsResponse.getWallTimeLimit() : BigDecimal.valueOf(10.0))
+                .memoryLimit(constraintsResponse.getMemoryLimit() != null ? constraintsResponse.getMemoryLimit() : 128000)
+                .stackLimit(constraintsResponse.getStackLimit() != null ? constraintsResponse.getStackLimit() : 64000)
+                .maxProcessesAndOrThreads(constraintsResponse.getMaxProcessesAndOrThreads() != null ? constraintsResponse.getMaxProcessesAndOrThreads() : 60)
+                .enablePerProcessAndThreadTimeLimit(constraintsResponse.getEnablePerProcessAndThreadTimeLimit() != null ? constraintsResponse.getEnablePerProcessAndThreadTimeLimit() : false)
+                .enablePerProcessAndThreadMemoryLimit(constraintsResponse.getEnablePerProcessAndThreadMemoryLimit() != null ? constraintsResponse.getEnablePerProcessAndThreadMemoryLimit() : false)
+                .maxFileSize(constraintsResponse.getMaxFileSize() != null ? constraintsResponse.getMaxFileSize() : 1024)
                 .compilerOptions(constraintsResponse.getCompilerOptions())
                 .commandLineArguments(constraintsResponse.getCommandLineArguments())
-                .redirectStderrToStdout(constraintsResponse.getRedirectStderrToStdout())
+                .redirectStderrToStdout(constraintsResponse.getRedirectStderrToStdout() != null ? constraintsResponse.getRedirectStderrToStdout() : false)
                 .callbackUrl(constraintsResponse.getCallbackUrl())
                 .additionalFiles(constraintsResponse.getAdditionalFiles() != null ?
                         java.util.Base64.getDecoder().decode(constraintsResponse.getAdditionalFiles()) : null)
-                .enableNetwork(constraintsResponse.getEnableNetwork())
+                .enableNetwork(constraintsResponse.getEnableNetwork() != null ? constraintsResponse.getEnableNetwork() : false)
                 .build();
     }
 }

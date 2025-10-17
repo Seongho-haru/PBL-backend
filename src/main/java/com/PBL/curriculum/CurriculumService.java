@@ -1,7 +1,7 @@
 package com.PBL.curriculum;
 
-import com.PBL.lecture.Lecture;
-import com.PBL.lecture.LectureRepository;
+import com.PBL.lecture.entity.Lecture;
+import com.PBL.lecture.repository.LectureRepository;
 import com.PBL.user.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

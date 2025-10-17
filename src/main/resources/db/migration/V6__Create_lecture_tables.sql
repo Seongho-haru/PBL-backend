@@ -9,11 +9,14 @@ CREATE TABLE IF NOT EXISTS lectures (
     type VARCHAR(20) NOT NULL CHECK (type IN ('MARKDOWN', 'PROBLEM')),
     category VARCHAR(100),
     difficulty VARCHAR(50),
-    time_limit INTEGER,
-    memory_limit INTEGER,
+    constraints_id BIGINT,
     is_public BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_lectures_constraints
+        FOREIGN KEY (constraints_id)
+        REFERENCES submission_constraints(id)
+        ON DELETE SET NULL
 );
 
 -- 테스트케이스 테이블 생성
@@ -33,6 +36,7 @@ CREATE INDEX IF NOT EXISTS idx_lectures_category ON lectures(category);
 CREATE INDEX IF NOT EXISTS idx_lectures_difficulty ON lectures(difficulty);
 CREATE INDEX IF NOT EXISTS idx_lectures_is_public ON lectures(is_public);
 CREATE INDEX IF NOT EXISTS idx_lectures_created_at ON lectures(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_lectures_constraints_id ON lectures(constraints_id);
 CREATE INDEX IF NOT EXISTS idx_test_cases_lecture_id ON test_cases(lecture_id);
 CREATE INDEX IF NOT EXISTS idx_test_cases_order ON test_cases(lecture_id, order_index);
 
@@ -57,36 +61,5 @@ COMMENT ON TABLE lectures IS '강의 정보를 저장하는 테이블 (마크다
 COMMENT ON TABLE test_cases IS '문제 강의의 테스트케이스를 저장하는 테이블';
 COMMENT ON COLUMN lectures.type IS '강의 유형: MARKDOWN(마크다운 강의), PROBLEM(문제 강의)';
 COMMENT ON COLUMN lectures.is_public IS '공개 강의 여부 (true: 공개, false: 비공개)';
-COMMENT ON COLUMN lectures.time_limit IS '문제 강의의 시간 제한 (초 단위)';
-COMMENT ON COLUMN lectures.memory_limit IS '문제 강의의 메모리 제한 (MB 단위)';
+COMMENT ON COLUMN lectures.constraints_id IS '강의에 적용되는 실행 제약조건 (CPU 시간, 메모리 등)';
 
-
--- 샘플 강의 데이터 추가
-INSERT INTO lectures (id, title, description, type, category, difficulty, time_limit, memory_limit, is_public) VALUES
-(1, '배열 합계 구하기', '주어진 배열의 모든 원소의 합을 구하는 문제입니다.', 'PROBLEM', '기초', '쉬움', 1, 128, true),
-(2, '두 수의 합', '두 개의 정수를 입력받아 합을 출력하는 문제입니다.', 'PROBLEM', '기초', '쉬움', 1, 128, true),
-(3, 'A+B', '두 정수 A와 B를 입력받아 A+B를 출력하는 기본 문제입니다.', 'PROBLEM', '기초', '쉬움', 1, 128, true);
-
--- 샘플 테스트케이스 데이터 추가
-INSERT INTO test_cases (lecture_id, input, expected_output, order_index) VALUES
--- 강의 1: 배열 합계 문제
-(1, '5\n1 2 3 4 5', '15', 1),
-(1, '3\n10 20 30', '60', 2),
-(1, '0', '0', 3),
-(1, '1\n100', '100', 4),
-
--- 강의 2: 두 수의 합 문제
-(2, '2\n5 10', '15', 1),
-(2, '1\n100', '100', 2),
-(2, '3\n1 2 3', '6', 3),
-
--- 강의 3: A+B 문제
-(3, '1 2', '3', 1),
-(3, '5 7', '12', 2),
-(3, '10 20', '30', 3),
-(3, '100 200', '300', 4),
-(3, '0 0', '0', 5),
-(3, '-5 3', '-2', 6),
-(3, '999 1', '1000', 7),
-(3, '123 456', '579', 8)
-;

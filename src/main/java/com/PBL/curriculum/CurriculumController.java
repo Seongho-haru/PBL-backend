@@ -1,7 +1,7 @@
 package com.PBL.curriculum;
 
 import com.PBL.curriculum.CurriculumDTOs.*;
-import com.PBL.lecture.Lecture;
+import com.PBL.lecture.entity.Lecture;
 import com.PBL.user.User;
 import com.PBL.user.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
@@ -352,8 +352,6 @@ public class CurriculumController {
         map.put("type", lecture.getType());
         map.put("category", lecture.getCategory());
         map.put("difficulty", lecture.getDifficulty());
-        map.put("timeLimit", lecture.getTimeLimit());
-        map.put("memoryLimit", lecture.getMemoryLimit());
         map.put("isPublic", lecture.getIsPublic());
         map.put("createdAt", lecture.getCreatedAt());
         map.put("updatedAt", lecture.getUpdatedAt());

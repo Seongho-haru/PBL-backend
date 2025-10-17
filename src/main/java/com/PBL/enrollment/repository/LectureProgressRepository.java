@@ -3,7 +3,7 @@ package com.PBL.enrollment.repository;
 import com.PBL.enrollment.entity.Enrollment;
 import com.PBL.enrollment.entity.LectureProgress;
 import com.PBL.enrollment.entity.ProgressStatus;
-import com.PBL.lecture.Lecture;
+import com.PBL.lecture.entity.Lecture;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

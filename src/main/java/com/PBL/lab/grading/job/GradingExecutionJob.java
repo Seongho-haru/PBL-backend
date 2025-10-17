@@ -9,7 +9,7 @@ import com.PBL.lab.core.service.DockerExecutionService;
 import com.PBL.lab.core.service.ExecutionResult;
 import com.PBL.lab.judge0.service.ExecutionService;
 import com.PBL.lab.judge0.service.SubmissionService;
-import com.PBL.lecture.TestCase;
+import com.PBL.lecture.entity.TestCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jobrunr.jobs.annotations.Job;

@@ -31,9 +31,5 @@ COMMENT ON COLUMN users.password IS '비밀번호 (해시화되어 저장)';
 COMMENT ON COLUMN users.created_at IS '계정 생성 시간';
 COMMENT ON COLUMN users.updated_at IS '계정 수정 시간';
 
--- 샘플 사용자 데이터 추가 (개발/테스트용)
 INSERT INTO users (username, login_id, password) VALUES
-('관리자', 'admin', 'admin123'),
-('테스트사용자1', 'testuser1', 'password123'),
-('테스트사용자2', 'testuser2', 'password123'),
-('개발자', 'developer', 'dev123');
+('관리자', 'admin', 'admin123');

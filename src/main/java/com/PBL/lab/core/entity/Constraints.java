@@ -1,10 +1,10 @@
 package com.PBL.lab.core.entity;
 
+import com.PBL.lab.core.dto.ConstraintsResponse;
+import com.PBL.lecture.entity.Lecture;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
 
 import java.math.BigDecimal;
 
@@ -25,7 +25,9 @@ import java.math.BigDecimal;
 @Table(name = "submission_constraints")
 @Data
 @EqualsAndHashCode
-@ToString(exclude = {"additionalFiles"})
+@NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class Constraints {
 
     /**
@@ -44,10 +46,10 @@ public class Constraints {
      * - 기본값: 1회, 최대: 20회
      * - 성능 측정의 정확도를 높이기 위해 사용
      */
-    @NotNull
     @DecimalMin("1")
     @DecimalMax("20")
     @Column(name = "number_of_runs")
+    @Builder.Default
     private Integer numberOfRuns = 1;
 
     /**
@@ -60,6 +62,7 @@ public class Constraints {
     @DecimalMin("0.0")
     @DecimalMax("15.0")
     @Column(name = "cpu_time_limit", precision = 10, scale = 6)
+    @Builder.Default
     private BigDecimal cpuTimeLimit = BigDecimal.valueOf(5.0);
 
     /**
@@ -68,10 +71,10 @@ public class Constraints {
      * - 기본값: 1초, 최대: 5초
      * - cpuTimeLimit에 추가로 제공되는 시간
      */
-    @NotNull
     @DecimalMin("0.0")
     @DecimalMax("5.0")
     @Column(name = "cpu_extra_time", precision = 10, scale = 6)
+    @Builder.Default
     private BigDecimal cpuExtraTime = BigDecimal.valueOf(1.0);
 
     /**
@@ -80,10 +83,10 @@ public class Constraints {
      * - 기본값: 10초, 최대: 20초
      * - 이 시간을 초과하면 강제 종료
      */
-    @NotNull
     @DecimalMin("1.0")
     @DecimalMax("20.0")
     @Column(name = "wall_time_limit", precision = 10, scale = 6)
+    @Builder.Default
     private BigDecimal wallTimeLimit = BigDecimal.valueOf(10.0);
 
     /**
@@ -96,6 +99,7 @@ public class Constraints {
     @Min(2048)
     @Max(512000)
     @Column(name = "memory_limit")
+    @Builder.Default
     private Integer memoryLimit = 128000; // KB
 
     /**
@@ -104,10 +108,10 @@ public class Constraints {
      * - 기본값: 64MB (64000KB), 최대: 128MB (128000KB)
      * - 재귀 호출이나 큰 지역 변수 사용 시 중요
      */
-    @NotNull
     @Min(0)
     @Max(128000)
     @Column(name = "stack_limit")
+    @Builder.Default
     private Integer stackLimit = 64000; // KB
 
     /**
@@ -116,10 +120,10 @@ public class Constraints {
      * - 기본값: 60개, 최대: 120개
      * - 멀티프로세싱, 멀티스레딩 프로그램의 리소스 제한
      */
-    @NotNull
     @Min(1)
     @Max(120)
     @Column(name = "max_processes_and_or_threads")
+    @Builder.Default
     private Integer maxProcessesAndOrThreads = 60;
 
     /**
@@ -129,6 +133,7 @@ public class Constraints {
      * - 멀티프로세싱 환경에서 개별 프로세스 제어
      */
     @Column(name = "enable_per_process_and_thread_time_limit")
+    @Builder.Default
     private Boolean enablePerProcessAndThreadTimeLimit = false;
 
     /**
@@ -138,6 +143,7 @@ public class Constraints {
      * - 멀티프로세싱 환경에서 개별 프로세스 메모리 제어
      */
     @Column(name = "enable_per_process_and_thread_memory_limit")
+    @Builder.Default
     private Boolean enablePerProcessAndThreadMemoryLimit = false;
 
     /**
@@ -146,10 +152,10 @@ public class Constraints {
      * - 기본값: 1MB (1024KB), 최대: 4MB (4096KB)
      * - 파일 출력이 많은 프로그램의 리소스 제한
      */
-    @NotNull
     @Min(0)
     @Max(4096)
     @Column(name = "max_file_size")
+    @Builder.Default
     private Integer maxFileSize = 1024; // KB
 
     // ========== 고급 실행 옵션 (Advanced Execution Options) ==========
@@ -181,6 +187,7 @@ public class Constraints {
      * - 디버깅이나 로그 통합 시 유용
      */
     @Column(name = "redirect_stderr_to_stdout")
+    @Builder.Default
     private Boolean redirectStderrToStdout = false;
 
     /**
@@ -197,8 +204,10 @@ public class Constraints {
      * - 프로젝트 제출 시 포함되는 추가 파일들
      * - ZIP, TAR 등 압축된 바이너리 형태로 저장
      * - 다중 파일 프로젝트 지원
+     *
+     * Note: @Lob를 제거함 - PostgreSQL에서 byte[]에 @Lob를 사용하면
+     * oid 타입으로 매핑되어 bytea와 충돌함. columnDefinition만으로 충분.
      */
-    @Lob
     @Column(name = "additional_files", columnDefinition = "bytea")
     private byte[] additionalFiles;
 
@@ -209,6 +218,38 @@ public class Constraints {
      * - 외부 API 호출이나 네트워크 통신이 필요한 경우에만 활성화
      */
     @Column(name = "enable_network")
+    @Builder.Default
     private Boolean enableNetwork = false;
 
+    /**
+     * ConstraintsResponse DTO를 Constraints 엔티티로 변환
+     *
+     * @param constraintsResponse 변환할 DTO 객체
+     * @return 변환된 Constraints 엔티티
+     */
+    public static Constraints build(ConstraintsResponse constraintsResponse) {
+        if (constraintsResponse == null) {
+            return null;
+        }
+
+        return Constraints.builder()
+                .numberOfRuns(constraintsResponse.getNumberOfRuns() != null ? constraintsResponse.getNumberOfRuns() : 1)
+                .cpuTimeLimit(constraintsResponse.getCpuTimeLimit() != null ? constraintsResponse.getCpuTimeLimit() : BigDecimal.valueOf(5.0))
+                .cpuExtraTime(constraintsResponse.getCpuExtraTime() != null ? constraintsResponse.getCpuExtraTime() : BigDecimal.valueOf(1.0))
+                .wallTimeLimit(constraintsResponse.getWallTimeLimit() != null ? constraintsResponse.getWallTimeLimit() : BigDecimal.valueOf(10.0))
+                .memoryLimit(constraintsResponse.getMemoryLimit() != null ? constraintsResponse.getMemoryLimit() : 128000)
+                .stackLimit(constraintsResponse.getStackLimit() != null ? constraintsResponse.getStackLimit() : 64000)
+                .maxProcessesAndOrThreads(constraintsResponse.getMaxProcessesAndOrThreads() != null ? constraintsResponse.getMaxProcessesAndOrThreads() : 60)
+                .enablePerProcessAndThreadTimeLimit(constraintsResponse.getEnablePerProcessAndThreadTimeLimit() != null ? constraintsResponse.getEnablePerProcessAndThreadTimeLimit() : false)
+                .enablePerProcessAndThreadMemoryLimit(constraintsResponse.getEnablePerProcessAndThreadMemoryLimit() != null ? constraintsResponse.getEnablePerProcessAndThreadMemoryLimit() : false)
+                .maxFileSize(constraintsResponse.getMaxFileSize() != null ? constraintsResponse.getMaxFileSize() : 1024)
+                .compilerOptions(constraintsResponse.getCompilerOptions())
+                .commandLineArguments(constraintsResponse.getCommandLineArguments())
+                .redirectStderrToStdout(constraintsResponse.getRedirectStderrToStdout() != null ? constraintsResponse.getRedirectStderrToStdout() : false)
+                .callbackUrl(constraintsResponse.getCallbackUrl())
+                .additionalFiles(constraintsResponse.getAdditionalFiles() != null ?
+                        java.util.Base64.getDecoder().decode(constraintsResponse.getAdditionalFiles()) : null)
+                .enableNetwork(constraintsResponse.getEnableNetwork() != null ? constraintsResponse.getEnableNetwork() : false)
+                .build();
+    }
 }

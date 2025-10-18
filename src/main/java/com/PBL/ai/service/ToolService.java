@@ -242,67 +242,67 @@ public class ToolService {
     // 3. 커리큘럼 조회 도구
     // ========================================
 
-    @Tool("커리큘럼 ID로 상세 정보를 조회합니다. 포함된 강의 목록과 순서를 확인할 수 있습니다.")
-    public Curriculum getCurriculum(@P("조회할 커리큘럼 ID") Long curriculumId) {
-        log.debug("🔧 [도구 호출] getCurriculum - 파라미터: curriculumId={}", curriculumId);
-        Curriculum result = curriculumService.getCurriculumById(curriculumId)
-                .orElseThrow(() -> new IllegalArgumentException("커리큘럼을 찾을 수 없습니다: " + curriculumId));
-        log.debug("✅ [도구 결과] getCurriculum - 커리큘럼명: {}, 강의 수: {}", 
-            result.getTitle(), result.getLectures() != null ? result.getLectures().size() : 0);
-        return result;
-    }
+//    @Tool("커리큘럼 ID로 상세 정보를 조회합니다. 포함된 강의 목록과 순서를 확인할 수 있습니다.")
+//    public Curriculum getCurriculum(@P("조회할 커리큘럼 ID") Long curriculumId) {
+//        log.debug("🔧 [도구 호출] getCurriculum - 파라미터: curriculumId={}", curriculumId);
+//        Curriculum result = curriculumService.getCurriculumById(curriculumId)
+//                .orElseThrow(() -> new IllegalArgumentException("커리큘럼을 찾을 수 없습니다: " + curriculumId));
+//        log.debug("✅ [도구 결과] getCurriculum - 커리큘럼명: {}, 강의 수: {}",
+//            result.getTitle(), result.getLectures() != null ? result.getLectures().size() : 0);
+//        return result;
+//    }
+//
+//    @Tool("모든 커리큘럼을 조회합니다. 포함된 강의 목록도 함께 반환됩니다.")
+//    public List<Curriculum> getAllCurriculums() {
+//        log.debug("🔧 [도구 호출] getAllCurriculums");
+//        List<Curriculum> result = curriculumService.getAllCurriculums();
+//        log.debug("✅ [도구 결과] getAllCurriculums - 커리큘럼 수: {}개", result.size());
+//        return result;
+//    }
 
-    @Tool("모든 커리큘럼을 조회합니다. 포함된 강의 목록도 함께 반환됩니다.")
-    public List<Curriculum> getAllCurriculums() {
-        log.debug("🔧 [도구 호출] getAllCurriculums");
-        List<Curriculum> result = curriculumService.getAllCurriculums();
-        log.debug("✅ [도구 결과] getAllCurriculums - 커리큘럼 수: {}개", result.size());
-        return result;
-    }
+//    @Tool("공개된 커리큘럼만 조회합니다. 학생들이 접근 가능한 학습 과정입니다.")
+//    public List<Curriculum> getPublicCurriculums() {
+//        log.debug("🔧 [도구 호출] getPublicCurriculums");
+//        List<Curriculum> result = curriculumService.getPublicCurriculums();
+//        log.debug("✅ [도구 결과] getPublicCurriculums - 커리큘럼 수: {}개", result.size());
+//        return result;
+//    }
 
-    @Tool("공개된 커리큘럼만 조회합니다. 학생들이 접근 가능한 학습 과정입니다.")
-    public List<Curriculum> getPublicCurriculums() {
-        log.debug("🔧 [도구 호출] getPublicCurriculums");
-        List<Curriculum> result = curriculumService.getPublicCurriculums();
-        log.debug("✅ [도구 결과] getPublicCurriculums - 커리큘럼 수: {}개", result.size());
-        return result;
-    }
-
-    @Tool("커리큘럼 제목으로 검색합니다. 부분 일치로 검색되며, 대소문자를 구분하지 않습니다.")
-    public List<Curriculum> searchCurriculums(@P("검색할 커리큘럼 제목 (부분 일치)") String title) {
-        log.debug("🔧 [도구 호출] searchCurriculums - 파라미터: title={}", title);
-        List<Curriculum> result = curriculumService.searchCurriculums(title);
-        log.debug("✅ [도구 결과] searchCurriculums - 검색 결과: {}개", result.size());
-        return result;
-    }
-
-    @Tool("공개 커리큘럼을 제목으로 검색합니다. 학생들이 수강 가능한 학습 과정을 찾을 때 사용합니다.")
-    public List<Curriculum> searchPublicCurriculums(@P("검색할 커리큘럼 제목 (부분 일치)") String title) {
-        log.debug("🔧 [도구 호출] searchPublicCurriculums - 파라미터: title={}", title);
-        List<Curriculum> result = curriculumService.searchPublicCurriculums(title);
-        log.debug("✅ [도구 결과] searchPublicCurriculums - 검색 결과: {}개", result.size());
-        return result;
-    }
+//    @Tool("커리큘럼 제목으로 검색합니다. 부분 일치로 검색되며, 대소문자를 구분하지 않습니다.")
+//    public List<Curriculum> searchCurriculums(@P("검색할 커리큘럼 제목 (부분 일치)") String title) {
+//        log.debug("🔧 [도구 호출] searchCurriculums - 파라미터: title={}", title);
+//        List<Curriculum> result = curriculumService.searchCurriculums(title);
+//        log.debug("✅ [도구 결과] searchCurriculums - 검색 결과: {}개", result.size());
+//        return result;
+//    }
+//
+//    @Tool("공개 커리큘럼을 제목으로 검색합니다. 학생들이 수강 가능한 학습 과정을 찾을 때 사용합니다.")
+//    public List<Curriculum> searchPublicCurriculums(@P("검색할 커리큘럼 제목 (부분 일치)") String title) {
+//        log.debug("🔧 [도구 호출] searchPublicCurriculums - 파라미터: title={}", title);
+//        List<Curriculum> result = curriculumService.searchPublicCurriculums(title);
+//        log.debug("✅ [도구 결과] searchPublicCurriculums - 검색 결과: {}개", result.size());
+//        return result;
+//    }
 
     // ========================================
     // 4. 통계 및 분석 도구
     // ========================================
 
-    @Tool("강의 타입별 통계를 조회합니다. 이론, 실습, 문제 강의가 각각 몇 개인지 확인할 수 있습니다.")
-    public List<Object[]> getLectureStatsByType() {
-        log.debug("🔧 [도구 호출] getLectureStatsByType");
-        List<Object[]> result = lectureService.getLectureStatsByType();
-        log.debug("✅ [도구 결과] getLectureStatsByType - 통계 항목: {}개", result.size());
-        return result;
-    }
-
-    @Tool("카테고리별 강의 통계를 조회합니다. 어떤 주제의 강의가 많은지 파악할 수 있습니다.")
-    public List<Object[]> getCategoryStats() {
-        log.debug("🔧 [도구 호출] getCategoryStats");
-        List<Object[]> result = lectureService.getCategoryStats();
-        log.debug("✅ [도구 결과] getCategoryStats - 카테고리 수: {}개", result.size());
-        return result;
-    }
+//    @Tool("강의 타입별 통계를 조회합니다. 이론, 실습, 문제 강의가 각각 몇 개인지 확인할 수 있습니다.")
+//    public List<Object[]> getLectureStatsByType() {
+//        log.debug("🔧 [도구 호출] getLectureStatsByType");
+//        List<Object[]> result = lectureService.getLectureStatsByType();
+//        log.debug("✅ [도구 결과] getLectureStatsByType - 통계 항목: {}개", result.size());
+//        return result;
+//    }
+//
+//    @Tool("카테고리별 강의 통계를 조회합니다. 어떤 주제의 강의가 많은지 파악할 수 있습니다.")
+//    public List<Object[]> getCategoryStats() {
+//        log.debug("🔧 [도구 호출] getCategoryStats");
+//        List<Object[]> result = lectureService.getCategoryStats();
+//        log.debug("✅ [도구 결과] getCategoryStats - 카테고리 수: {}개", result.size());
+//        return result;
+//    }
 
     /*
      * TODO 추후 추가 예정 기능:

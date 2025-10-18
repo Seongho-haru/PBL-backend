@@ -1,22 +1,17 @@
 package com.PBL.curriculum;
 
 import com.PBL.curriculum.CurriculumDTOs.*;
-import com.PBL.lecture.entity.Lecture;
-import com.PBL.user.User;
-import com.PBL.user.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * 커리큘럼 관리 REST API Controller
@@ -24,16 +19,15 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/curriculums")
+@Slf4j
 @Tag(name = "Curriculums", description = "커리큘럼 관리 API - 강의들을 폴더처럼 묶어서 관리")
 public class CurriculumController {
 
     private final CurriculumService curriculumService;
-    private final UserRepository userRepository;
 
     @Autowired
-    public CurriculumController(CurriculumService curriculumService, UserRepository userRepository) {
+    public CurriculumController(CurriculumService curriculumService) {
         this.curriculumService = curriculumService;
-        this.userRepository = userRepository;
     }
 
     // === 커리큘럼 기본 CRUD ===
@@ -41,20 +35,14 @@ public class CurriculumController {
     @GetMapping
     @Operation(summary = "모든 커리큘럼 조회", description = "시스템에 등록된 모든 커리큘럼을 최신순으로 조회합니다.")
     public ResponseEntity<List<CurriculumResponse>> getAllCurriculums() {
-        List<Curriculum> curriculums = curriculumService.getAllCurriculums();
-        List<CurriculumResponse> responses = curriculums.stream()
-                .map(CurriculumResponse::new)
-                .collect(Collectors.toList());
+        List<CurriculumResponse> responses = curriculumService.getAllCurriculums();
         return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/public")
     @Operation(summary = "공개 커리큘럼 조회", description = "공개된 커리큘럼만 최신순으로 조회합니다.")
     public ResponseEntity<List<CurriculumResponse>> getPublicCurriculums() {
-        List<Curriculum> curriculums = curriculumService.getPublicCurriculums();
-        List<CurriculumResponse> responses = curriculums.stream()
-                .map(CurriculumResponse::new)
-                .collect(Collectors.toList());
+        List<CurriculumResponse> responses = curriculumService.getPublicCurriculums();
         return ResponseEntity.ok(responses);
     }
 
@@ -63,21 +51,12 @@ public class CurriculumController {
     public ResponseEntity<?> getCurriculumById(
             @Parameter(description = "커리큘럼 ID") @PathVariable Long id,
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
-        Optional<Curriculum> curriculumOpt = curriculumService.getCurriculumById(id);
-        
-        if (curriculumOpt.isEmpty()) {
+        try {
+            CurriculumDetailResponse response = curriculumService.getCurriculumByIdWithAuth(id, userId);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
-
-        Curriculum curriculum = curriculumOpt.get();
-        
-        // 권한 체크: 공개 커리큘럼이거나 작성자인 경우만 조회 가능
-        if (!curriculum.isPublicCurriculum() && (userId == null || !curriculum.isAuthor(userId))) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "이 커리큘럼에 접근할 권한이 없습니다."));
-        }
-
-        return ResponseEntity.ok(new CurriculumDetailResponse(curriculum));
     }
 
     @PostMapping
@@ -86,25 +65,14 @@ public class CurriculumController {
             @RequestBody CreateCurriculumRequest request,
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         try {
-            // 사용자 권한 확인
-            if (userId == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "사용자 인증이 필요합니다."));
-            }
-            
-            // 작성자 정보 확인
-            User author = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
-
-            Curriculum curriculum = curriculumService.createCurriculum(
-                    request.getTitle(),
-                    request.getDescription(),
-                    request.isPublic(),
-                    author,
-                    request.getDifficulty(),
-                    request.getSummary()
-            );
-            return ResponseEntity.ok(new CurriculumResponse(curriculum));
+            CurriculumResponse response = curriculumService.createCurriculumWithAuth(request, userId);
+            return ResponseEntity.ok(response);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
@@ -117,32 +85,20 @@ public class CurriculumController {
             @RequestBody UpdateCurriculumRequest request,
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         try {
-            // 사용자 권한 확인
-            if (userId == null) {
+            CurriculumResponse response = curriculumService.updateCurriculumWithAuth(id, request, userId);
+            return ResponseEntity.ok(response);
+        } catch (SecurityException e) {
+            if (e.getMessage().contains("인증")) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "사용자 인증이 필요합니다."));
+                        .body(Map.of("error", e.getMessage()));
+            } else {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", e.getMessage()));
             }
-
-            // 커리큘럼 존재 여부 먼저 확인
-            Optional<Curriculum> curriculumOpt = curriculumService.getCurriculumById(id);
-            if (curriculumOpt.isEmpty()) {
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("찾을 수 없습니다")) {
                 return ResponseEntity.notFound().build();
             }
-
-            // 작성자 권한 확인
-            if (!curriculumService.canEditCurriculum(id, userId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "이 커리큘럼을 수정할 권한이 없습니다."));
-            }
-
-            Curriculum curriculum = curriculumService.updateCurriculum(
-                    id,
-                    request.getTitle(),
-                    request.getDescription(),
-                    request.getIsPublic()
-            );
-            return ResponseEntity.ok(new CurriculumResponse(curriculum));
-        } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
     }
@@ -153,27 +109,20 @@ public class CurriculumController {
             @Parameter(description = "커리큘럼 ID") @PathVariable Long id,
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         try {
-            // 사용자 권한 확인
-            if (userId == null) {
+            curriculumService.deleteCurriculumWithAuth(id, userId);
+            return ResponseEntity.ok(Map.of("message", "커리큘럼이 성공적으로 삭제되었습니다."));
+        } catch (SecurityException e) {
+            if (e.getMessage().contains("인증")) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "사용자 인증이 필요합니다."));
+                        .body(Map.of("error", e.getMessage()));
+            } else {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", e.getMessage()));
             }
-
-            // 커리큘럼 존재 여부 먼저 확인
-            Optional<Curriculum> curriculumOpt = curriculumService.getCurriculumById(id);
-            if (curriculumOpt.isEmpty()) {
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("찾을 수 없습니다")) {
                 return ResponseEntity.notFound().build();
             }
-
-            // 작성자 권한 확인
-            if (!curriculumService.canDeleteCurriculum(id, userId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "이 커리큘럼을 삭제할 권한이 없습니다."));
-            }
-
-            curriculumService.deleteCurriculum(id);
-            return ResponseEntity.ok(Map.of("message", "커리큘럼이 성공적으로 삭제되었습니다."));
-        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "커리큘럼 삭제 중 오류가 발생했습니다."));
         }
@@ -263,10 +212,7 @@ public class CurriculumController {
     @Operation(summary = "커리큘럼 검색", description = "제목으로 커리큘럼을 검색합니다.")
     public ResponseEntity<List<CurriculumResponse>> searchCurriculums(
             @Parameter(description = "검색할 제목 (부분 일치)") @RequestParam String title) {
-        List<Curriculum> curriculums = curriculumService.searchCurriculums(title);
-        List<CurriculumResponse> responses = curriculums.stream()
-                .map(CurriculumResponse::new)
-                .collect(Collectors.toList());
+        List<CurriculumResponse> responses = curriculumService.searchCurriculums(title);
         return ResponseEntity.ok(responses);
     }
 
@@ -274,10 +220,7 @@ public class CurriculumController {
     @Operation(summary = "공개 커리큘럼 검색", description = "공개 커리큘럼 중에서 제목으로 검색합니다.")
     public ResponseEntity<List<CurriculumResponse>> searchPublicCurriculums(
             @Parameter(description = "검색할 제목 (부분 일치)") @RequestParam String title) {
-        List<Curriculum> curriculums = curriculumService.searchPublicCurriculums(title);
-        List<CurriculumResponse> responses = curriculums.stream()
-                .map(CurriculumResponse::new)
-                .collect(Collectors.toList());
+        List<CurriculumResponse> responses = curriculumService.searchPublicCurriculums(title);
         return ResponseEntity.ok(responses);
     }
 
@@ -286,10 +229,7 @@ public class CurriculumController {
     @GetMapping("/lectures/public")
     @Operation(summary = "공개 강의 조회", description = "커리큘럼에 추가할 수 있는 모든 공개 강의를 조회합니다.")
     public ResponseEntity<List<Map<String, Object>>> getPublicLectures() {
-        List<Lecture> lectures = curriculumService.getPublicLectures();
-        List<Map<String, Object>> responses = lectures.stream()
-                .map(this::toLectureMap)
-                .collect(Collectors.toList());
+        List<Map<String, Object>> responses = curriculumService.getPublicLectures();
         return ResponseEntity.ok(responses);
     }
 
@@ -300,10 +240,7 @@ public class CurriculumController {
             @Parameter(description = "카테고리 필터") @RequestParam(required = false) String category,
             @Parameter(description = "난이도 필터") @RequestParam(required = false) String difficulty,
             @Parameter(description = "강의 유형 필터") @RequestParam(required = false) String type) {
-        List<Lecture> lectures = curriculumService.searchPublicLectures(title, category, difficulty, type);
-        List<Map<String, Object>> responses = lectures.stream()
-                .map(this::toLectureMap)
-                .collect(Collectors.toList());
+        List<Map<String, Object>> responses = curriculumService.searchPublicLectures(title, category, difficulty, type);
         return ResponseEntity.ok(responses);
     }
 
@@ -317,10 +254,7 @@ public class CurriculumController {
     @Operation(summary = "사용자별 커리큘럼 조회", description = "특정 사용자가 작성한 모든 커리큘럼을 조회합니다.")
     public ResponseEntity<List<CurriculumResponse>> getUserCurriculums(
             @Parameter(description = "사용자 ID") @PathVariable Long userId) {
-        List<Curriculum> curriculums = curriculumService.getUserCurriculums(userId);
-        List<CurriculumResponse> responses = curriculums.stream()
-                .map(CurriculumResponse::new)
-                .collect(Collectors.toList());
+        List<CurriculumResponse> responses = curriculumService.getUserCurriculums(userId);
         return ResponseEntity.ok(responses);
     }
 
@@ -332,37 +266,7 @@ public class CurriculumController {
     @Operation(summary = "사용자별 공개 커리큘럼 조회", description = "특정 사용자가 작성한 공개 커리큘럼만 조회합니다.")
     public ResponseEntity<List<CurriculumResponse>> getUserPublicCurriculums(
             @Parameter(description = "사용자 ID") @PathVariable Long userId) {
-        List<Curriculum> curriculums = curriculumService.getUserPublicCurriculums(userId);
-        List<CurriculumResponse> responses = curriculums.stream()
-                .map(CurriculumResponse::new)
-                .collect(Collectors.toList());
+        List<CurriculumResponse> responses = curriculumService.getUserPublicCurriculums(userId);
         return ResponseEntity.ok(responses);
-    }
-
-    // === Helper 메서드 ===
-
-    /**
-     * Lecture 엔티티를 안전한 Map으로 변환 (Lazy Loading 방지)
-     */
-    private Map<String, Object> toLectureMap(Lecture lecture) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("id", lecture.getId());
-        map.put("title", lecture.getTitle());
-        map.put("description", lecture.getDescription());
-        map.put("type", lecture.getType());
-        map.put("category", lecture.getCategory());
-        map.put("difficulty", lecture.getDifficulty());
-        map.put("isPublic", lecture.getIsPublic());
-        map.put("createdAt", lecture.getCreatedAt());
-        map.put("updatedAt", lecture.getUpdatedAt());
-        
-        // 테스트케이스는 개수만 포함 (Lazy Loading 방지)
-        try {
-            map.put("testCaseCount", lecture.getTestCases() != null ? lecture.getTestCases().size() : 0);
-        } catch (Exception e) {
-            map.put("testCaseCount", 0);
-        }
-        
-        return map;
     }
 }

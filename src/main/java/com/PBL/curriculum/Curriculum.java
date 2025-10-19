@@ -2,6 +2,9 @@ package com.PBL.curriculum;
 
 import com.PBL.user.User;
 import jakarta.persistence.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -16,6 +19,8 @@ import java.util.List;
  * 여러 강의들을 묶어서 관리하는 컨테이너
  */
 @Entity
+@Getter
+@Setter
 @Table(name = "curriculums")
 public class Curriculum {
 
@@ -34,6 +39,17 @@ public class Curriculum {
      */
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "curriculum_tags", joinColumns = @JoinColumn(name = "curriculum_id"))
+    @Column(name = "tag", length = 50)
+    private List<String> tags = new ArrayList<>();
+
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;  // 강의 소요시간 (분 단위)
+
+    @Column
+    private String thumbnailImageUrl;
 
     /**
      * 공개 커리큘럼 여부
@@ -208,101 +224,4 @@ public class Curriculum {
         return this.author != null && this.author.getId().equals(userId);
     }
 
-    // === Getter & Setter ===
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Boolean getIsPublic() {
-        return isPublic;
-    }
-
-    public void setIsPublic(Boolean isPublic) {
-        this.isPublic = isPublic;
-    }
-
-    public List<CurriculumLecture> getLectures() {
-        return lectures;
-    }
-
-    public void setLectures(List<CurriculumLecture> lectures) {
-        this.lectures = lectures;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public User getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(User author) {
-        this.author = author;
-    }
-
-    public String getDifficulty() {
-        return difficulty;
-    }
-
-    public void setDifficulty(String difficulty) {
-        this.difficulty = difficulty;
-    }
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
-
-    public BigDecimal getAverageRating() {
-        return averageRating;
-    }
-
-    public void setAverageRating(BigDecimal averageRating) {
-        this.averageRating = averageRating;
-    }
-
-    public Integer getStudentCount() {
-        return studentCount;
-    }
-
-    public void setStudentCount(Integer studentCount) {
-        this.studentCount = studentCount;
-    }
 }

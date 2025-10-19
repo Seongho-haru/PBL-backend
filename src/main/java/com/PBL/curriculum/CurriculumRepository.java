@@ -1,6 +1,7 @@
 package com.PBL.curriculum;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -45,21 +46,6 @@ public interface CurriculumRepository extends JpaRepository<Curriculum, Long> {
            "WHERE c.id = :id")
     Optional<Curriculum> findByIdWithLectures(@Param("id") Long id);
 
-    /**
-     * 공개 커리큘럼만 조회
-     */
-    List<Curriculum> findByIsPublicTrueOrderByCreatedAtDesc();
-
-    /**
-     * 제목으로 검색 (부분 일치)
-     */
-    List<Curriculum> findByTitleContainingIgnoreCaseOrderByCreatedAtDesc(String title);
-
-    /**
-     * 공개 커리큘럼에서 제목으로 검색
-     */
-    List<Curriculum> findByIsPublicTrueAndTitleContainingIgnoreCaseOrderByCreatedAtDesc(String title);
-
     // === 작성자 관련 메서드 ===
 
     /**
@@ -101,4 +87,38 @@ public interface CurriculumRepository extends JpaRepository<Curriculum, Long> {
            "WHERE c.author.id = :authorId AND c.isPublic = :isPublic " +
            "ORDER BY c.createdAt DESC")
     List<Curriculum> findByAuthorIdAndIsPublicWithLectures(@Param("authorId") Long authorId, @Param("isPublic") Boolean isPublic);
+
+    /**
+     * 제목으로 검색 (강의 포함)
+     */
+    @Query("SELECT DISTINCT c FROM Curriculum c " +
+           "LEFT JOIN FETCH c.lectures cl " +
+           "LEFT JOIN FETCH cl.lecture " +
+           "WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :title, '%')) " +
+           "ORDER BY c.createdAt DESC")
+    List<Curriculum> findByTitleContainingIgnoreCaseWithLectures(@Param("title") String title);
+
+    /**
+     * 공개 커리큘럼에서 제목으로 검색 (강의 포함)
+     */
+    @Query("SELECT DISTINCT c FROM Curriculum c " +
+           "LEFT JOIN FETCH c.lectures cl " +
+           "LEFT JOIN FETCH cl.lecture " +
+           "WHERE c.isPublic = true AND LOWER(c.title) LIKE LOWER(CONCAT('%', :title, '%')) " +
+           "ORDER BY c.createdAt DESC")
+    List<Curriculum> findPublicByTitleContainingIgnoreCaseWithLectures(@Param("title") String title);
+
+    /**
+     * 수강생 수 증가 (Atomic)
+     */
+    @Modifying
+    @Query("UPDATE Curriculum c SET c.studentCount = c.studentCount + 1 WHERE c.id = :id")
+    int incrementStudentCountAtomic(@Param("id") Long id);
+
+    /**
+     * 수강생 수 감소 (Atomic)
+     */
+    @Modifying
+    @Query("UPDATE Curriculum c SET c.studentCount = c.studentCount - 1 WHERE c.id = :id AND c.studentCount > 0")
+    int decrementStudentCountAtomic(@Param("id") Long id);
 }

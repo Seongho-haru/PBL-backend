@@ -2,9 +2,12 @@ package com.PBL.curriculum;
 
 import com.PBL.lecture.entity.Lecture;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,6 +20,8 @@ public class CurriculumDTOs {
     /**
      * 커리큘럼 목록 조회용 DTO (간단한 정보)
      */
+    @Getter
+    @Setter
     @Schema(description = "커리큘럼 기본 정보")
     public static class CurriculumResponse {
         @Schema(description = "커리큘럼 ID")
@@ -61,6 +66,10 @@ public class CurriculumDTOs {
         @Schema(description = "수강생 수")
         private Integer studentCount;
 
+        private List<String> tags;
+        private String thumbnailImageUrl;
+        private Integer durationMinutes;
+
         // 생성자
         public CurriculumResponse() {}
 
@@ -75,6 +84,10 @@ public class CurriculumDTOs {
             this.studentCount = curriculum.getStudentCount();
             this.createdAt = curriculum.getCreatedAt();
             this.updatedAt = curriculum.getUpdatedAt();
+
+            this.tags = curriculum.getTags() != null ? curriculum.getTags() : new ArrayList<>();
+            this.thumbnailImageUrl = curriculum.getThumbnailImageUrl();
+            this.durationMinutes = curriculum.getDurationMinutes();
             
             // 작성자 정보 설정
             try {
@@ -110,40 +123,14 @@ public class CurriculumDTOs {
             }
         }
 
-        // Getters and Setters
-        public Long getId() { return id; }
-        public void setId(Long id) { this.id = id; }
-        public String getTitle() { return title; }
-        public void setTitle(String title) { this.title = title; }
-        public String getDescription() { return description; }
-        public void setDescription(String description) { this.description = description; }
-        public Boolean getIsPublic() { return isPublic; }
-        public void setIsPublic(Boolean isPublic) { this.isPublic = isPublic; }
-        public Integer getTotalLectureCount() { return totalLectureCount; }
-        public void setTotalLectureCount(Integer totalLectureCount) { this.totalLectureCount = totalLectureCount; }
-        public Integer getRequiredLectureCount() { return requiredLectureCount; }
-        public void setRequiredLectureCount(Integer requiredLectureCount) { this.requiredLectureCount = requiredLectureCount; }
-        public Integer getOptionalLectureCount() { return optionalLectureCount; }
-        public void setOptionalLectureCount(Integer optionalLectureCount) { this.optionalLectureCount = optionalLectureCount; }
-        public LocalDateTime getCreatedAt() { return createdAt; }
-        public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-        public LocalDateTime getUpdatedAt() { return updatedAt; }
-        public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-        public AuthorInfo getAuthor() { return author; }
-        public void setAuthor(AuthorInfo author) { this.author = author; }
-        public String getDifficulty() { return difficulty; }
-        public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
-        public String getSummary() { return summary; }
-        public void setSummary(String summary) { this.summary = summary; }
-        public BigDecimal getAverageRating() { return averageRating; }
-        public void setAverageRating(BigDecimal averageRating) { this.averageRating = averageRating; }
-        public Integer getStudentCount() { return studentCount; }
-        public void setStudentCount(Integer studentCount) { this.studentCount = studentCount; }
+
     }
 
     /**
      * 커리큘럼 상세 조회용 DTO (강의 목록 포함)
      */
+    @Getter
+    @Setter
     @Schema(description = "커리큘럼 상세 정보")
     public static class CurriculumDetailResponse {
         @Schema(description = "커리큘럼 ID")
@@ -191,6 +178,15 @@ public class CurriculumDTOs {
         @Schema(description = "수강생 수")
         private Integer studentCount;
 
+        @Schema(description = "태그 목록")
+        private List<String> tags;
+
+        @Schema(description = "썸네일 이미지 URL")
+        private String thumbnailImageUrl;
+
+        @Schema(description = "소요 시간 (분)")
+        private Integer durationMinutes;
+
         // 생성자
         public CurriculumDetailResponse() {}
 
@@ -211,7 +207,12 @@ public class CurriculumDTOs {
             this.optionalLectureCount = curriculum.getOptionalLectureCount();
             this.createdAt = curriculum.getCreatedAt();
             this.updatedAt = curriculum.getUpdatedAt();
-            
+
+            // 새로 추가된 필드들
+            this.tags = curriculum.getTags() != null ? curriculum.getTags() : new ArrayList<>();
+            this.thumbnailImageUrl = curriculum.getThumbnailImageUrl();
+            this.durationMinutes = curriculum.getDurationMinutes();
+
             // 작성자 정보 설정
             try {
                 if (curriculum.getAuthor() != null) {
@@ -226,42 +227,14 @@ public class CurriculumDTOs {
             }
         }
 
-        // Getters and Setters
-        public Long getId() { return id; }
-        public void setId(Long id) { this.id = id; }
-        public String getTitle() { return title; }
-        public void setTitle(String title) { this.title = title; }
-        public String getDescription() { return description; }
-        public void setDescription(String description) { this.description = description; }
-        public Boolean getIsPublic() { return isPublic; }
-        public void setIsPublic(Boolean isPublic) { this.isPublic = isPublic; }
-        public List<CurriculumLectureResponse> getLectures() { return lectures; }
-        public void setLectures(List<CurriculumLectureResponse> lectures) { this.lectures = lectures; }
-        public Integer getTotalLectureCount() { return totalLectureCount; }
-        public void setTotalLectureCount(Integer totalLectureCount) { this.totalLectureCount = totalLectureCount; }
-        public Integer getRequiredLectureCount() { return requiredLectureCount; }
-        public void setRequiredLectureCount(Integer requiredLectureCount) { this.requiredLectureCount = requiredLectureCount; }
-        public Integer getOptionalLectureCount() { return optionalLectureCount; }
-        public void setOptionalLectureCount(Integer optionalLectureCount) { this.optionalLectureCount = optionalLectureCount; }
-        public LocalDateTime getCreatedAt() { return createdAt; }
-        public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-        public LocalDateTime getUpdatedAt() { return updatedAt; }
-        public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-        public AuthorInfo getAuthor() { return author; }
-        public void setAuthor(AuthorInfo author) { this.author = author; }
-        public String getDifficulty() { return difficulty; }
-        public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
-        public String getSummary() { return summary; }
-        public void setSummary(String summary) { this.summary = summary; }
-        public BigDecimal getAverageRating() { return averageRating; }
-        public void setAverageRating(BigDecimal averageRating) { this.averageRating = averageRating; }
-        public Integer getStudentCount() { return studentCount; }
-        public void setStudentCount(Integer studentCount) { this.studentCount = studentCount; }
+
     }
 
     /**
      * 커리큘럼 내 강의 정보 DTO
      */
+    @Getter
+    @Setter
     @Schema(description = "커리큘럼 내 강의 정보")
     public static class CurriculumLectureResponse {
         @Schema(description = "연결 ID")
@@ -323,36 +296,14 @@ public class CurriculumDTOs {
             }
         }
 
-        // Getters and Setters
-        public Long getId() { return id; }
-        public void setId(Long id) { this.id = id; }
-        public Long getLectureId() { return lectureId; }
-        public void setLectureId(Long lectureId) { this.lectureId = lectureId; }
-        public String getLectureTitle() { return lectureTitle; }
-        public void setLectureTitle(String lectureTitle) { this.lectureTitle = lectureTitle; }
-        public String getLectureDescription() { return lectureDescription; }
-        public void setLectureDescription(String lectureDescription) { this.lectureDescription = lectureDescription; }
-        public String getLectureType() { return lectureType; }
-        public void setLectureType(String lectureType) { this.lectureType = lectureType; }
-        public String getLectureCategory() { return lectureCategory; }
-        public void setLectureCategory(String lectureCategory) { this.lectureCategory = lectureCategory; }
-        public String getLectureDifficulty() { return lectureDifficulty; }
-        public void setLectureDifficulty(String lectureDifficulty) { this.lectureDifficulty = lectureDifficulty; }
-        public Integer getOrderIndex() { return orderIndex; }
-        public void setOrderIndex(Integer orderIndex) { this.orderIndex = orderIndex; }
-        public Boolean getIsRequired() { return isRequired; }
-        public void setIsRequired(Boolean isRequired) { this.isRequired = isRequired; }
-        public String getOriginalAuthor() { return originalAuthor; }
-        public void setOriginalAuthor(String originalAuthor) { this.originalAuthor = originalAuthor; }
-        public String getSourceInfo() { return sourceInfo; }
-        public void setSourceInfo(String sourceInfo) { this.sourceInfo = sourceInfo; }
-        public LocalDateTime getCreatedAt() { return createdAt; }
-        public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
     }
 
     /**
      * 커리큘럼 생성 요청 DTO
      */
+    @Getter
+    @Setter
     @Schema(description = "커리큘럼 생성 요청")
     public static class CreateCurriculumRequest {
         @Schema(description = "커리큘럼 제목", required = true)
@@ -373,47 +324,50 @@ public class CurriculumDTOs {
         @Schema(description = "커리큘럼 간단 소개")
         private String summary;
 
-        // Getters and Setters
-        public String getTitle() { return title; }
-        public void setTitle(String title) { this.title = title; }
-        public String getDescription() { return description; }
-        public void setDescription(String description) { this.description = description; }
-        public boolean isPublic() { return isPublic; }
-        public void setIsPublic(boolean isPublic) { this.isPublic = isPublic; }
-        public Long getAuthorId() { return authorId; }
-        public void setAuthorId(Long authorId) { this.authorId = authorId; }
-        public String getDifficulty() { return difficulty; }
-        public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
-        public String getSummary() { return summary; }
-        public void setSummary(String summary) { this.summary = summary; }
+        private List<String> tags;
+        private String thumbnailImageUrl;
+        private Integer durationMinutes;
+
     }
 
     /**
      * 커리큘럼 수정 요청 DTO
      */
+    @Getter
+    @Setter
     @Schema(description = "커리큘럼 수정 요청")
     public static class UpdateCurriculumRequest {
         @Schema(description = "커리큘럼 제목")
         private String title;
-        
+
         @Schema(description = "커리큘럼 설명")
         private String description;
-        
+
         @Schema(description = "공개 여부")
         private Boolean isPublic;
 
-        // Getters and Setters
-        public String getTitle() { return title; }
-        public void setTitle(String title) { this.title = title; }
-        public String getDescription() { return description; }
-        public void setDescription(String description) { this.description = description; }
-        public Boolean getIsPublic() { return isPublic; }
-        public void setIsPublic(Boolean isPublic) { this.isPublic = isPublic; }
+        @Schema(description = "커리큘럼 난이도")
+        private String difficulty;
+
+        @Schema(description = "커리큘럼 간단 소개")
+        private String summary;
+
+        @Schema(description = "태그 목록")
+        private List<String> tags;
+
+        @Schema(description = "썸네일 이미지 URL")
+        private String thumbnailImageUrl;
+
+        @Schema(description = "소요 시간 (분)")
+        private Integer durationMinutes;
+
     }
 
     /**
      * 강의 추가 요청 DTO
      */
+    @Getter
+    @Setter
     @Schema(description = "커리큘럼에 강의 추가 요청")
     public static class AddLectureRequest {
         @Schema(description = "강의 ID", required = true)
@@ -428,33 +382,25 @@ public class CurriculumDTOs {
         @Schema(description = "원본 강의 출처 정보")
         private String sourceInfo;
 
-        // Getters and Setters
-        public Long getLectureId() { return lectureId; }
-        public void setLectureId(Long lectureId) { this.lectureId = lectureId; }
-        public boolean isRequired() { return isRequired; }
-        public void setRequired(boolean required) { this.isRequired = required; }
-        public String getOriginalAuthor() { return originalAuthor; }
-        public void setOriginalAuthor(String originalAuthor) { this.originalAuthor = originalAuthor; }
-        public String getSourceInfo() { return sourceInfo; }
-        public void setSourceInfo(String sourceInfo) { this.sourceInfo = sourceInfo; }
     }
 
     /**
      * 강의 순서 변경 요청 DTO
      */
+    @Getter
+    @Setter
     @Schema(description = "강의 순서 변경 요청")
     public static class ReorderLecturesRequest {
         @Schema(description = "강의 ID 목록 (순서대로)", required = true)
         private List<Long> lectureIds;
 
-        // Getters and Setters
-        public List<Long> getLectureIds() { return lectureIds; }
-        public void setLectureIds(List<Long> lectureIds) { this.lectureIds = lectureIds; }
     }
 
     /**
      * 작성자 정보 DTO
      */
+    @Getter
+    @Setter
     @Schema(description = "작성자 정보")
     public static class AuthorInfo {
         @Schema(description = "사용자 ID")
@@ -466,12 +412,5 @@ public class CurriculumDTOs {
         @Schema(description = "로그인 ID")
         private String loginId;
 
-        // Getters and Setters
-        public Long getId() { return id; }
-        public void setId(Long id) { this.id = id; }
-        public String getUsername() { return username; }
-        public void setUsername(String username) { this.username = username; }
-        public String getLoginId() { return loginId; }
-        public void setLoginId(String loginId) { this.loginId = loginId; }
     }
 }

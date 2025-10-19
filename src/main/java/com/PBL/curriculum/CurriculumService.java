@@ -138,13 +138,15 @@ public class CurriculumService {
      * 커리큘럼 생성 (작성자 및 메타데이터 포함)
      */
     @Transactional
-    public CurriculumResponse createCurriculum(String title, String description, boolean isPublic, User author,
-                                               String difficulty, String summary) {
-        Curriculum curriculum = new Curriculum(title, description);
-        curriculum.setIsPublic(isPublic);
+    public CurriculumResponse createCurriculum(CreateCurriculumRequest request, User author) {
+        Curriculum curriculum = new Curriculum(request.getTitle(), request.getDescription());
+        curriculum.setIsPublic(request.isPublic());
         curriculum.setAuthor(author);
-        curriculum.setDifficulty(difficulty);
-        curriculum.setSummary(summary);
+        curriculum.setDifficulty(request.getDifficulty());
+        curriculum.setSummary(request.getSummary());
+        curriculum.setTags(request.getTags());
+        curriculum.setThumbnailImageUrl(request.getThumbnailImageUrl());
+        curriculum.setDurationMinutes(request.getDurationMinutes());
         curriculum = curriculumRepository.save(curriculum);
         return new CurriculumResponse(curriculum);
     }
@@ -163,27 +165,42 @@ public class CurriculumService {
         User author = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
 
-        return createCurriculum(
-                request.getTitle(),
-                request.getDescription(),
-                request.isPublic(),
-                author,
-                request.getDifficulty(),
-                request.getSummary()
-        );
+        return createCurriculum(request, author);
     }
 
     /**
      * 커리큘럼 수정
      */
     @Transactional
-    public Curriculum updateCurriculum(Long id, String title, String description, Boolean isPublic) {
+    public Curriculum updateCurriculum(Long id, UpdateCurriculumRequest request) {
         Curriculum curriculum = curriculumRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("커리큘럼을 찾을 수 없습니다: " + id));
 
-        if (title != null) curriculum.setTitle(title);
-        if (description != null) curriculum.setDescription(description);
-        if (isPublic != null) curriculum.setIsPublic(isPublic);
+        // 기본 필드 업데이트 (null이 아닐 때만)
+        if (request.getTitle() != null) {
+            curriculum.setTitle(request.getTitle());
+        }
+        if (request.getDescription() != null) {
+            curriculum.setDescription(request.getDescription());
+        }
+        if (request.getIsPublic() != null) {
+            curriculum.setIsPublic(request.getIsPublic());
+        }
+        if (request.getDifficulty() != null) {
+            curriculum.setDifficulty(request.getDifficulty());
+        }
+        if (request.getSummary() != null) {
+            curriculum.setSummary(request.getSummary());
+        }
+        if (request.getTags() != null) {
+            curriculum.setTags(request.getTags());
+        }
+        if (request.getThumbnailImageUrl() != null) {
+            curriculum.setThumbnailImageUrl(request.getThumbnailImageUrl());
+        }
+        if (request.getDurationMinutes() != null) {
+            curriculum.setDurationMinutes(request.getDurationMinutes());
+        }
 
         return curriculumRepository.save(curriculum);
     }
@@ -209,12 +226,7 @@ public class CurriculumService {
             throw new SecurityException("이 커리큘럼을 수정할 권한이 없습니다.");
         }
 
-        Curriculum curriculum = updateCurriculum(
-                id,
-                request.getTitle(),
-                request.getDescription(),
-                request.getIsPublic()
-        );
+        Curriculum curriculum = updateCurriculum(id, request);
         return new CurriculumResponse(curriculum);
     }
 
@@ -396,8 +408,7 @@ public class CurriculumService {
      */
     @Transactional(readOnly = true)
     public List<CurriculumResponse> searchCurriculums(String title) {
-        return curriculumRepository.findAllWithLectures().stream()
-                .filter(c -> c.getTitle().toLowerCase().contains(title.toLowerCase()))
+        return curriculumRepository.findByTitleContainingIgnoreCaseWithLectures(title).stream()
                 .map(CurriculumResponse::new)
                 .toList();
     }
@@ -407,8 +418,7 @@ public class CurriculumService {
      */
     @Transactional(readOnly = true)
     public List<CurriculumResponse> searchPublicCurriculums(String title) {
-        return curriculumRepository.findPublicCurriculumsWithLectures().stream()
-                .filter(c -> c.getTitle().toLowerCase().contains(title.toLowerCase()))
+        return curriculumRepository.findPublicByTitleContainingIgnoreCaseWithLectures(title).stream()
                 .map(CurriculumResponse::new)
                 .toList();
     }
@@ -517,29 +527,28 @@ public class CurriculumService {
     // === 수강생 수 관리 ===
 
     /**
-     * 커리큘럼의 수강생 수 증가
+     * 커리큘럼의 수강생 수 증가 (Atomic operation)
      */
     @Transactional
     public void incrementStudentCount(Long curriculumId) {
-        Curriculum curriculum = curriculumRepository.findById(curriculumId)
-                .orElseThrow(() -> new RuntimeException("커리큘럼을 찾을 수 없습니다: " + curriculumId));
-
-        curriculum.setStudentCount(curriculum.getStudentCount() + 1);
-        curriculumRepository.save(curriculum);
+        int updated = curriculumRepository.incrementStudentCountAtomic(curriculumId);
+        if (updated == 0) {
+            throw new RuntimeException("커리큘럼을 찾을 수 없습니다: " + curriculumId);
+        }
     }
 
     /**
-     * 커리큘럼의 수강생 수 감소
+     * 커리큘럼의 수강생 수 감소 (Atomic operation)
      */
     @Transactional
     public void decrementStudentCount(Long curriculumId) {
-        Curriculum curriculum = curriculumRepository.findById(curriculumId)
-                .orElseThrow(() -> new RuntimeException("커리큘럼을 찾을 수 없습니다: " + curriculumId));
-
-        int currentCount = curriculum.getStudentCount();
-        if (currentCount > 0) {
-            curriculum.setStudentCount(currentCount - 1);
-            curriculumRepository.save(curriculum);
+        int updated = curriculumRepository.decrementStudentCountAtomic(curriculumId);
+        if (updated == 0) {
+            // 커리큘럼이 없거나 이미 0인 경우
+            if (!curriculumRepository.existsById(curriculumId)) {
+                throw new RuntimeException("커리큘럼을 찾을 수 없습니다: " + curriculumId);
+            }
+            // 이미 0인 경우는 조용히 무시
         }
     }
 

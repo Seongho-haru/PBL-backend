@@ -51,6 +51,9 @@ public class Curriculum {
     @Column
     private String thumbnailImageUrl;
 
+    @Column(length = 100)
+    private String category;
+
     /**
      * 공개 커리큘럼 여부
      * true: 다른 사용자가 볼 수 있음

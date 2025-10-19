@@ -2,6 +2,7 @@ package com.PBL.curriculum;
 
 import com.PBL.lecture.entity.Lecture;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -38,6 +39,8 @@ public class CurriculumDTOs {
         
         @Schema(description = "총 강의 수")
         private Integer totalLectureCount;
+
+        private String category;
         
         @Schema(description = "필수 강의 수")
         private Integer requiredLectureCount;
@@ -88,6 +91,7 @@ public class CurriculumDTOs {
             this.tags = curriculum.getTags() != null ? curriculum.getTags() : new ArrayList<>();
             this.thumbnailImageUrl = curriculum.getThumbnailImageUrl();
             this.durationMinutes = curriculum.getDurationMinutes();
+            this.category = curriculum.getCategory();
             
             // 작성자 정보 설정
             try {
@@ -186,6 +190,7 @@ public class CurriculumDTOs {
 
         @Schema(description = "소요 시간 (분)")
         private Integer durationMinutes;
+        private String category;
 
         // 생성자
         public CurriculumDetailResponse() {}
@@ -212,6 +217,7 @@ public class CurriculumDTOs {
             this.tags = curriculum.getTags() != null ? curriculum.getTags() : new ArrayList<>();
             this.thumbnailImageUrl = curriculum.getThumbnailImageUrl();
             this.durationMinutes = curriculum.getDurationMinutes();
+            this.category = curriculum.getCategory();
 
             // 작성자 정보 설정
             try {
@@ -327,6 +333,7 @@ public class CurriculumDTOs {
         private List<String> tags;
         private String thumbnailImageUrl;
         private Integer durationMinutes;
+        private String category;
 
     }
 
@@ -360,6 +367,8 @@ public class CurriculumDTOs {
 
         @Schema(description = "소요 시간 (분)")
         private Integer durationMinutes;
+
+        private String category;
 
     }
 

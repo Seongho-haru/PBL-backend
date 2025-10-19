@@ -151,6 +151,7 @@ public class CurriculumService {
         curriculum.setTags(request.getTags());
         curriculum.setThumbnailImageUrl(request.getThumbnailImageUrl());
         curriculum.setDurationMinutes(request.getDurationMinutes());
+        curriculum.setCategory(request.getCategory());
         curriculum = curriculumRepository.save(curriculum);
         return new CurriculumResponse(curriculum);
     }
@@ -204,6 +205,9 @@ public class CurriculumService {
         }
         if (request.getDurationMinutes() != null) {
             curriculum.setDurationMinutes(request.getDurationMinutes());
+        }
+        if (request.getCategory() != null) {
+            curriculum.setCategory(request.getCategory());
         }
 
         return curriculumRepository.save(curriculum);

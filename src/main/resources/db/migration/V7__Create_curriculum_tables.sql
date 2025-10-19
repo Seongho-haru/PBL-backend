@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS curriculums (
     id BIGSERIAL PRIMARY KEY,
     title VARCHAR(200) NOT NULL,
     description TEXT,
+    category VARCHAR(100),
     is_public BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -33,6 +34,7 @@ CREATE TABLE IF NOT EXISTS curriculum_lectures (
 -- 인덱스 생성
 CREATE INDEX IF NOT EXISTS idx_curriculums_is_public ON curriculums(is_public);
 CREATE INDEX IF NOT EXISTS idx_curriculums_created_at ON curriculums(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_curriculums_category ON curriculums(category);
 CREATE INDEX IF NOT EXISTS idx_curriculum_lectures_curriculum_id ON curriculum_lectures(curriculum_id);
 CREATE INDEX IF NOT EXISTS idx_curriculum_lectures_lecture_id ON curriculum_lectures(lecture_id);
 CREATE INDEX IF NOT EXISTS idx_curriculum_lectures_order ON curriculum_lectures(curriculum_id, order_index);
@@ -47,6 +49,7 @@ CREATE TRIGGER update_curriculums_updated_at
 -- 테이블 코멘트
 COMMENT ON TABLE curriculums IS '커리큘럼 정보를 저장하는 테이블 (강의들의 폴더 역할)';
 COMMENT ON TABLE curriculum_lectures IS '커리큘럼과 강의의 연결 관계를 저장하는 테이블';
+COMMENT ON COLUMN curriculums.category IS '커리큘럼 카테고리 (예: 웹, 알고리즘, 데이터베이스 등)';
 COMMENT ON COLUMN curriculums.is_public IS '공개 커리큘럼 여부 (true: 공개, false: 비공개)';
 COMMENT ON COLUMN curriculum_lectures.is_required IS '필수 강의 여부 (true: 필수, false: 선택)';
 COMMENT ON COLUMN curriculum_lectures.original_author IS '원본 강의 작성자 (다른 사용자 강의 링크 시)';

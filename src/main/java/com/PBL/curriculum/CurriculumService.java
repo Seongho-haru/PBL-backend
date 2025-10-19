@@ -5,11 +5,13 @@ import com.PBL.lecture.entity.Lecture;
 import com.PBL.lecture.repository.LectureRepository;
 import com.PBL.user.User;
 import com.PBL.user.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Transactional
+@Slf4j
 public class CurriculumService {
 
     private final CurriculumRepository curriculumRepository;
@@ -60,6 +63,7 @@ public class CurriculumService {
     @Transactional(readOnly = true)
     public List<CurriculumResponse> getPublicCurriculums() {
         List<Curriculum> curriculums = curriculumRepository.findPublicCurriculumsWithLectures();
+        log.info("Curriculums found: {}", curriculums.toString());
         return curriculums.stream()
                 .map(CurriculumResponse::new)
                 .collect(Collectors.toList());
@@ -380,6 +384,7 @@ public class CurriculumService {
      * Lecture 엔티티를 안전한 Map으로 변환 (Lazy Loading 방지)
      */
     private Map<String, Object> toLectureMap(Lecture lecture) {
+        log.info(lecture.toString());
         Map<String, Object> map = new HashMap<>();
         map.put("id", lecture.getId());
         map.put("title", lecture.getTitle());
@@ -390,6 +395,15 @@ public class CurriculumService {
         map.put("isPublic", lecture.getIsPublic());
         map.put("createdAt", lecture.getCreatedAt());
         map.put("updatedAt", lecture.getUpdatedAt());
+
+        // 태그 추가
+        map.put("tags", lecture.getTags() != null ? lecture.getTags() : new ArrayList<>());
+
+        // 썸네일 이미지 URL 추가
+        map.put("thumbnailImageUrl", lecture.getThumbnailImageUrl());
+
+        // 소요시간 추가
+        map.put("durationMinutes", lecture.getDurationMinutes());
 
         // 테스트케이스는 개수만 포함 (Lazy Loading 방지)
         try {

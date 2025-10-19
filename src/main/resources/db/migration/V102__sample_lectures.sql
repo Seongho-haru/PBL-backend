@@ -1209,3 +1209,102 @@ INSERT INTO test_cases (lecture_id, input, expected_output, order_index) VALUES
 ((SELECT id FROM lectures WHERE title = '[문제] 괄호 짝 맞추기'), '(()', 'False', 6),  -- 틀린값: 열린 괄호만
 ((SELECT id FROM lectures WHERE title = '[문제] 괄호 짝 맞추기'), '())', 'False', 7),  -- 틀린값: 닫힌 괄호 많음
 ((SELECT id FROM lectures WHERE title = '[문제] 괄호 짝 맞추기'), '{[(])}', 'False', 8);  -- 틀린값: 순서 틀림
+
+-- ============================================
+-- 강의 태그 데이터 (lecture_tags)
+-- ============================================
+
+-- 커리큘럼 1: Introduction To Algorithms - 태그
+INSERT INTO lecture_tags (lecture_id, tag) VALUES
+-- 알고리즘이란?
+((SELECT id FROM lectures WHERE title = '알고리즘이란?'), '알고리즘'),
+((SELECT id FROM lectures WHERE title = '알고리즘이란?'), '기초'),
+((SELECT id FROM lectures WHERE title = '알고리즘이란?'), '개념'),
+-- 시간복잡도
+((SELECT id FROM lectures WHERE title = '시간복잡도'), '알고리즘'),
+((SELECT id FROM lectures WHERE title = '시간복잡도'), '기초'),
+((SELECT id FROM lectures WHERE title = '시간복잡도'), '성능분석'),
+-- [문제] 배열에서 최댓값 찾기
+((SELECT id FROM lectures WHERE title = '[문제] 배열에서 최댓값 찾기'), '알고리즘'),
+((SELECT id FROM lectures WHERE title = '[문제] 배열에서 최댓값 찾기'), '기초'),
+((SELECT id FROM lectures WHERE title = '[문제] 배열에서 최댓값 찾기'), '배열'),
+-- Big O 표기법
+((SELECT id FROM lectures WHERE title = 'Big O 표기법'), '알고리즘'),
+((SELECT id FROM lectures WHERE title = 'Big O 표기법'), '기초'),
+((SELECT id FROM lectures WHERE title = 'Big O 표기법'), '성능분석'),
+-- 버블 정렬
+((SELECT id FROM lectures WHERE title = '버블 정렬'), '알고리즘'),
+((SELECT id FROM lectures WHERE title = '버블 정렬'), '기초'),
+((SELECT id FROM lectures WHERE title = '버블 정렬'), '정렬'),
+-- [문제] 버블 정렬 구현하기
+((SELECT id FROM lectures WHERE title = '[문제] 버블 정렬 구현하기'), '알고리즘'),
+((SELECT id FROM lectures WHERE title = '[문제] 버블 정렬 구현하기'), '기초'),
+((SELECT id FROM lectures WHERE title = '[문제] 버블 정렬 구현하기'), '정렬'),
+-- 퀵 정렬
+((SELECT id FROM lectures WHERE title = '퀵 정렬'), '알고리즘'),
+((SELECT id FROM lectures WHERE title = '퀵 정렬'), '중급'),
+((SELECT id FROM lectures WHERE title = '퀵 정렬'), '정렬'),
+-- [문제] 이진 탐색 구현
+((SELECT id FROM lectures WHERE title = '[문제] 이진 탐색 구현'), '알고리즘'),
+((SELECT id FROM lectures WHERE title = '[문제] 이진 탐색 구현'), '중급'),
+((SELECT id FROM lectures WHERE title = '[문제] 이진 탐색 구현'), '탐색'),
+
+-- 커리큘럼 2: 웹 기초 HTML/CSS - 태그
+-- HTML 기본 구조
+((SELECT id FROM lectures WHERE title = 'HTML 기본 구조'), '웹'),
+((SELECT id FROM lectures WHERE title = 'HTML 기본 구조'), '기초'),
+((SELECT id FROM lectures WHERE title = 'HTML 기본 구조'), 'HTML'),
+-- [문제] 프로필 카드 만들기
+((SELECT id FROM lectures WHERE title = '[문제] 프로필 카드 만들기'), '웹'),
+((SELECT id FROM lectures WHERE title = '[문제] 프로필 카드 만들기'), '기초'),
+((SELECT id FROM lectures WHERE title = '[문제] 프로필 카드 만들기'), 'HTML'),
+-- CSS 선택자
+((SELECT id FROM lectures WHERE title = 'CSS 선택자'), '웹'),
+((SELECT id FROM lectures WHERE title = 'CSS 선택자'), '기초'),
+((SELECT id FROM lectures WHERE title = 'CSS 선택자'), 'CSS'),
+-- [문제] CSS로 버튼 스타일링
+((SELECT id FROM lectures WHERE title = '[문제] CSS로 버튼 스타일링'), '웹'),
+((SELECT id FROM lectures WHERE title = '[문제] CSS로 버튼 스타일링'), '기초'),
+((SELECT id FROM lectures WHERE title = '[문제] CSS로 버튼 스타일링'), 'CSS'),
+-- Flexbox
+((SELECT id FROM lectures WHERE title = 'Flexbox'), '웹'),
+((SELECT id FROM lectures WHERE title = 'Flexbox'), '중급'),
+((SELECT id FROM lectures WHERE title = 'Flexbox'), 'CSS'),
+-- [문제] Flexbox 네비게이션 바
+((SELECT id FROM lectures WHERE title = '[문제] Flexbox 네비게이션 바'), '웹'),
+((SELECT id FROM lectures WHERE title = '[문제] Flexbox 네비게이션 바'), '중급'),
+((SELECT id FROM lectures WHERE title = '[문제] Flexbox 네비게이션 바'), 'CSS'),
+-- 반응형 디자인
+((SELECT id FROM lectures WHERE title = '반응형 디자인'), '웹'),
+((SELECT id FROM lectures WHERE title = '반응형 디자인'), '중급'),
+((SELECT id FROM lectures WHERE title = '반응형 디자인'), 'CSS'),
+-- [문제] 반응형 그리드 레이아웃
+((SELECT id FROM lectures WHERE title = '[문제] 반응형 그리드 레이아웃'), '웹'),
+((SELECT id FROM lectures WHERE title = '[문제] 반응형 그리드 레이아웃'), '중급'),
+((SELECT id FROM lectures WHERE title = '[문제] 반응형 그리드 레이아웃'), 'CSS'),
+
+-- 커리큘럼 3: Python 자료구조 - 태그
+-- 리스트와 튜플
+((SELECT id FROM lectures WHERE title = '리스트와 튜플'), 'Python'),
+((SELECT id FROM lectures WHERE title = '리스트와 튜플'), '기초'),
+((SELECT id FROM lectures WHERE title = '리스트와 튜플'), '자료구조'),
+-- [문제] 리스트 중복 제거
+((SELECT id FROM lectures WHERE title = '[문제] 리스트 중복 제거'), 'Python'),
+((SELECT id FROM lectures WHERE title = '[문제] 리스트 중복 제거'), '기초'),
+((SELECT id FROM lectures WHERE title = '[문제] 리스트 중복 제거'), '자료구조'),
+-- 딕셔너리
+((SELECT id FROM lectures WHERE title = '딕셔너리'), 'Python'),
+((SELECT id FROM lectures WHERE title = '딕셔너리'), '기초'),
+((SELECT id FROM lectures WHERE title = '딕셔너리'), '자료구조'),
+-- [문제] 단어 빈도수 계산
+((SELECT id FROM lectures WHERE title = '[문제] 단어 빈도수 계산'), 'Python'),
+((SELECT id FROM lectures WHERE title = '[문제] 단어 빈도수 계산'), '기초'),
+((SELECT id FROM lectures WHERE title = '[문제] 단어 빈도수 계산'), '자료구조'),
+-- 스택 구현
+((SELECT id FROM lectures WHERE title = '스택 구현'), 'Python'),
+((SELECT id FROM lectures WHERE title = '스택 구현'), '중급'),
+((SELECT id FROM lectures WHERE title = '스택 구현'), '자료구조'),
+-- [문제] 괄호 짝 맞추기
+((SELECT id FROM lectures WHERE title = '[문제] 괄호 짝 맞추기'), 'Python'),
+((SELECT id FROM lectures WHERE title = '[문제] 괄호 짝 맞추기'), '중급'),
+((SELECT id FROM lectures WHERE title = '[문제] 괄호 짝 맞추기'), '자료구조');

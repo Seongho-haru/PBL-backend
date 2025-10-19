@@ -8,6 +8,8 @@ import com.PBL.lecture.entity.TestCase;
 import com.PBL.lecture.repository.LectureRepository;
 import com.PBL.user.User;
 import lombok.extern.slf4j.Slf4j;
+
+import org.checkerframework.checker.units.qual.t;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,7 +31,7 @@ import java.util.Optional;
 public class LectureService {
 
     private final LectureRepository lectureRepository;
-
+    
     public LectureService(LectureRepository lectureRepository) {
         this.lectureRepository = lectureRepository;
     }
@@ -48,6 +50,7 @@ public class LectureService {
     /**
      * AI ToolService용 Entity 조회 (기본)
      */
+    @Transactional(readOnly = true)
     public Optional<Lecture> getLecture(Long id) {
         return lectureRepository.findById(id);
     }
@@ -55,6 +58,7 @@ public class LectureService {
     /**
      * AI ToolService용 Entity 조회 (테스트케이스 포함)
      */
+    @Transactional(readOnly = true)
     public Optional<Lecture> getLectureWithTestCases(Long id) {
         return lectureRepository.findByIdWithTestCases(id);
     }
@@ -110,6 +114,20 @@ public class LectureService {
             existingLecture.setIsPublic(request.getIsPublic());
         }
 
+        // 새로 추가된 필드 업데이트
+        if (request.getTags() != null) {
+            existingLecture.setTags(request.getTags());
+        }
+        if (request.getThumbnailImageUrl() != null) {
+            existingLecture.setThumbnailImageUrl(request.getThumbnailImageUrl());
+        }
+        if (request.getDurationMinutes() > 0) {
+            existingLecture.setDurationMinutes(request.getDurationMinutes());
+        }
+        if (request.getContent() != null) {
+            existingLecture.setContent(request.getContent());
+        }
+
         // Constraints 업데이트
         if (request.getConstraints() != null) {
             Constraints constraints = Constraints.build(request.getConstraints());
@@ -152,6 +170,7 @@ public class LectureService {
     /**
      * AI ToolService용 카테고리별 강의 Entity 조회
      */
+    @Transactional(readOnly = true)
     public List<Lecture> findLectureEntitiesByCategory(String category) {
         return lectureRepository.findByCategory(category);
     }
@@ -159,6 +178,7 @@ public class LectureService {
     /**
      * AI ToolService용 제목 검색 Entity 조회
      */
+    @Transactional(readOnly = true)
     public List<Lecture> findLectureEntitiesByTitle(String title) {
         return lectureRepository.findByTitleContainingIgnoreCase(title);
     }
@@ -192,6 +212,7 @@ public class LectureService {
     /**
      * AI ToolService용 타입별 강의 Entity 조회
      */
+    @Transactional(readOnly = true)
     public List<Lecture> findLectureEntitiesByType(LectureType type) {
         return lectureRepository.findByType(type);
     }
@@ -212,6 +233,7 @@ public class LectureService {
     /**
      * AI ToolService용 최근 강의 Entity 조회
      */
+    @Transactional(readOnly = true)
     public List<Lecture> findRecentLectureEntities() {
         return lectureRepository.findTop10ByOrderByCreatedAtDesc();
     }
@@ -281,6 +303,7 @@ public class LectureService {
     /**
      * 강의 통계 조회
      */
+
     public List<Object[]> getLectureStatsByType() {
         return lectureRepository.countByType();
     }

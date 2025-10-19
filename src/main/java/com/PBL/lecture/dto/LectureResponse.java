@@ -38,6 +38,11 @@ public class LectureResponse {
     private LocalDateTime updatedAt;
     private AuthorInfo author;
 
+    private List<String> tags;
+    private String thumbnailImageUrl;
+    private int durationMinutes;
+    private String content;
+
 
     public static  LectureResponse from(Lecture lecture) {
 
@@ -53,6 +58,11 @@ public class LectureResponse {
                     .createdAt(lecture.getCreatedAt())
                     .updatedAt(lecture.getUpdatedAt())
                     .author(AuthorInfo.from(lecture.getAuthor()))
+
+                    .tags(lecture.getTags())
+                    .thumbnailImageUrl(lecture.getThumbnailImageUrl())
+                    .content(lecture.getContent())
+                    .durationMinutes(lecture.getDurationMinutes())
                     .build();
         } else if(lecture.getType() == LectureType.PROBLEM){
             List<TestCaseResponse> testCaseResponses = lecture.getTestCases() != null ?
@@ -78,6 +88,11 @@ public class LectureResponse {
                     .author(AuthorInfo.from(lecture.getAuthor()))
                     .constraints(ConstraintsResponse.from(lecture.getConstraints()))
                     .testCases(testCaseResponses)
+
+                    .tags(lecture.getTags())
+                    .thumbnailImageUrl(lecture.getThumbnailImageUrl())
+                    .content(lecture.getContent())
+                    .durationMinutes(lecture.getDurationMinutes())
                     .build();
         }else{
             return null;

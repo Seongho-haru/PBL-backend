@@ -133,6 +133,9 @@ public class Lecture {
     @Column(length = 50)
     private String difficulty;
 
+    @Column(columnDefinition = "TEXT")
+    private String content;
+
     /**
      * 공개 강의 여부 (필수)
      *
@@ -151,6 +154,18 @@ public class Lecture {
     @Column(nullable = false)
     @Builder.Default
     private Boolean isPublic = false;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "lecture_tags", joinColumns = @JoinColumn(name = "lecture_id"))
+    @Builder.Default
+    @Column(name = "tag", length = 50)
+    private List<String> tags = new ArrayList<>();
+
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;  // 강의 소요시간 (분 단위)
+
+    @Column
+    private String thumbnailImageUrl;
 
     /**
      * 강의 작성자 (필수)
@@ -275,6 +290,11 @@ public class Lecture {
                 .isPublic(request.getIsPublic() != null ? request.getIsPublic() : false)
                 .author(author)
                 .testCases(new ArrayList<>())
+
+                .tags(request.getTags())
+                .thumbnailImageUrl(request.getThumbnailImageUrl())
+                .content(request.getContent())
+                .durationMinutes(request.getDurationMinutes())
                 .build();
 
         // TestCase 처리

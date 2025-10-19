@@ -25,4 +25,9 @@ public class CreateLectureRequest {
     private Boolean isPublic;
     private ConstraintsResponse constraints;
     private List<TestCaseRequest> testCases;
+
+    private List<String> tags;
+    private String thumbnailImageUrl;
+    private int durationMinutes;
+    private String content;
 }

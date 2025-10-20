@@ -16,7 +16,4 @@ public class GradingRequest {
 
     @JsonProperty("problem_id")
     private Long problemId;
-
-    @JsonProperty("constraints_id")
-    private Long constraintsId;
 }

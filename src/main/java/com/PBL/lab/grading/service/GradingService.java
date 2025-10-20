@@ -12,6 +12,9 @@ import com.PBL.lab.core.service.ConfigService;
 import com.PBL.lab.core.service.LanguageService;
 import com.PBL.lab.judge0.service.SubmissionService;
 import com.PBL.lab.core.service.ExecutionResult;
+import com.PBL.lecture.LectureService;
+import com.PBL.lecture.dto.LectureResponse;
+import com.PBL.lecture.entity.Lecture;
 import com.PBL.lecture.entity.TestCase;
 import com.PBL.lecture.repository.TestCaseRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -37,6 +41,7 @@ public class GradingService {
     private final LanguageService languageService;
     private final ConstraintsRepository constraintsRepository;
     private final ConfigService configService;
+    private final LectureService lectureService;
 
 
     public Page<Grading> findAll(Pageable pageable) {
@@ -209,17 +214,9 @@ public class GradingService {
     }
 
     private Constraints resolveConstraints(GradingRequest request) {
-        // 1. constraintsId가 있으면 해당 제약조건 사용
-        if (request.getConstraintsId() != null) {
-            return constraintsRepository.findById(request.getConstraintsId())
-                    .orElseThrow(() -> new IllegalArgumentException(
-                            "Constraints with id " + request.getConstraintsId() + " not found"));
-        }
-
-
-        // 3. 기본 제약조건(id=1) 사용
-        return constraintsRepository.findDefaultConstraints()
-                .orElseThrow(() -> new IllegalStateException("Default constraints (id=1) not found"));
+        return lectureService.getLecture(request.getProblemId()).orElseThrow(
+                () -> new IllegalArgumentException("강의를 찾을 수 없습니다.")
+        ).getConstraints();
     }
 
     public void updateStatus(String token, Status status) {

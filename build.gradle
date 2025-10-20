@@ -51,8 +51,7 @@ dependencies {
     implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.3.4'
     
     // Background Jobs (simplified without Redis)
-    implementation 'org.jobrunr:jobrunr:8.1.0'
-    implementation 'org.jobrunr:jobrunr-spring-boot-3-starter:8.1.0'
+    implementation 'org.jobrunr:jobrunr-spring-boot-3-starter:6.3.4'
     
     // Monitoring
     implementation 'io.micrometer:micrometer-registry-prometheus'

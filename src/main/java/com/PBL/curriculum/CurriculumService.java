@@ -581,4 +581,34 @@ public class CurriculumService {
         curriculum.setAverageRating(newRating);
         curriculumRepository.save(curriculum);
     }
+
+    /*
+     * 커리큘럼 다음 페이지 조회
+     */
+    @Transactional
+    public CurriculumDTOs.CurriculumNextLecture navigationLectures(Long curriculumId , Long currentLectureId) {
+        // 1. 현재 orderIndex 조회
+        Integer currentOrder = curriculumLectureRepository
+                .findOrderIndexByCurriculumIdAndLectureId(curriculumId, currentLectureId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "커리큘럼에서 해당 강의를 찾을 수 없습니다."
+                ));
+
+        // 2. 다음/이전 강의 조회
+        Long nextLectureId = curriculumLectureRepository
+                .findNextLectureId(curriculumId, currentOrder)
+                .orElse(null);
+
+        Long preLectureId = curriculumLectureRepository
+                .findPreviousLectureId(curriculumId, currentOrder)
+                .orElse(null);
+
+        // 3. DTO 반환
+        return CurriculumDTOs.CurriculumNextLecture.builder()
+                .curriculumId(curriculumId)
+                .currentLectureId(currentLectureId)
+                .nextLectureId(nextLectureId)
+                .preLectureId(preLectureId)
+                .build();
+    }
 }

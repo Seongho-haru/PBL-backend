@@ -3,6 +3,8 @@ package com.PBL.curriculum;
 import com.PBL.lecture.entity.Lecture;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
+import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -390,6 +392,17 @@ public class CurriculumDTOs {
         
         @Schema(description = "원본 강의 출처 정보")
         private String sourceInfo;
+
+    }
+
+    @Data
+    @Builder
+    public static class CurriculumNextLecture {
+        //커리큘럼
+        private Long curriculumId;
+        private Long currentLectureId;
+        private Long nextLectureId;
+        private Long preLectureId;
 
     }
 

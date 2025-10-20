@@ -269,4 +269,15 @@ public class CurriculumController {
         List<CurriculumResponse> responses = curriculumService.getUserPublicCurriculums(userId);
         return ResponseEntity.ok(responses);
     }
+
+    /*
+     * 다음 강의, 이전강의 조회
+     */
+    @GetMapping("/{curriculumId}/lectures/{lectureId}/navigation")
+    @Operation
+    public ResponseEntity<CurriculumDTOs.CurriculumNextLecture> getLectureNavigation(
+            @PathVariable Long curriculumId, @PathVariable Long lectureId
+    ){
+        return ResponseEntity.ok(curriculumService.navigationLectures(curriculumId, lectureId));
+    }
 }

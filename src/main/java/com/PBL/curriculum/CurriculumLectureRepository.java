@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 커리큘럼-강의 연결 Repository
@@ -49,4 +50,37 @@ public interface CurriculumLectureRepository extends JpaRepository<CurriculumLec
      */
     @Query("SELECT COUNT(cl) FROM CurriculumLecture cl WHERE cl.curriculum.id = :curriculumId AND cl.isRequired = true")
     int countRequiredByCurriculumId(@Param("curriculumId") Long curriculumId);
+
+    /*
+     * 특정 커리큘럼의 이전,다음 강의 조회
+     */
+    // 1. 현재 강의의 orderIndex 조회
+    @Query("SELECT cl.orderIndex FROM CurriculumLecture cl " +
+            "WHERE cl.curriculum.id = :curriculumId AND cl.lectureId = :lectureId")
+    Optional<Integer> findOrderIndexByCurriculumIdAndLectureId(
+            @Param("curriculumId") Long curriculumId,
+            @Param("lectureId") Long lectureId
+    );
+
+    // 2. 다음 강의 ID 조회
+    @Query("SELECT cl.lectureId FROM CurriculumLecture cl " +
+            "WHERE cl.curriculum.id = :curriculumId " +
+            "AND cl.orderIndex > :currentOrderIndex " +
+            "ORDER BY cl.orderIndex ASC " +
+            "LIMIT 1")
+    Optional<Long> findNextLectureId(
+            @Param("curriculumId") Long curriculumId,
+            @Param("currentOrderIndex") Integer currentOrderIndex
+    );
+
+    // 3. 이전 강의 ID 조회
+    @Query("SELECT cl.lectureId FROM CurriculumLecture cl " +
+            "WHERE cl.curriculum.id = :curriculumId " +
+            "AND cl.orderIndex < :currentOrderIndex " +
+            "ORDER BY cl.orderIndex DESC " +
+            "LIMIT 1")
+    Optional<Long> findPreviousLectureId(
+            @Param("curriculumId") Long curriculumId,
+            @Param("currentOrderIndex") Integer currentOrderIndex
+    );
 }

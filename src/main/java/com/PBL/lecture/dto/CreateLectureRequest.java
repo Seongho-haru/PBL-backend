@@ -30,4 +30,6 @@ public class CreateLectureRequest {
     private String thumbnailImageUrl;
     private int durationMinutes;
     private String content;
+    private String input_content;
+    private String output_content;
 }

@@ -42,6 +42,8 @@ public class LectureResponse {
     private String thumbnailImageUrl;
     private int durationMinutes;
     private String content;
+    private String input_content;
+    private String output_content;
 
 
     public static  LectureResponse from(Lecture lecture) {
@@ -93,6 +95,8 @@ public class LectureResponse {
                     .thumbnailImageUrl(lecture.getThumbnailImageUrl())
                     .content(lecture.getContent())
                     .durationMinutes(lecture.getDurationMinutes())
+                    .input_content(lecture.getInputContent())
+                    .output_content(lecture.getOutputContent())
                     .build();
         }else{
             return null;

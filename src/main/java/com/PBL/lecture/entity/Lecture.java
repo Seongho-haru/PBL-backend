@@ -133,8 +133,35 @@ public class Lecture {
     @Column(length = 50)
     private String difficulty;
 
+    /**
+     * 강의 본문 내용
+     *
+     * - MARKDOWN 타입: 강의 전체 내용 (마크다운 형식)
+     * - PROBLEM 타입: 문제 전체 설명
+     * - TEXT 타입으로 길이 제한 없음
+     */
     @Column(columnDefinition = "TEXT")
     private String content;
+
+    /**
+     * 문제 입력 형식 설명 (PROBLEM 타입만 사용)
+     *
+     * - 입력 데이터 형식 및 범위 설명
+     * - 예: "- 첫 줄: 배열의 크기 N (1 ≤ N ≤ 100)"
+     * - MARKDOWN 타입에서는 NULL
+     */
+    @Column(name = "input_content", columnDefinition = "TEXT")
+    private String inputContent;
+
+    /**
+     * 문제 출력 형식 설명 (PROBLEM 타입만 사용)
+     *
+     * - 출력 데이터 형식 설명
+     * - 예: "- 배열의 최댓값을 출력"
+     * - MARKDOWN 타입에서는 NULL
+     */
+    @Column(name = "output_content", columnDefinition = "TEXT")
+    private String outputContent;
 
     /**
      * 공개 강의 여부 (필수)
@@ -294,6 +321,8 @@ public class Lecture {
                 .tags(request.getTags())
                 .thumbnailImageUrl(request.getThumbnailImageUrl())
                 .content(request.getContent())
+                .inputContent(request.getInput_content())
+                .outputContent(request.getInput_content())
                 .durationMinutes(request.getDurationMinutes())
                 .build();
 

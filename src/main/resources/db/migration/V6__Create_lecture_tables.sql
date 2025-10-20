@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS lectures (
     title VARCHAR(200) NOT NULL,
     description TEXT,
     content TEXT,
+    input_content TEXT,
+    output_content TEXT,
     type VARCHAR(20) NOT NULL CHECK (type IN ('MARKDOWN', 'PROBLEM')),
     category VARCHAR(100),
     difficulty VARCHAR(50),
@@ -75,7 +77,9 @@ COMMENT ON TABLE test_cases IS '문제 강의의 테스트케이스를 저장하
 COMMENT ON TABLE lecture_tags IS '강의 태그를 저장하는 테이블';
 COMMENT ON COLUMN lectures.type IS '강의 유형: MARKDOWN(마크다운 강의), PROBLEM(문제 강의)';
 COMMENT ON COLUMN lectures.description IS '강의 간략 설명 (요약)';
-COMMENT ON COLUMN lectures.content IS '강의 본문 내용 (전체)';
+COMMENT ON COLUMN lectures.content IS '강의 본문 내용 (전체) - MARKDOWN 타입에서 사용';
+COMMENT ON COLUMN lectures.input_content IS '문제 입력 형식 설명 - PROBLEM 타입에서 사용';
+COMMENT ON COLUMN lectures.output_content IS '문제 출력 형식 설명 - PROBLEM 타입에서 사용';
 COMMENT ON COLUMN lectures.is_public IS '공개 강의 여부 (true: 공개, false: 비공개)';
 COMMENT ON COLUMN lectures.thumbnail_image_url IS '강의 썸네일 이미지 URL (S3)';
 COMMENT ON COLUMN lectures.duration_minutes IS '강의 예상 소요시간 (분 단위)';

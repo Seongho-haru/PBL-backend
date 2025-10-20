@@ -40,7 +40,7 @@ public class LectureResponse {
 
     private List<String> tags;
     private String thumbnailImageUrl;
-    private int durationMinutes;
+    private Integer durationMinutes;
     private String content;
     private String input_content;
     private String output_content;

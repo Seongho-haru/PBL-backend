@@ -7,6 +7,10 @@ import com.PBL.user.User;
 import com.PBL.user.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,6 +71,31 @@ public class CurriculumService {
         return curriculums.stream()
                 .map(CurriculumResponse::new)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 공개 커리큘럼 조회 (페이징, 강의 포함) - DTO 반환
+     * 2단계 쿼리: 1) ID만 페이징 조회 2) ID로 fetch join 조회
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getPublicCurriculums(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("created_at")));
+        Page<Long> idsPage = curriculumRepository.findPublicCurriculumIds(pageable);
+
+        // ID 리스트로 강의 포함하여 조회
+        List<Curriculum> curriculums = idsPage.getContent().isEmpty()
+                ? new ArrayList<>()
+                : curriculumRepository.findByIdInWithLectures(idsPage.getContent());
+
+        // DTO 변환
+        List<CurriculumResponse> responses = curriculums.stream()
+                .map(CurriculumResponse::new)
+                .collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("curriculums", responses);
+        response.put("meta", createPaginationMeta(idsPage));
+        return response;
     }
 
     /**
@@ -441,6 +470,31 @@ public class CurriculumService {
                 .toList();
     }
 
+    /**
+     * 공개 커리큘럼 제목으로 검색 (페이징, 강의 포함) - DTO 반환
+     * 2단계 쿼리: 1) ID만 페이징 조회 2) ID로 fetch join 조회
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> searchPublicCurriculums(String title, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
+        Page<Long> idsPage = curriculumRepository.findPublicCurriculumIdsByTitle(title, pageable);
+
+        // ID 리스트로 강의 포함하여 조회
+        List<Curriculum> curriculums = idsPage.getContent().isEmpty()
+                ? new ArrayList<>()
+                : curriculumRepository.findByIdInWithLectures(idsPage.getContent());
+
+        // DTO 변환
+        List<CurriculumResponse> responses = curriculums.stream()
+                .map(CurriculumResponse::new)
+                .collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("curriculums", responses);
+        response.put("meta", createPaginationMeta(idsPage));
+        return response;
+    }
+
     // === 강의 삭제 시 자동 정리 ===
 
     /**
@@ -520,6 +574,22 @@ public class CurriculumService {
         return canEditCurriculum(curriculumId, userId);
     }
 
+    // === 페이지네이션 헬퍼 메서드 ===
+
+    /**
+     * 페이지네이션 메타데이터 생성
+     */
+    private Map<String, Object> createPaginationMeta(Page<?> page) {
+        Map<String, Object> meta = new HashMap<>();
+        meta.put("current_page", page.getNumber() + 1);  // 1부터 시작
+        meta.put("next_page", page.hasNext() ? page.getNumber() + 2 : null);
+        meta.put("prev_page", page.hasPrevious() ? page.getNumber() : null);
+        meta.put("total_pages", page.getTotalPages());
+        meta.put("total_count", page.getTotalElements());
+        meta.put("per_page", page.getSize());
+        return meta;
+    }
+
     /**
      * 사용자의 커리큘럼 목록 조회 (강의 포함) - DTO 반환
      */
@@ -532,6 +602,31 @@ public class CurriculumService {
     }
 
     /**
+     * 사용자의 커리큘럼 목록 조회 (페이징, 강의 포함) - DTO 반환
+     * 2단계 쿼리: 1) ID만 페이징 조회 2) ID로 fetch join 조회
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getUserCurriculums(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
+        Page<Long> idsPage = curriculumRepository.findIdsByAuthorId(userId, pageable);
+
+        // ID 리스트로 강의 포함하여 조회
+        List<Curriculum> curriculums = idsPage.getContent().isEmpty()
+                ? new ArrayList<>()
+                : curriculumRepository.findByIdInWithLectures(idsPage.getContent());
+
+        // DTO 변환
+        List<CurriculumResponse> responses = curriculums.stream()
+                .map(CurriculumResponse::new)
+                .collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("curriculums", responses);
+        response.put("meta", createPaginationMeta(idsPage));
+        return response;
+    }
+
+    /**
      * 사용자의 공개 커리큘럼 목록 조회 (강의 포함) - DTO 반환
      */
     @Transactional(readOnly = true)
@@ -540,6 +635,31 @@ public class CurriculumService {
         return curriculums.stream()
                 .map(CurriculumResponse::new)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 사용자의 공개 커리큘럼 목록 조회 (페이징, 강의 포함) - DTO 반환
+     * 2단계 쿼리: 1) ID만 페이징 조회 2) ID로 fetch join 조회
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getUserPublicCurriculums(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
+        Page<Long> idsPage = curriculumRepository.findIdsByAuthorIdAndIsPublic(userId, true, pageable);
+
+        // ID 리스트로 강의 포함하여 조회
+        List<Curriculum> curriculums = idsPage.getContent().isEmpty()
+                ? new ArrayList<>()
+                : curriculumRepository.findByIdInWithLectures(idsPage.getContent());
+
+        // DTO 변환
+        List<CurriculumResponse> responses = curriculums.stream()
+                .map(CurriculumResponse::new)
+                .collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("curriculums", responses);
+        response.put("meta", createPaginationMeta(idsPage));
+        return response;
     }
 
     // === 수강생 수 관리 ===

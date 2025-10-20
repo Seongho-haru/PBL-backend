@@ -1,5 +1,7 @@
 package com.PBL.curriculum;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -79,6 +81,30 @@ public interface CurriculumRepository extends JpaRepository<Curriculum, Long> {
     List<Curriculum> findByAuthorIdWithLectures(@Param("authorId") Long authorId);
 
     /**
+     * 작성자 ID로 커리큘럼 조회 (강의 포함, 페이징)
+     *
+     * 주의: fetch join과 페이징을 함께 사용할 때는 두 단계 쿼리 필요
+     * 1단계: ID만 페이징하여 조회
+     * 2단계: 조회된 ID로 fetch join
+     */
+    @Query(value = "SELECT c.id FROM curriculums c " +
+           "WHERE c.author_id = :authorId " +
+           "ORDER BY c.created_at DESC",
+           countQuery = "SELECT COUNT(c.id) FROM curriculums c WHERE c.author_id = :authorId",
+           nativeQuery = true)
+    Page<Long> findIdsByAuthorId(@Param("authorId") Long authorId, Pageable pageable);
+
+    /**
+     * ID 리스트로 커리큘럼 조회 (강의 포함)
+     */
+    @Query("SELECT DISTINCT c FROM Curriculum c " +
+           "LEFT JOIN FETCH c.lectures cl " +
+           "LEFT JOIN FETCH cl.lecture " +
+           "WHERE c.id IN :ids " +
+           "ORDER BY c.createdAt DESC")
+    List<Curriculum> findByIdInWithLectures(@Param("ids") List<Long> ids);
+
+    /**
      * 작성자 ID와 공개 여부로 커리큘럼 조회 (강의 포함)
      */
     @Query("SELECT DISTINCT c FROM Curriculum c " +
@@ -87,6 +113,16 @@ public interface CurriculumRepository extends JpaRepository<Curriculum, Long> {
            "WHERE c.author.id = :authorId AND c.isPublic = :isPublic " +
            "ORDER BY c.createdAt DESC")
     List<Curriculum> findByAuthorIdAndIsPublicWithLectures(@Param("authorId") Long authorId, @Param("isPublic") Boolean isPublic);
+
+    /**
+     * 작성자 ID와 공개 여부로 커리큘럼 ID 조회 (페이징)
+     */
+    @Query(value = "SELECT c.id FROM curriculums c " +
+           "WHERE c.author_id = :authorId AND c.is_public = :isPublic " +
+           "ORDER BY c.created_at DESC",
+           countQuery = "SELECT COUNT(c.id) FROM curriculums c WHERE c.author_id = :authorId AND c.is_public = :isPublic",
+           nativeQuery = true)
+    Page<Long> findIdsByAuthorIdAndIsPublic(@Param("authorId") Long authorId, @Param("isPublic") Boolean isPublic, Pageable pageable);
 
     /**
      * 제목으로 검색 (강의 포함)
@@ -107,6 +143,26 @@ public interface CurriculumRepository extends JpaRepository<Curriculum, Long> {
            "WHERE c.isPublic = true AND LOWER(c.title) LIKE LOWER(CONCAT('%', :title, '%')) " +
            "ORDER BY c.createdAt DESC")
     List<Curriculum> findPublicByTitleContainingIgnoreCaseWithLectures(@Param("title") String title);
+
+    /**
+     * 공개 커리큘럼 ID 조회 (페이징)
+     */
+    @Query(value = "SELECT c.id FROM curriculums c " +
+           "WHERE c.is_public = true " +
+           "ORDER BY c.created_at DESC",
+           countQuery = "SELECT COUNT(c.id) FROM curriculums c WHERE c.is_public = true",
+           nativeQuery = true)
+    Page<Long> findPublicCurriculumIds(Pageable pageable);
+
+    /**
+     * 공개 커리큘럼에서 제목으로 검색 (페이징)
+     */
+    @Query(value = "SELECT c.id FROM curriculums c " +
+           "WHERE c.is_public = true AND LOWER(c.title) LIKE LOWER(CONCAT('%', :title, '%')) " +
+           "ORDER BY c.created_at DESC",
+           countQuery = "SELECT COUNT(c.id) FROM curriculums c WHERE c.is_public = true AND LOWER(c.title) LIKE LOWER(CONCAT('%', :title, '%'))",
+           nativeQuery = true)
+    Page<Long> findPublicCurriculumIdsByTitle(@Param("title") String title, Pageable pageable);
 
     /**
      * 수강생 수 증가 (Atomic)

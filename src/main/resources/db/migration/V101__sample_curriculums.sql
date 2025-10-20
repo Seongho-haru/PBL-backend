@@ -8,12 +8,12 @@ INSERT INTO users (username, login_id, password) VALUES
 ('테스트사용자1', 'testuser1', 'password123'),
 ('테스트사용자2', 'testuser2', 'password123'),
 ('개발자', 'developer', 'dev123'),
-('김유희', 'kim.yuhee', 'password123'),
-('이서준', 'lee.seojun', 'password123'),
-('박가은', 'park.gaeun', 'password123'),
-('최민수', 'choi.minsu', 'password123'),
-('정은지', 'jung.eunji', 'password123'),
-('오지후', 'oh.jihu', 'password123')
+('김유희', 'kimyuhee', 'password123'),
+('이서준', 'leeseojun', 'password123'),
+('박가은', 'parkgaeun', 'password123'),
+('최민수', 'choiminsu', 'password123'),
+('정은지', 'jungeunji', 'password123'),
+('오지후', 'ohjihu', 'password123')
 ON CONFLICT (login_id) DO NOTHING;
 
 -- ============================================
@@ -30,7 +30,7 @@ INSERT INTO curriculums (title, description, is_public, difficulty, summary, cat
     '알고리즘',
     NULL,
     120,
-    (SELECT id FROM users WHERE login_id = 'kim.yuhee'),
+    (SELECT id FROM users WHERE login_id = 'admin'),
     '2025-09-01 00:00:00',
     '2025-09-01 00:00:00'
 );
@@ -51,7 +51,7 @@ INSERT INTO curriculums (title, description, is_public, difficulty, summary, cat
     '웹',
     NULL,
     105,
-    (SELECT id FROM users WHERE login_id = 'lee.seojun'),
+    (SELECT id FROM users WHERE login_id = 'admin'),
     '2025-08-22 00:00:00',
     '2025-08-22 00:00:00'
 );
@@ -73,7 +73,7 @@ INSERT INTO curriculums (title, description, is_public, difficulty, summary, cat
     '개발·프로그래밍',
     NULL,
     90,
-    (SELECT id FROM users WHERE login_id = 'park.gaeun'),
+    (SELECT id FROM users WHERE login_id = 'admin'),
     '2025-07-05 00:00:00',
     '2025-07-05 00:00:00'
 );
@@ -94,7 +94,7 @@ INSERT INTO curriculums (title, description, is_public, difficulty, summary, cat
     '게임 개발',
     NULL,
     150,
-    (SELECT id FROM users WHERE login_id = 'choi.minsu'),
+    (SELECT id FROM users WHERE login_id = 'admin'),
     '2025-05-18 00:00:00',
     '2025-05-18 00:00:00'
 );
@@ -115,7 +115,7 @@ INSERT INTO curriculums (title, description, is_public, difficulty, summary, cat
     '데이터베이스',
     NULL,
     100,
-    (SELECT id FROM users WHERE login_id = 'jung.eunji'),
+    (SELECT id FROM users WHERE login_id = 'admin'),
     '2025-04-10 00:00:00',
     '2025-04-10 00:00:00'
 );
@@ -136,7 +136,7 @@ INSERT INTO curriculums (title, description, is_public, difficulty, summary, cat
     '인공지능',
     NULL,
     80,
-    (SELECT id FROM users WHERE login_id = 'oh.jihu'),
+    (SELECT id FROM users WHERE login_id = 'admin'),
     '2025-03-03 00:00:00',
     '2025-03-03 00:00:00'
 );

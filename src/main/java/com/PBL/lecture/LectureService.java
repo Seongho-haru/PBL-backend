@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -377,14 +378,10 @@ public class LectureService {
                 .map(LectureResponse::from)
                 .toList();
 
-        return Map.of(
-                "lectures", responses,
-                "currentPage", lecturesPage.getNumber(),
-                "totalElements", lecturesPage.getTotalElements(),
-                "totalPages", lecturesPage.getTotalPages(),
-                "hasNext", lecturesPage.hasNext(),
-                "hasPrevious", lecturesPage.hasPrevious()
-        );
+        Map<String, Object> response = new HashMap<>();
+        response.put("lectures", responses);
+        response.put("meta", createPaginationMeta(lecturesPage));
+        return response;
     }
 
     /**
@@ -402,14 +399,10 @@ public class LectureService {
                 .map(LectureResponse::from)
                 .toList();
 
-        return Map.of(
-                "lectures", responses,
-                "currentPage", lecturesPage.getNumber(),
-                "totalElements", lecturesPage.getTotalElements(),
-                "totalPages", lecturesPage.getTotalPages(),
-                "hasNext", lecturesPage.hasNext(),
-                "hasPrevious", lecturesPage.hasPrevious()
-        );
+        Map<String, Object> response = new HashMap<>();
+        response.put("lectures", responses);
+        response.put("meta", createPaginationMeta(lecturesPage));
+        return response;
     }
 
     // === 권한 체크 메서드 ===
@@ -465,6 +458,26 @@ public class LectureService {
     }
 
     /**
+     * 사용자의 강의 목록 조회 (페이징, DTO 반환)
+     * 트랜잭션 내부에서 조회 및 변환 수행
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getUserLectures(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Lecture> lecturesPage = lectureRepository.findByAuthorId(userId, pageable);
+
+        // 트랜잭션 내부에서 DTO 변환
+        List<LectureResponse> responses = lecturesPage.getContent().stream()
+                .map(LectureResponse::from)
+                .toList();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("lectures", responses);
+        response.put("meta", createPaginationMeta(lecturesPage));
+        return response;
+    }
+
+    /**
      * 사용자의 공개 강의 목록 조회 (DTO 반환)
      * 트랜잭션 내부에서 조회 및 변환 수행
      */
@@ -475,6 +488,26 @@ public class LectureService {
         return lectures.stream()
                 .map(LectureResponse::from)
                 .toList();
+    }
+
+    /**
+     * 사용자의 공개 강의 목록 조회 (페이징, DTO 반환)
+     * 트랜잭션 내부에서 조회 및 변환 수행
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getUserPublicLectures(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Lecture> lecturesPage = lectureRepository.findByAuthorIdAndIsPublicTrue(userId, pageable);
+
+        // 트랜잭션 내부에서 DTO 변환
+        List<LectureResponse> responses = lecturesPage.getContent().stream()
+                .map(LectureResponse::from)
+                .toList();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("lectures", responses);
+        response.put("meta", createPaginationMeta(lecturesPage));
+        return response;
     }
 
     // === 검증 메서드 ===
@@ -495,6 +528,22 @@ public class LectureService {
             throw new IllegalArgumentException("강의 유형은 필수입니다.");
         }
 
+    }
+
+    // === 페이지네이션 헬퍼 메서드 ===
+
+    /**
+     * 페이지네이션 메타데이터 생성
+     */
+    private Map<String, Object> createPaginationMeta(Page<?> page) {
+        Map<String, Object> meta = new HashMap<>();
+        meta.put("current_page", page.getNumber() + 1);  // 1부터 시작
+        meta.put("next_page", page.hasNext() ? page.getNumber() + 2 : null);
+        meta.put("prev_page", page.hasPrevious() ? page.getNumber() : null);
+        meta.put("total_pages", page.getTotalPages());
+        meta.put("total_count", page.getTotalElements());
+        meta.put("per_page", page.getSize());
+        return meta;
     }
 
     // === Controller용 DTO 변환 메서드 ===

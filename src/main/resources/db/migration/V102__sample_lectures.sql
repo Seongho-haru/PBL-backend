@@ -24,7 +24,7 @@ INSERT INTO lectures (title, description, content, input_content, output_content
 1. 냄비에 물 550ml를 넣고 끓인다
 2. 물이 끓으면 면과 스프를 넣는다
 3. 4분 30초간 끓인다
-4. 완성!', NULL, NULL, 'MARKDOWN', '알고리즘', '기초', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'kim.yuhee'), NULL, NOW(), NOW()),
+4. 완성!', NULL, NULL, 'MARKDOWN', '알고리즘', '기초', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'kimyuhee'), NULL, NOW(), NOW()),
 ('시간복잡도', '알고리즘의 성능을 측정하는 시간복잡도를 배웁니다.', '# 시간복잡도
 
 알고리즘의 성능을 측정하는 중요한 지표인 시간복잡도에 대해 알아봅니다.
@@ -41,7 +41,7 @@ INSERT INTO lectures (title, description, content, input_content, output_content
 - **O(2ⁿ)**: 지수 시간 - 피보나치 재귀 등
 
 ## 예제
-배열에서 최댓값 찾기는 O(n)입니다. 모든 원소를 한 번씩 확인해야 하기 때문입니다.', NULL, NULL, 'MARKDOWN', '알고리즘', '기초', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'kim.yuhee'), NULL, NOW(), NOW()),
+배열에서 최댓값 찾기는 O(n)입니다. 모든 원소를 한 번씩 확인해야 하기 때문입니다.', NULL, NULL, 'MARKDOWN', '알고리즘', '기초', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'kimyuhee'), NULL, NOW(), NOW()),
 ('[문제] 배열에서 최댓값 찾기',
 '주어진 정수 배열에서 최댓값을 찾는 함수를 작성하세요.',
 '주어진 정수 배열에서 최댓값을 찾는 함수를 작성하세요.
@@ -53,7 +53,7 @@ INSERT INTO lectures (title, description, content, input_content, output_content
 '- 첫 줄: 배열의 크기 N (1 ≤ N ≤ 100)
 - 둘째 줄: N개의 정수 (-1000 ≤ 각 원소 ≤ 1000)',
 '- 배열의 최댓값을 출력',
-'PROBLEM', '알고리즘', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'kim.yuhee'), 1, NOW(), NOW()),
+'PROBLEM', '알고리즘', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'kimyuhee'), 1, NOW(), NOW()),
 ('Big O 표기법', '알고리즘 성능을 표현하는 Big O 표기법을 배웁니다.', '# Big O 표기법
 
 실제 코드 예제를 통해 Big O 표기법을 이해합니다.
@@ -94,7 +94,7 @@ def bubble_sort(arr):
 - O(log n): 약 10번 연산
 - O(n): 1,000번 연산
 - O(n log n): 약 10,000번 연산
-- O(n²): 1,000,000번 연산', NULL, NULL, 'MARKDOWN', '알고리즘', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'kim.yuhee'), NULL, NOW(), NOW()),
+- O(n²): 1,000,000번 연산', NULL, NULL, 'MARKDOWN', '알고리즘', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'kimyuhee'), NULL, NOW(), NOW()),
 ('버블 정렬', '가장 기본적인 정렬 알고리즘인 버블 정렬을 배웁니다.', '# 버블 정렬 (Bubble Sort)
 
 가장 단순하지만 비효율적인 정렬 알고리즘입니다.
@@ -125,7 +125,7 @@ def bubble_sort(arr):
 - 최악: O(n²)
 
 ## 최적화 기법
-교환이 한 번도 일어나지 않으면 이미 정렬된 것이므로 조기 종료할 수 있습니다.', NULL, NULL, 'MARKDOWN', '알고리즘', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'kim.yuhee'), NULL, NOW(), NOW()),
+교환이 한 번도 일어나지 않으면 이미 정렬된 것이므로 조기 종료할 수 있습니다.', NULL, NULL, 'MARKDOWN', '알고리즘', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'kimyuhee'), NULL, NOW(), NOW()),
 ('[문제] 버블 정렬 구현하기',
 '버블 정렬 알고리즘을 구현하세요.',
 '버블 정렬 알고리즘을 구현하세요.
@@ -136,7 +136,7 @@ def bubble_sort(arr):
 '- 첫 줄: 배열의 크기 N (1 ≤ N ≤ 1000)
 - 둘째 줄: N개의 정수 (-10000 ≤ 각 원소 ≤ 10000)',
 '- 오름차순으로 정렬된 배열을 공백으로 구분하여 출력',
-'PROBLEM', '알고리즘', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'kim.yuhee'), 1, NOW(), NOW()),
+'PROBLEM', '알고리즘', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'kimyuhee'), 1, NOW(), NOW()),
 ('퀵 정렬', '분할 정복 방식의 효율적인 정렬 알고리즘을 배웁니다.', '# 퀵 정렬 (Quick Sort)
 
 평균적으로 가장 빠른 정렬 알고리즘 중 하나입니다.
@@ -180,7 +180,7 @@ def quick_sort(arr):
 
 **단점**:
 - 최악의 경우 O(n²)
-- 불안정 정렬 (같은 값의 순서가 바뀔 수 있음)', NULL, NULL, 'MARKDOWN', '알고리즘', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'kim.yuhee'), NULL, NOW(), NOW()),
+- 불안정 정렬 (같은 값의 순서가 바뀔 수 있음)', NULL, NULL, 'MARKDOWN', '알고리즘', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'kimyuhee'), NULL, NOW(), NOW()),
 ('[문제] 이진 탐색 구현',
 '정렬된 배열에서 특정 값을 찾는 이진 탐색 알고리즘을 구현하세요.',
 '정렬된 배열에서 특정 값을 찾는 이진 탐색 알고리즘을 구현하세요.
@@ -193,7 +193,7 @@ def quick_sort(arr):
 - 둘째 줄: N개의 오름차순 정렬된 정수 (1 ≤ 각 원소 ≤ 1000000)
 - 셋째 줄: 찾을 값 target (1 ≤ target ≤ 1000000)',
 '- target이 있으면 인덱스(0-based), 없으면 -1 출력',
-'PROBLEM', '알고리즘', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'kim.yuhee'), 1, NOW(), NOW());
+'PROBLEM', '알고리즘', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'kimyuhee'), 1, NOW(), NOW());
 
 -- ============================================
 -- 커리큘럼 2: 웹 기초 HTML/CSS
@@ -240,7 +240,7 @@ HTML(HyperText Markup Language)은 웹 페이지의 구조를 정의하는 마�
 ## 시맨틱 HTML의 중요성
 1. **접근성 향상**: 스크린 리더 등 보조 기술이 이해하기 쉬움
 2. **SEO 개선**: 검색 엔진이 내용을 더 잘 파악
-3. **유지보수 용이**: 코드의 의미가 명확함', NULL, NULL, 'MARKDOWN', '웹', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'lee.seojun'), NULL, NOW(), NOW()),
+3. **유지보수 용이**: 코드의 의미가 명확함', NULL, NULL, 'MARKDOWN', '웹', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'leeseojun'), NULL, NOW(), NOW()),
 ('[문제] 프로필 카드 만들기',
 'HTML로 간단한 프로필 카드를 만드세요.',
 'HTML로 간단한 프로필 카드를 만드세요.
@@ -257,7 +257,7 @@ HTML(HyperText Markup Language)은 웹 페이지의 구조를 정의하는 마�
 - 유효한 HTML5 문법 사용',
 NULL,
 '- HTML 문서 출력',
-'PROBLEM', '웹', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'lee.seojun'), 1, NOW(), NOW()),
+'PROBLEM', '웹', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'leeseojun'), 1, NOW(), NOW()),
 ('CSS 선택자', 'CSS 선택자의 종류와 우선순위를 배웁니다.', '# CSS 선택자
 
 HTML 요소에 스타일을 적용하기 위한 CSS 선택자를 배웁니다.
@@ -344,7 +344,7 @@ input:focus {
 4. 클래스/속성/가상클래스 (10점)
 5. 타입 선택자 (1점)
 
-같은 우선순위면 나중에 선언된 스타일이 적용됩니다.', NULL, NULL, 'MARKDOWN', '웹', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'lee.seojun'), NULL, NOW(), NOW()),
+같은 우선순위면 나중에 선언된 스타일이 적용됩니다.', NULL, NULL, 'MARKDOWN', '웹', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'leeseojun'), NULL, NOW(), NOW()),
 ('[문제] CSS로 버튼 스타일링',
 'CSS를 사용하여 hover 효과가 있는 버튼을 만드세요.',
 'CSS를 사용하여 hover 효과가 있는 버튼을 만드세요.
@@ -361,7 +361,7 @@ input:focus {
 - 메모리 제한: 64MB',
 NULL,
 '- HTML/CSS 문서 출력',
-'PROBLEM', '웹', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'lee.seojun'), 1, NOW(), NOW()),
+'PROBLEM', '웹', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'leeseojun'), 1, NOW(), NOW()),
 ('Flexbox', 'Flexbox 레이아웃 시스템으로 유연한 레이아웃을 만드는 방법을 배웁니다.', '# Flexbox
 
 CSS Flexbox를 사용하여 유연한 레이아웃을 구현하는 방법을 배웁니다.
@@ -460,7 +460,7 @@ Flexible Box Layout의 약자로, 1차원 레이아웃을 쉽게 만들 수 있�
     flex-wrap: wrap;
     gap: 20px;
 }
-```', NULL, NULL, 'MARKDOWN', '웹', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'lee.seojun'), NULL, NOW(), NOW()),
+```', NULL, NULL, 'MARKDOWN', '웹', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'leeseojun'), NULL, NOW(), NOW()),
 ('[문제] Flexbox 네비게이션 바',
 'Flexbox를 사용하여 가로 방향의 네비게이션 바를 만드세요.',
 'Flexbox를 사용하여 가로 방향의 네비게이션 바를 만드세요.
@@ -477,7 +477,7 @@ Flexible Box Layout의 약자로, 1차원 레이아웃을 쉽게 만들 수 있�
 - 메모리 제한: 64MB',
 NULL,
 '- HTML/CSS 문서 출력',
-'PROBLEM', '웹', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'lee.seojun'), 1, NOW(), NOW()),
+'PROBLEM', '웹', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'leeseojun'), 1, NOW(), NOW()),
 ('반응형 디자인', '다양한 디바이스에 대응하는 반응형 웹 디자인을 배웁니다.', '# 반응형 디자인 (Responsive Design)
 
 다양한 화면 크기에 자동으로 적응하는 웹사이트를 만드는 방법을 배웁니다.
@@ -597,7 +597,7 @@ img {
 @media (max-width: 767px) {
     .box { width: 100%; }
 }
-```', NULL, NULL, 'MARKDOWN', '웹', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'lee.seojun'), NULL, NOW(), NOW()),
+```', NULL, NULL, 'MARKDOWN', '웹', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'leeseojun'), NULL, NOW(), NOW()),
 ('[문제] 반응형 그리드 레이아웃',
 '미디어 쿼리로 반응형 그리드를 만드세요.',
 '미디어 쿼리로 반응형 그리드를 만드세요.
@@ -613,7 +613,7 @@ img {
 - 메모리 제한: 64MB',
 NULL,
 '- HTML/CSS 문서 출력',
-'PROBLEM', '웹', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'lee.seojun'), 1, NOW(), NOW());
+'PROBLEM', '웹', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'leeseojun'), 1, NOW(), NOW());
 
 -- ============================================
 -- 커리큘럼 3: Python 자료구조
@@ -725,7 +725,7 @@ evens = [x for x in range(10) if x % 2 == 0]
 
 # 중첩
 matrix = [[i*j for j in range(3)] for i in range(3)]
-```', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'park.gaeun'), NULL, NOW(), NOW()),
+```', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'parkgaeun'), NULL, NOW(), NOW()),
 ('[문제] 리스트 중복 제거',
 '정수 리스트에서 중복된 값을 제거하고 순서를 유지한 새 리스트를 반환하는 함수를 작성하세요.',
 '정수 리스트에서 중복된 값을 제거하고 순서를 유지한 새 리스트를 반환하는 함수를 작성하세요.
@@ -736,7 +736,7 @@ matrix = [[i*j for j in range(3)] for i in range(3)]
 '- 첫 줄: 리스트의 크기 N (1 ≤ N ≤ 1000)
 - 둘째 줄: N개의 정수 (-1000 ≤ 각 원소 ≤ 1000)',
 '- 중복을 제거하고 순서를 유지한 리스트를 공백으로 구분하여 출력',
-'PROBLEM', 'Python', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'park.gaeun'), 1, NOW(), NOW()),
+'PROBLEM', 'Python', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'parkgaeun'), 1, NOW(), NOW()),
 ('딕셔너리', '키-값 쌍으로 데이터를 저장하는 딕셔너리 자료구조를 배웁니다.', '# 딕셔너리 (Dictionary)
 
 파이썬의 해시 테이블 기반 자료구조를 배웁니다.
@@ -883,7 +883,7 @@ names = ["Alice", "Bob", "Charlie"]
 # 딕셔너리 검색: O(1)
 scores = {"Alice": 95, "Bob": 88, "Charlie": 92}
 "Bob" in scores  # 즉시 찾음
-```', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'park.gaeun'), NULL, NOW(), NOW()),
+```', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'parkgaeun'), NULL, NOW(), NOW()),
 ('[문제] 단어 빈도수 계산',
 '문자열을 입력받아 각 단어의 빈도수를 딕셔너리로 반환하는 함수를 작성하세요.',
 '문자열을 입력받아 각 단어의 빈도수를 딕셔너리로 반환하는 함수를 작성하세요.
@@ -897,7 +897,7 @@ scores = {"Alice": 95, "Bob": 88, "Charlie": 92}
 - 알파벳과 공백만 포함',
 '- 각 단어와 빈도수를 "단어:빈도수" 형식으로 출력
 - 단어는 알파벳 순으로 정렬',
-'PROBLEM', 'Python', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'park.gaeun'), 1, NOW(), NOW()),
+'PROBLEM', 'Python', '기초', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'parkgaeun'), 1, NOW(), NOW()),
 ('스택 구현', 'LIFO 방식의 스택 자료구조를 파이썬으로 구현하는 방법을 배웁니다.', '# 스택 (Stack)
 
 후입선출(LIFO) 방식의 스택 자료구조를 배웁니다.
@@ -1052,7 +1052,7 @@ def factorial(n):
 1. 계산기 구현 (후위 표기법)
 2. 미로 탐색 (DFS)
 3. 되돌리기(Undo) 기능
-4. 웹 브라우저 방문 기록', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'park.gaeun'), NULL, NOW(), NOW()),
+4. 웹 브라우저 방문 기록', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'parkgaeun'), NULL, NOW(), NOW()),
 ('[문제] 괄호 짝 맞추기',
 '스택을 사용하여 문자열의 괄호가 올바르게 짝지어져 있는지 검사하는 함수를 작성하세요.',
 '스택을 사용하여 문자열의 괄호가 올바르게 짝지어져 있는지 검사하는 함수를 작성하세요.
@@ -1064,7 +1064,7 @@ def factorial(n):
 '- 한 줄의 문자열 (1 ≤ 길이 ≤ 10000)
 - (), {}, [] 세 종류의 괄호만 포함',
 '- 올바르게 짝지어져 있으면 "True", 아니면 "False" 출력',
-'PROBLEM', 'Python', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'park.gaeun'), 1, NOW(), NOW());
+'PROBLEM', 'Python', '중급', true, NULL, 15, (SELECT id FROM users WHERE login_id = 'parkgaeun'), 1, NOW(), NOW());
 
 -- ============================================
 -- 커리큘럼-강의 연결 (curriculum_lectures)

@@ -431,6 +431,19 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     List<Lecture> findByAuthorId(Long authorId);
 
     /**
+     * 작성자 ID로 강의 조회 (페이징)
+     *
+     * @param authorId 작성자 사용자 ID
+     * @param pageable 페이징 정보
+     * @return 해당 작성자가 만든 강의 페이지
+     *
+     * 활용:
+     * - 내 강의 목록 조회 (페이징)
+     * - 특정 사용자의 전체 강의 조회 (페이징)
+     */
+    Page<Lecture> findByAuthorId(Long authorId, Pageable pageable);
+
+    /**
      * 작성자 ID와 공개 여부로 강의 조회
      *
      * @param authorId 작성자 사용자 ID
@@ -441,6 +454,19 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
      * - 작성자별 공개 강의 포트폴리오
      */
     List<Lecture> findByAuthorIdAndIsPublicTrue(Long authorId);
+
+    /**
+     * 작성자 ID와 공개 여부로 강의 조회 (페이징)
+     *
+     * @param authorId 작성자 사용자 ID
+     * @param pageable 페이징 정보
+     * @return 해당 작성자의 공개 강의 페이지
+     *
+     * 활용:
+     * - 다른 사용자가 특정 작성자의 공개 강의 둘러보기 (페이징)
+     * - 작성자별 공개 강의 포트폴리오 (페이징)
+     */
+    Page<Lecture> findByAuthorIdAndIsPublicTrue(Long authorId, Pageable pageable);
 
     /**
      * 작성자 ID와 강의 유형으로 조회

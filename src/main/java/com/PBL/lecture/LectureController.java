@@ -371,11 +371,13 @@ public class LectureController {
      */
     @GetMapping("/user/{userId}")
     @Operation(summary = "사용자별 강의 조회", description = "특정 사용자가 작성한 모든 강의를 조회합니다.")
-    public ResponseEntity<List<LectureResponse>> getUserLectures(
-            @Parameter(description = "사용자 ID") @PathVariable Long userId) {
-        // Service에서 트랜잭션 내 DTO 변환된 결과를 받음
-        List<LectureResponse> responses = lectureService.getUserLectures(userId);
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<Map<String, Object>> getUserLectures(
+            @Parameter(description = "사용자 ID") @PathVariable Long userId,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        // Service에서 트랜잭션 내 DTO 변환 및 페이징 결과를 받음
+        Map<String, Object> result = lectureService.getUserLectures(userId, page, size);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -384,11 +386,13 @@ public class LectureController {
      */
     @GetMapping("/user/{userId}/public")
     @Operation(summary = "사용자별 공개 강의 조회", description = "특정 사용자가 작성한 공개 강의만 조회합니다.")
-    public ResponseEntity<List<LectureResponse>> getUserPublicLectures(
-            @Parameter(description = "사용자 ID") @PathVariable Long userId) {
-        // Service에서 트랜잭션 내 DTO 변환된 결과를 받음
-        List<LectureResponse> responses = lectureService.getUserPublicLectures(userId);
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<Map<String, Object>> getUserPublicLectures(
+            @Parameter(description = "사용자 ID") @PathVariable Long userId,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        // Service에서 트랜잭션 내 DTO 변환 및 페이징 결과를 받음
+        Map<String, Object> result = lectureService.getUserPublicLectures(userId, page, size);
+        return ResponseEntity.ok(result);
     }
 
 }

@@ -41,9 +41,11 @@ public class CurriculumController {
 
     @GetMapping("/public")
     @Operation(summary = "공개 커리큘럼 조회", description = "공개된 커리큘럼만 최신순으로 조회합니다.")
-    public ResponseEntity<List<CurriculumResponse>> getPublicCurriculums() {
-        List<CurriculumResponse> responses = curriculumService.getPublicCurriculums();
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<Map<String, Object>> getPublicCurriculums(
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        Map<String, Object> result = curriculumService.getPublicCurriculums(page, size);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")
@@ -218,10 +220,12 @@ public class CurriculumController {
 
     @GetMapping("/public/search")
     @Operation(summary = "공개 커리큘럼 검색", description = "공개 커리큘럼 중에서 제목으로 검색합니다.")
-    public ResponseEntity<List<CurriculumResponse>> searchPublicCurriculums(
-            @Parameter(description = "검색할 제목 (부분 일치)") @RequestParam String title) {
-        List<CurriculumResponse> responses = curriculumService.searchPublicCurriculums(title);
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<Map<String, Object>> searchPublicCurriculums(
+            @Parameter(description = "검색할 제목 (부분 일치)") @RequestParam String title,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        Map<String, Object> result = curriculumService.searchPublicCurriculums(title, page, size);
+        return ResponseEntity.ok(result);
     }
 
     // === 공개 강의 조회 (커리큘럼 생성 시 사용) ===
@@ -252,10 +256,12 @@ public class CurriculumController {
      */
     @GetMapping("/user/{userId}")
     @Operation(summary = "사용자별 커리큘럼 조회", description = "특정 사용자가 작성한 모든 커리큘럼을 조회합니다.")
-    public ResponseEntity<List<CurriculumResponse>> getUserCurriculums(
-            @Parameter(description = "사용자 ID") @PathVariable Long userId) {
-        List<CurriculumResponse> responses = curriculumService.getUserCurriculums(userId);
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<Map<String, Object>> getUserCurriculums(
+            @Parameter(description = "사용자 ID") @PathVariable Long userId,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        Map<String, Object> result = curriculumService.getUserCurriculums(userId, page, size);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -264,10 +270,12 @@ public class CurriculumController {
      */
     @GetMapping("/user/{userId}/public")
     @Operation(summary = "사용자별 공개 커리큘럼 조회", description = "특정 사용자가 작성한 공개 커리큘럼만 조회합니다.")
-    public ResponseEntity<List<CurriculumResponse>> getUserPublicCurriculums(
-            @Parameter(description = "사용자 ID") @PathVariable Long userId) {
-        List<CurriculumResponse> responses = curriculumService.getUserPublicCurriculums(userId);
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<Map<String, Object>> getUserPublicCurriculums(
+            @Parameter(description = "사용자 ID") @PathVariable Long userId,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        Map<String, Object> result = curriculumService.getUserPublicCurriculums(userId, page, size);
+        return ResponseEntity.ok(result);
     }
 
     /*

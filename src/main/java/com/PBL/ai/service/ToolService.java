@@ -16,9 +16,9 @@ import dev.langchain4j.agent.tool.Tool;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -53,12 +53,20 @@ public class ToolService {
 
     @Tool("코드 제출 목록을 페이징으로 조회합니다. 실행 결과와 상태를 확인할 수 있습니다.")
     public Page<Submission> getSubmission(
-            @P("페이징 정보 (페이지 번호, 크기, 정렬 기준)")@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
-            @P("코드를 Base64로 인코딩하여 반환할지 여부")boolean base64_encoded,
-            @P("응답에 포함할 필드 목록 (쉼표로 구분)")String fields
+            @P("페이지 번호 (1부터 시작)") int page,
+            @P("페이지 크기 (기본값: 20)") int size,
+            @P("코드를 Base64로 인코딩하여 반환할지 여부") boolean base64_encoded,
+            @P("응답에 포함할 필드 목록 (쉼표로 구분)") String fields
             //, TODO: 향후 추가 예정 - 유저 ID로 특정 사용자의 제출만 조회
     ) {
         try{
+            // 페이지 번호는 1부터 시작하지만, PageRequest는 0부터 시작
+            Pageable pageable = PageRequest.of(
+                Math.max(0, page - 1),
+                size > 0 ? size : 20,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+            );
+
             Page<Submission> submissionPage = null;
             /*
              TODO
@@ -95,16 +103,24 @@ public class ToolService {
 
     @Tool("코드 채점 목록을 페이징으로 조회합니다. 문제 ID로 필터링할 수 있으며, 테스트 케이스 통과 여부와 점수를 확인할 수 있습니다.")
     public Page<Grading> getGrading(
-            @P("페이징 정보 (페이지 번호, 크기, 정렬 기준)")@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
-            @P("특정 문제의 채점만 조회 (선택 사항)") Long problemId,
-            @P("코드를 Base64로 인코딩하여 반환할지 여부")boolean base64_encoded,
-            @P("응답에 포함할 필드 목록 (쉼표로 구분)")String fields
+            @P("페이지 번호 (1부터 시작)") int page,
+            @P("페이지 크기 (기본값: 20)") int size,
+            @P("특정 문제의 채점만 조회 (선택 사항, 없으면 0 또는 음수)") Long problemId,
+            @P("코드를 Base64로 인코딩하여 반환할지 여부") boolean base64_encoded,
+            @P("응답에 포함할 필드 목록 (쉼표로 구분)") String fields
             //, TODO: 향후 추가 예정 - 유저 ID로 특정 사용자의 채점만 조회
     ){
         try {
+            // 페이지 번호는 1부터 시작하지만, PageRequest는 0부터 시작
+            Pageable pageable = PageRequest.of(
+                Math.max(0, page - 1),
+                size > 0 ? size : 20,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+            );
+
             Page<Grading> gradingPage = null;
-            if (problemId != null){
-                gradingPage = gradingService.findByProblemId(problemId,pageable);
+            if (problemId != null && problemId > 0){
+                gradingPage = gradingService.findByProblemId(problemId, pageable);
             }
             else{
                 gradingPage = gradingService.findAll(pageable);

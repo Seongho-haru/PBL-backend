@@ -1,5 +1,6 @@
 package com.PBL.ai.controller;
 
+import com.PBL.ai.dto.Chat;
 import com.PBL.ai.dto.GradingRequest;
 import com.PBL.ai.dto.StreamResponse;
 import com.PBL.ai.service.AssistantService;
@@ -29,6 +30,10 @@ class AssistantController {
     //1. 코드 실행/제출 에대한 해설
     //2. 커리큘럼 생성 또는 조합
 
+//    @PostMapping
+//    public Flux<String> chat(@RequestBody Chat requset) {
+//    }
+
     /**
      * 코딩테스트 해설 보기 (JSON 스트리밍 방식)
      * @param request 제출 토큰 및 문제 ID
@@ -37,15 +42,10 @@ class AssistantController {
     @PostMapping(value = "/chat/grading", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<String> gradingStream(@RequestBody GradingRequest request) {
         try {
-            // 1. 제출한 토큰을 활용해서 채점 정보 가져오기
-            Grading grading = gradingService.findByToken(request.getGradingToken());
 
-            // 2. 문제 정보 가져오기
-            Lecture lecture = lectureService.getLecture(request.getProblemId())
-                    .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + request.getProblemId()));
 
             // 3. AI 분석 및 해설 생성 (스트리밍) - 각 청크를 JSON 문자열로 변환
-            return assistantService.analyAndExplainStream(grading, lecture)
+            return assistantService.analyAndExplainStream(request)
                     .map(content -> {
                         try {
                             // 텍스트를 JSON DTO로 변환 후 문자열로 직렬화

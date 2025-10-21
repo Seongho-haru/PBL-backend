@@ -1,6 +1,5 @@
 package com.PBL.ai.controller;
 
-import com.PBL.ai.dto.Chat;
 import com.PBL.ai.dto.GradingRequest;
 import com.PBL.ai.dto.StreamResponse;
 import com.PBL.ai.service.AssistantService;

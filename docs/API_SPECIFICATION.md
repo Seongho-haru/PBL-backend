@@ -2,7 +2,7 @@
 
 ## 📋 개요
 
-PBL(Problem-Based Learning) 백엔드 API 명세서입니다. 사용자 인증, 강의 관리, 커리큘럼 관리, 수강 관리, 이미지 저장 기능을 제공합니다.
+PBL(Problem-Based Learning) 백엔드 API 명세서입니다. 사용자 인증, 강의 관리, 커리큘럼 관리, 수강 관리, 이미지 저장, Q&A 게시판 기능을 제공합니다.
 
 ## 🔗 Base URL
 
@@ -868,9 +868,264 @@ http://localhost:9000/pbl-images/20251012_165201_20322763.jpg
 
 ---
 
+## 💬 Q&A 게시판 API
+
+### 1. 질문 생성
+
+**POST** `/api/qna/questions`
+
+**Request Headers:**
+
+```
+X-User-Id: 1
+Content-Type: application/json
+```
+
+**Request Body:**
+
+```json
+{
+  "title": "Spring Boot 설정 관련 질문",
+  "content": "Spring Boot에서 JPA 설정을 어떻게 해야 하나요?",
+  "category": "QUESTION",
+  "course": "자바스프링",
+  "language": "Java"
+}
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "id": 1,
+  "title": "Spring Boot 설정 관련 질문",
+  "content": "Spring Boot에서 JPA 설정을 어떻게 해야 하나요?",
+  "status": "UNRESOLVED",
+  "category": "QUESTION",
+  "course": "자바스프링",
+  "language": "Java",
+  "authorName": "김준성",
+  "likes": 0,
+  "createdAt": "2025-10-16T10:30:00",
+  "updatedAt": "2025-10-16T10:30:00",
+  "answers": []
+}
+```
+
+---
+
+### 2. 질문 목록 조회
+
+**GET** `/api/qna/questions`
+
+**Query Parameters:**
+
+- `keyword` (optional): 검색 키워드
+- `status` (optional): 질문 상태 (UNRESOLVED, RESOLVED)
+- `category` (optional): 질문 카테고리 (QUESTION, TIP, BUG_REPORT, FEATURE_REQUEST, GENERAL)
+- `course` (optional): 강의명
+- `language` (optional): 프로그래밍 언어
+- `authorId` (optional): 작성자 ID
+- `page` (optional): 페이지 번호 (기본값: 0)
+- `size` (optional): 페이지 크기 (기본값: 20)
+
+**Response (200 OK):**
+
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "title": "Spring Boot 설정 관련 질문",
+      "status": "UNRESOLVED",
+      "category": "QUESTION",
+      "course": "자바스프링",
+      "language": "Java",
+      "authorName": "김준성",
+      "commentCount": 2,
+      "likes": 5,
+      "createdAt": "2025-10-16T10:30:00"
+    }
+  ],
+  "pageable": {
+    "sort": {
+      "sorted": true,
+      "unsorted": false
+    },
+    "pageNumber": 0,
+    "pageSize": 20
+  },
+  "totalElements": 1,
+  "totalPages": 1,
+  "first": true,
+  "last": true,
+  "numberOfElements": 1
+}
+```
+
+---
+
+### 3. 질문 상세 조회
+
+**GET** `/api/qna/questions/{questionId}`
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "title": "Spring Boot 설정 관련 질문",
+  "content": "Spring Boot에서 JPA 설정을 어떻게 해야 하나요?",
+  "status": "UNRESOLVED",
+  "category": "QUESTION",
+  "course": "자바스프링",
+  "language": "Java",
+  "authorName": "김준성",
+  "likes": 5,
+  "createdAt": "2025-10-16T10:30:00",
+  "updatedAt": "2025-10-16T10:30:00",
+  "answers": [
+    {
+      "id": 1,
+      "content": "application.yml 파일에서 다음과 같이 설정하시면 됩니다...",
+      "authorName": "김준성",
+      "likes": 3,
+      "isAccepted": false,
+      "parentAnswerId": null,
+      "createdAt": "2025-10-16T10:35:00",
+      "updatedAt": "2025-10-16T10:35:00",
+      "replies": []
+    }
+  ]
+}
+```
+
+---
+
+### 4. 답변 생성
+
+**POST** `/api/qna/answers/questions/{questionId}`
+
+**Request Headers:**
+
+```
+X-User-Id: 1
+Content-Type: application/json
+```
+
+**Request Body:**
+
+```json
+{
+  "content": "application.yml 파일에서 다음과 같이 설정하시면 됩니다:\n\nspring:\n  datasource:\n    url: jdbc:postgresql://localhost:5432/your_database",
+  "parentAnswerId": null
+}
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "id": 1,
+  "content": "application.yml 파일에서 다음과 같이 설정하시면 됩니다:\n\nspring:\n  datasource:\n    url: jdbc:postgresql://localhost:5432/your_database",
+  "authorName": "김준성",
+  "likes": 0,
+  "isAccepted": false,
+  "parentAnswerId": null,
+  "createdAt": "2025-10-16T10:35:00",
+  "updatedAt": "2025-10-16T10:35:00",
+  "replies": []
+}
+```
+
+---
+
+### 5. 답변 채택
+
+**POST** `/api/qna/answers/{answerId}/accept`
+
+**Request Headers:**
+
+```
+X-User-Id: 1
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "message": "답변이 채택되었습니다."
+}
+```
+
+---
+
+### 6. 질문 좋아요
+
+**POST** `/api/qna/questions/{questionId}/like`
+
+**Response (200 OK):**
+
+```json
+{
+  "message": "좋아요가 추가되었습니다."
+}
+```
+
+---
+
+### 7. 답변 좋아요
+
+**POST** `/api/qna/answers/{answerId}/like`
+
+**Response (200 OK):**
+
+```json
+{
+  "message": "좋아요가 추가되었습니다."
+}
+```
+
+---
+
+### 8. 질문 통계 조회
+
+**GET** `/api/qna/questions/stats`
+
+**Response (200 OK):**
+
+```json
+{
+  "totalQuestions": 100,
+  "unresolvedQuestions": 25,
+  "resolvedQuestions": 75,
+  "courseStats": [
+    ["자바스프링", 45],
+    ["React 기초", 30],
+    ["Vue.js 기초", 25]
+  ],
+  "languageStats": [
+    ["Java", 50],
+    ["JavaScript", 30],
+    ["Python", 20]
+  ]
+}
+```
+
+**에러 응답:**
+
+- **400 Bad Request**: 잘못된 요청
+- **401 Unauthorized**: X-User-Id 헤더 누락
+- **403 Forbidden**: 권한 없음 (본인의 질문/답변이 아님)
+- **404 Not Found**: 질문/답변을 찾을 수 없음
+- **500 Internal Server Error**: 서버 내부 오류
+
+---
+
 ## 🔗 관련 문서
 
 - [S3 모듈 상세 API](./API_SPECIFICATION_S3.md)
+- [Q&A 모듈 상세 API](./API_SPECIFICATION_QNA.md)
 
 ---
 

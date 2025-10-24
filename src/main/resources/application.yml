@@ -114,6 +114,8 @@ springdoc:
         url: /api-docs/grading
       - name: "S3 Image Management APIs"
         url: /api-docs/s3
+      - name: "Q&A Management APIs"
+        url: /api-docs/qna
   show-actuator: true
   packages-to-scan: com.PBL # 전체 PBL 패키지 자동 스캔
   group-configs:
@@ -153,6 +155,12 @@ springdoc:
         - /api/s3/**
       packages-to-scan:
         - com.PBL.s3
+    - group: "qna"
+      display-name: "Q&A Management APIs"
+      paths-to-match:
+        - /api/qna/**
+      packages-to-scan:
+        - com.PBL.qna
 
 # Logging Configuration
 logging:

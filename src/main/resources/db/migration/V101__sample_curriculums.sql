@@ -1,148 +1,72 @@
--- 샘플 커리큘럼 데이터 삽입
+-- Python 커리큘럼 데이터 삽입
 -- V101__sample_curriculums.sql
 
 -- ============================================
--- 샘플 강사 사용자 추가 (커리큘럼 작성자)
--- ============================================
-INSERT INTO users (username, login_id, password) VALUES
-('테스트사용자1', 'testuser1', 'password123'),
-('테스트사용자2', 'testuser2', 'password123'),
-('개발자', 'developer', 'dev123'),
-('김유희', 'kimyuhee', 'password123'),
-('이서준', 'leeseojun', 'password123'),
-('박가은', 'parkgaeun', 'password123'),
-('최민수', 'choiminsu', 'password123'),
-('정은지', 'jungeunji', 'password123'),
-('오지후', 'ohjihu', 'password123')
-ON CONFLICT (login_id) DO NOTHING;
-
--- ============================================
--- 샘플 커리큘럼 데이터
+-- Python 커리큘럼 데이터
 -- ============================================
 
--- 커리큘럼 1: Introduction To Algorithms
+-- 커리큘럼 1: Python 기초
 INSERT INTO curriculums (title, description, is_public, difficulty, summary, category, thumbnail_image_url, duration_minutes, author_id, created_at, updated_at) VALUES (
-    'Introduction To Algorithms',
-    '알고리즘 기초 개념을 예제로 익히고 실습 문제로 다집니다. 정렬, 그래프, 동적계획법 등 핵심 알고리즘을 학습합니다.',
+    'Python 기초 완성',
+    'Python 프로그래밍의 기초부터 차근차근 배웁니다. 변수, 자료형, 제어문, 함수 등 프로그래밍의 핵심 개념을 실습을 통해 학습합니다.',
     true,
     '기초',
-    '알고리즘의 기본 개념과 핵심 정렬 알고리즘을 학습합니다.',
-    '알고리즘',
+    'Python 기초 문법부터 함수까지 단계별로 학습합니다.',
+    'Python',
     NULL,
-    120,
+    360,
     (SELECT id FROM users WHERE login_id = 'admin'),
-    '2025-09-01 00:00:00',
-    '2025-09-01 00:00:00'
+    NOW(),
+    NOW()
 );
 
 -- 커리큘럼 1 태그 추가
 INSERT INTO curriculum_tags (curriculum_id, tag) VALUES
-((SELECT id FROM curriculums WHERE title = 'Introduction To Algorithms'), '알고리즘'),
-((SELECT id FROM curriculums WHERE title = 'Introduction To Algorithms'), '기초'),
-((SELECT id FROM curriculums WHERE title = 'Introduction To Algorithms'), '정렬');
+((SELECT id FROM curriculums WHERE title = 'Python 기초 완성'), 'Python'),
+((SELECT id FROM curriculums WHERE title = 'Python 기초 완성'), '기초'),
+((SELECT id FROM curriculums WHERE title = 'Python 기초 완성'), '프로그래밍'),
+((SELECT id FROM curriculums WHERE title = 'Python 기초 완성'), '입문');
 
--- 커리큘럼 2: 웹 기초 HTML/CSS
+-- 커리큘럼 2: Python 중급
 INSERT INTO curriculums (title, description, is_public, difficulty, summary, category, thumbnail_image_url, duration_minutes, author_id, created_at, updated_at) VALUES (
-    '웹 기초: HTML/CSS',
-    'HTML과 CSS로 반응형 레이아웃을 구현합니다. 레이아웃 설계와 반응형 디자인 기법을 학습합니다.',
+    'Python 중급 마스터',
+    'Python의 중급 기능을 학습합니다. 컴프리헨션, 람다, OOP, 예외 처리 등 실무에 필요한 핵심 개념을 익힙니다.',
     true,
-    '기초',
-    'HTML/CSS 기초부터 반응형 디자인까지 실습으로 배웁니다.',
-    '웹',
+    '중급',
+    'Python 중급 문법과 객체지향 프로그래밍을 마스터합니다.',
+    'Python',
     NULL,
-    105,
+    375,
     (SELECT id FROM users WHERE login_id = 'admin'),
-    '2025-08-22 00:00:00',
-    '2025-08-22 00:00:00'
+    NOW(),
+    NOW()
 );
 
 -- 커리큘럼 2 태그 추가
 INSERT INTO curriculum_tags (curriculum_id, tag) VALUES
-((SELECT id FROM curriculums WHERE title = '웹 기초: HTML/CSS'), '웹개발'),
-((SELECT id FROM curriculums WHERE title = '웹 기초: HTML/CSS'), 'HTML'),
-((SELECT id FROM curriculums WHERE title = '웹 기초: HTML/CSS'), 'CSS'),
-((SELECT id FROM curriculums WHERE title = '웹 기초: HTML/CSS'), '반응형');
+((SELECT id FROM curriculums WHERE title = 'Python 중급 마스터'), 'Python'),
+((SELECT id FROM curriculums WHERE title = 'Python 중급 마스터'), '중급'),
+((SELECT id FROM curriculums WHERE title = 'Python 중급 마스터'), 'OOP'),
+((SELECT id FROM curriculums WHERE title = 'Python 중급 마스터'), '함수형');
 
--- 커리큘럼 3: Python 자료구조
+-- 커리큘럼 3: Python 고급
 INSERT INTO curriculums (title, description, is_public, difficulty, summary, category, thumbnail_image_url, duration_minutes, author_id, created_at, updated_at) VALUES (
-    'Python 자료구조',
-    '파이썬 핵심 자료구조와 알고리즘 기본. 리스트, 딕셔너리, 세트 등의 자료구조를 실습을 통해 학습합니다.',
+    'Python 고급 전문가',
+    'Python 표준 라이브러리와 고급 기능을 완벽하게 익힙니다. 45개 핵심 모듈과 데코레이터, 제너레이터, 동시성 프로그래밍까지 다룹니다.',
     true,
-    '기초',
-    '파이썬 핵심 자료구조를 실습으로 배웁니다.',
-    '개발·프로그래밍',
+    '고급',
+    'Python 표준 라이브러리 45개 모듈과 고급 기능을 마스터합니다.',
+    'Python',
     NULL,
-    90,
+    1125,
     (SELECT id FROM users WHERE login_id = 'admin'),
-    '2025-07-05 00:00:00',
-    '2025-07-05 00:00:00'
+    NOW(),
+    NOW()
 );
 
 -- 커리큘럼 3 태그 추가
 INSERT INTO curriculum_tags (curriculum_id, tag) VALUES
-((SELECT id FROM curriculums WHERE title = 'Python 자료구조'), 'Python'),
-((SELECT id FROM curriculums WHERE title = 'Python 자료구조'), '자료구조'),
-((SELECT id FROM curriculums WHERE title = 'Python 자료구조'), '기초');
-
--- 커리큘럼 4: 게임 개발 입문 with Unity
-INSERT INTO curriculums (title, description, is_public, difficulty, summary, category, thumbnail_image_url, duration_minutes, author_id, created_at, updated_at) VALUES (
-    '게임 개발 입문 with Unity',
-    'Unity로 간단한 게임을 만들며 핵심 개념을 배웁니다. 씬, 프리팹, 게임 오브젝트 등을 학습합니다.',
-    true,
-    '중급',
-    'Unity 기초부터 간단한 게임 제작까지 단계별로 학습합니다.',
-    '게임 개발',
-    NULL,
-    150,
-    (SELECT id FROM users WHERE login_id = 'admin'),
-    '2025-05-18 00:00:00',
-    '2025-05-18 00:00:00'
-);
-
--- 커리큘럼 4 태그 추가
-INSERT INTO curriculum_tags (curriculum_id, tag) VALUES
-((SELECT id FROM curriculums WHERE title = '게임 개발 입문 with Unity'), 'Unity'),
-((SELECT id FROM curriculums WHERE title = '게임 개발 입문 with Unity'), '게임개발'),
-((SELECT id FROM curriculums WHERE title = '게임 개발 입문 with Unity'), '중급');
-
--- 커리큘럼 5: SQL로 하는 데이터 질의
-INSERT INTO curriculums (title, description, is_public, difficulty, summary, category, thumbnail_image_url, duration_minutes, author_id, created_at, updated_at) VALUES (
-    'SQL로 하는 데이터 질의',
-    '실무 예제로 익히는 SQL 쿼리 작성. JOIN, 인덱스 등 데이터베이스 핵심 개념을 학습합니다.',
-    true,
-    '중급',
-    '실무 SQL 쿼리 작성 능력을 향상시킵니다.',
-    '데이터베이스',
-    NULL,
-    100,
-    (SELECT id FROM users WHERE login_id = 'admin'),
-    '2025-04-10 00:00:00',
-    '2025-04-10 00:00:00'
-);
-
--- 커리큘럼 5 태그 추가
-INSERT INTO curriculum_tags (curriculum_id, tag) VALUES
-((SELECT id FROM curriculums WHERE title = 'SQL로 하는 데이터 질의'), 'SQL'),
-((SELECT id FROM curriculums WHERE title = 'SQL로 하는 데이터 질의'), '데이터베이스'),
-((SELECT id FROM curriculums WHERE title = 'SQL로 하는 데이터 질의'), '중급');
-
--- 커리큘럼 6: 인공지능 개요
-INSERT INTO curriculums (title, description, is_public, difficulty, summary, category, thumbnail_image_url, duration_minutes, author_id, created_at, updated_at) VALUES (
-    '인공지능 개요',
-    'AI 기본 개념과 사례 소개. 머신러닝과 딥러닝의 기초를 이해하고 실제 사례를 살펴봅니다.',
-    true,
-    '기초',
-    'AI, 머신러닝, 딥러닝의 기본 개념을 이해합니다.',
-    '인공지능',
-    NULL,
-    80,
-    (SELECT id FROM users WHERE login_id = 'admin'),
-    '2025-03-03 00:00:00',
-    '2025-03-03 00:00:00'
-);
-
--- 커리큘럼 6 태그 추가
-INSERT INTO curriculum_tags (curriculum_id, tag) VALUES
-((SELECT id FROM curriculums WHERE title = '인공지능 개요'), 'AI'),
-((SELECT id FROM curriculums WHERE title = '인공지능 개요'), '머신러닝'),
-((SELECT id FROM curriculums WHERE title = '인공지능 개요'), '기초');
+((SELECT id FROM curriculums WHERE title = 'Python 고급 전문가'), 'Python'),
+((SELECT id FROM curriculums WHERE title = 'Python 고급 전문가'), '고급'),
+((SELECT id FROM curriculums WHERE title = 'Python 고급 전문가'), '표준라이브러리'),
+((SELECT id FROM curriculums WHERE title = 'Python 고급 전문가'), '전문가');

@@ -10,22 +10,22 @@ x-logging: &default-logging
 
 services:
   # Watchtower for automatic container updates
-  watchtower:
-    image: containrrr/watchtower:latest
-    container_name: watchtower
-    restart: unless-stopped
-    environment:
-      - WATCHTOWER_POLL_INTERVAL=300 # Check every 5 minutes
-      - WATCHTOWER_CLEANUP=true # Remove old images
-      - WATCHTOWER_INCLUDE_STOPPED=true
-      - WATCHTOWER_REVIVE_STOPPED=true
-      - WATCHTOWER_NOTIFICATIONS=slack
-      - WATCHTOWER_NOTIFICATION_SLACK_HOOK_URL=${SLACK_WEBHOOK_URL}
-      - WATCHTOWER_NOTIFICATION_SLACK_IDENTIFIER=watchtower-pbl
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: --interval 300 --cleanup --include-stopped --revive-stopped
-    <<: *default-logging
+#  watchtower:
+#    image: containrrr/watchtower:latest
+#    container_name: watchtower
+#    restart: unless-stopped
+#    environment:
+#      - WATCHTOWER_POLL_INTERVAL=300 # Check every 5 minutes
+#      - WATCHTOWER_CLEANUP=true # Remove old images
+#      - WATCHTOWER_INCLUDE_STOPPED=true
+#      - WATCHTOWER_REVIVE_STOPPED=true
+#      - WATCHTOWER_NOTIFICATIONS=slack
+#      - WATCHTOWER_NOTIFICATION_SLACK_HOOK_URL=${SLACK_WEBHOOK_URL}
+#      - WATCHTOWER_NOTIFICATION_SLACK_IDENTIFIER=watchtower-pbl
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
+#    command: --interval 300 --cleanup --include-stopped --revive-stopped
+#    <<: *default-logging
 
   # PBL Backend Application (로컬 개발용 - gradlew bootRun 사용)
   # pbl-backend:
@@ -122,6 +122,22 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  chroma-mcp:
+    image: chroma-mcp:latest  # 이미 빌드된 이미지 사용
+    container_name: chroma-mcp
+    restart: unless-stopped
+    environment:
+      - CHROMA_CLIENT_TYPE=persistent
+      - CHROMA_DATA_DIR=/data
+    volumes:
+      - /Volumes/SamsungSSD/chroma_db:/data
+    command: tail -f /dev/null
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # MinIO Object Storage
   minio:

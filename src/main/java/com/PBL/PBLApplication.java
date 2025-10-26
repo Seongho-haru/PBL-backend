@@ -40,12 +40,13 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @EnableCaching
 @EnableAsync
 @ComponentScan(basePackages = {
-    "com.PBL.lab",        // 기존 Judge0 패키지
-    "com.PBL.lecture",    // Lecture 패키지
-    "com.PBL.curriculum", // Curriculum 패키지
-    "com.PBL.user",       // User 패키지
-    "com.PBL.s3",         // S3 패키지
-    "com.PBL.qna"         // Q&A 패키지
+    "com.PBL.lab",           // 기존 Judge0 패키지
+    "com.PBL.lecture",       // Lecture 패키지
+    "com.PBL.curriculum",    // Curriculum 패키지
+    "com.PBL.user",          // User 패키지
+    "com.PBL.s3",            // S3 패키지
+    "com.PBL.qna",           // Q&A 패키지
+    "com.PBL.recommendation" // Recommendation 패키지
 })
 public class PBLApplication {
 

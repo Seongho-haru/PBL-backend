@@ -116,6 +116,8 @@ springdoc:
         url: /api-docs/s3
       - name: "Q&A Management APIs"
         url: /api-docs/qna
+      - name: "Recommendation System APIs"
+        url: /api-docs/recommendations
   show-actuator: true
   packages-to-scan: com.PBL # 전체 PBL 패키지 자동 스캔
   group-configs:
@@ -161,6 +163,12 @@ springdoc:
         - /api/qna/**
       packages-to-scan:
         - com.PBL.qna
+    - group: "recommendations"
+      display-name: "Recommendation System APIs"
+      paths-to-match:
+        - /api/recommendations/**
+      packages-to-scan:
+        - com.PBL.recommendation
 
 # Logging Configuration
 logging:

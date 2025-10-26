@@ -492,4 +492,14 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
      * 작성자 ID와 공개 여부로 강의 개수 조회
      */
     long countByAuthorIdAndIsPublic(Long authorId, Boolean isPublic);
+
+    /**
+     * 타입, 카테고리, 난이도로 강의 조회
+     */
+    List<Lecture> findByTypeAndCategoryAndDifficulty(LectureType type, String category, String difficulty);
+
+    /**
+     * 공개 문제 강의 중 타입, 카테고리, 난이도로 조회
+     */
+    List<Lecture> findByTypeAndCategoryAndDifficultyAndIsPublicTrue(LectureType type, String category, String difficulty);
 }

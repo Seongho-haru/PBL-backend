@@ -1,0 +1,97 @@
+{
+  "info": {
+    "_postman_id": "recommendation-collection-v2",
+    "name": "PBL Recommendation Module",
+    "description": "PBL 추천 시스템 API 컬렉션\n\n개인화된 커리큘럼 추천 및 유사 문제 강의 추천 기능을 테스트합니다.\n\n필수 헤더: X-User-Id",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. 개인화 커리큘럼 추천",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "{{userId}}",
+            "type": "text",
+            "description": "사용자 ID (필수)"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/recommendations/curriculums?limit={{limit}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "recommendations", "curriculums"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "{{limit}}",
+              "description": "추천 개수 (기본값: 10)"
+            }
+          ]
+        },
+        "description": "사용자의 수강 이력과 선호도를 기반으로 **공개 커리큘럼**을 추천합니다.\n\n**우선순위:** Priority 2\n\n**추천 방식:**\n1. 사용자 수강 이력 분석\n   - 카테고리 추출 (수강한 커리큘럼의 카테고리)\n   - 태그 추출 (수강한 커리큘럼의 태그)\n   - 선호 난이도 추출 (가장 많이 수강한 난이도)\n\n2. 모든 공개 커리큘럼 대상 점수 계산\n   - 이미 수강 중인 커리큘럼 제외\n   - 점수 높은 순으로 정렬\n\n**점수 계산 기준:**\n- 카테고리 매칭: 30점 (사용자가 학습한 카테고리와 일치)\n- 태그 매칭: 40점 (공통 태그 개수 × 10점, 최대 40점)\n- 난이도 매칭: 10점 (선호 난이도와 일치)\n- 평점 점수: 20점 (평균 별점 × 4, 5.0 → 20점)\n\n**최대 점수:** 100점\n\n**예시:**\n사용자가 \"알고리즘\", \"자료구조\" 커리큘럼을 수강했다면:\n→ \"Python 자료구조 심화\" 커리큘럼 추천 (카테고리/태그 매칭)"
+      },
+      "response": []
+    },
+    {
+      "name": "2. 유사 문제 강의 추천",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "{{userId}}",
+            "type": "text",
+            "description": "사용자 ID (필수)"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/recommendations/similar-lectures?lectureId={{lectureId}}&limit={{limit}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "recommendations", "similar-lectures"],
+          "query": [
+            {
+              "key": "lectureId",
+              "value": "{{lectureId}}",
+              "description": "기준이 될 문제 강의 ID (필수)"
+            },
+            {
+              "key": "limit",
+              "value": "{{limit}}",
+              "description": "추천 개수 (기본값: 5)"
+            }
+          ]
+        },
+        "description": "현재 풀고 있는 문제 강의와 유사한 다른 **공개 문제 강의**를 추천합니다.\n\n**우선순위:** Priority 1 (가장 중요한 기능)\n\n**추천 방식:**\n- 모든 공개 문제 강의를 대상으로 점수 계산\n- 카테고리/난이도가 달라도 점수에 따라 추천\n- 점수가 0보다 큰 강의만 추천\n\n**점수 계산 기준:**\n- 카테고리 일치: 50점 (가장 중요)\n- 난이도 일치: 30점 (중요)\n- 태그 매칭: 20점 (보조)\n- 제목 키워드 유사도: 10점 (보조)\n\n**주의사항:**\n- 기준 강의는 문제 강의 타입이어야 함\n- 이미 학습한 강의는 제외됨\n- 공개 문제 강의만 추천됨"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://114.201.56.70:2358",
+      "type": "string",
+      "description": "서버 기본 URL"
+    },
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string",
+      "description": "사용자 ID"
+    },
+    {
+      "key": "lectureId",
+      "value": "1",
+      "type": "string",
+      "description": "기준이 될 문제 강의 ID"
+    },
+    {
+      "key": "limit",
+      "value": "10",
+      "type": "string",
+      "description": "추천 개수"
+    }
+  ]
+}

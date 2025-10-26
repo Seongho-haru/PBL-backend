@@ -98,4 +98,10 @@ public interface LectureProgressRepository extends JpaRepository<LectureProgress
      */
     @Query("SELECT COUNT(lp) FROM LectureProgress lp WHERE lp.lecture.id = :lectureId AND lp.status = 'COMPLETED'")
     long countByLectureIdAndStatusCompleted(@Param("lectureId") Long lectureId);
+
+    /**
+     * 수강 ID 목록으로 진도 조회
+     */
+    @Query("SELECT lp FROM LectureProgress lp WHERE lp.enrollment.id IN :enrollmentIds")
+    List<LectureProgress> findByEnrollmentIdIn(@Param("enrollmentIds") List<Long> enrollmentIds);
 }

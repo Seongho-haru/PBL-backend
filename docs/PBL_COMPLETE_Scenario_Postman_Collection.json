@@ -1,0 +1,369 @@
+{
+  "info": {
+    "name": "PBL Complete Learning Journey",
+    "description": "PBL 시스템 완전한 학습 여정 시나리오\n\n시나리오: 회원가입 → 로그인 → 커리큘럼 조회 → 수강신청 → 문제 강의 풀이 → 채점 (틀림) → 유사 문제 추천 → 개인화 추천\n\n우선순위:\n- Priority 1: 유사 문제 강의 추천\n- Priority 2: 개인화 커리큘럼 추천",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://114.201.56.70:2358",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "curriculum_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "lecture_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "enrollment_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "submission_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Phase 1: User Registration & Login",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('user_id', response.id);",
+                  "    console.log('✅ 회원가입 성공:', response.username);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"student001\",\n    \"loginId\": \"student001\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "새로운 사용자 회원가입\n\nRequest Body:\n- username: 사용자명\n- loginId: 로그인 ID (중복 불가)\n- password: 비밀번호"
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('user_id', response.id);",
+                  "    console.log('✅ 로그인 성공:', response.username);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"loginId\": \"student001\",\n    \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "사용자 로그인\n\nRequest Body:\n- loginId: 로그인 ID\n- password: 비밀번호"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Phase 2: Browse Curriculums",
+      "item": [
+        {
+          "name": "Get All Public Curriculums",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/curriculums",
+              "host": ["{{base_url}}"],
+              "path": ["api", "curriculums"]
+            },
+            "description": "공개 커리큘럼 목록 조회"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Curriculum Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const curriculum = pm.response.json();",
+                  "    pm.collectionVariables.set('curriculum_id', curriculum.id);",
+                  "    console.log('📚 커리큘럼:', curriculum.title);",
+                  "    if (curriculum.lectures && curriculum.lectures.length > 0) {",
+                  "        const firstLecture = curriculum.lectures[0];",
+                  "        if (firstLecture && firstLecture.lectureId) {",
+                  "            pm.collectionVariables.set('lecture_id', firstLecture.lectureId);",
+                  "            console.log('🎯 강의 ID:', firstLecture.lectureId);",
+                  "        }",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/curriculums/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "curriculums", "1"]
+            },
+            "description": "커리큘럼 상세 정보 조회 (강의 목록 포함)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Phase 3: Enroll in Curriculum",
+      "item": [
+        {
+          "name": "Enroll in Curriculum",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "    const enrollment = pm.response.json();",
+                  "    pm.collectionVariables.set('enrollment_id', enrollment.id || enrollment.enrollmentId);",
+                  "    console.log('✅ 수강 신청 완료');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"curriculumId\": {{curriculum_id}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/enrollments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "enrollments"]
+            },
+            "description": "커리큘럼 수강 신청"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Phase 4: Solve Problem (Wrong Answer)",
+      "item": [
+        {
+          "name": "Get Problem Lecture",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/lectures/{{lecture_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "lectures", "{{lecture_id}}"]
+            },
+            "description": "문제 강의 조회"
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Wrong Answer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const submission = pm.response.json();",
+                  "    pm.collectionVariables.set('submission_id', submission.id);",
+                  "    console.log('📝 잘못된 답안 제출 완료');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"source_code\": \"print('Wrong Answer')\",\n    \"language_id\": 92,\n    \"stdin\": \"\",\n    \"expected_output\": \"\",\n    \"cpu_time_limit\": 2,\n    \"memory_limit\": 128000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/submissions",
+              "host": ["{{base_url}}"],
+              "path": ["submissions"]
+            },
+            "description": "틀린 답안 제출 (추천 시스템 테스트용)"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Submission Result",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/submissions/{{submission_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["submissions", "{{submission_id}}"]
+            },
+            "description": "제출 결과 확인 (틀림)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Phase 5: Get Recommendations",
+      "item": [
+        {
+          "name": "Get Similar Problem Lectures (Priority 1)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/recommendations/similar-lectures?lectureId={{lecture_id}}&limit=5",
+              "host": ["{{base_url}}"],
+              "path": ["api", "recommendations", "similar-lectures"],
+              "query": [
+                {
+                  "key": "lectureId",
+                  "value": "{{lecture_id}}"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "유사 문제 강의 추천 (Priority 1 - 가장 중요한 기능)\n\n카테고리, 태그, 난이도 기반 유사도 계산으로 유사한 문제 강의 추천"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Personalized Curriculums (Priority 2)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-Id",
+                "value": "{{user_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/recommendations/curriculums?limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "recommendations", "curriculums"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "개인화 커리큘럼 추천 (Priority 2)\n\n사용자의 수강 이력, 선호 카테고리, 태그, 난이도를 기반으로 커리큘럼 추천"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

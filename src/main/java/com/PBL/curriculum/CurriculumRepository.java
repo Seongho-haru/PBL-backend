@@ -177,4 +177,18 @@ public interface CurriculumRepository extends JpaRepository<Curriculum, Long> {
     @Modifying
     @Query("UPDATE Curriculum c SET c.studentCount = c.studentCount - 1 WHERE c.id = :id AND c.studentCount > 0")
     int decrementStudentCountAtomic(@Param("id") Long id);
+
+    /**
+     * 공개 커리큘럼만 조회
+     */
+    List<Curriculum> findByIsPublicTrue();
+
+    /**
+     * 공개 커리큘럼만 조회 (작성자 포함)
+     */
+    @Query("SELECT DISTINCT c FROM Curriculum c " +
+           "LEFT JOIN FETCH c.author " +
+           "WHERE c.isPublic = true " +
+           "ORDER BY c.createdAt DESC")
+    List<Curriculum> findPublicCurriculumsWithAuthor();
 }

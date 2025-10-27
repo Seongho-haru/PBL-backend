@@ -1122,6 +1122,200 @@ X-User-Id: 1
 
 ---
 
+## 📝 커리큘럼 리뷰 & 문의 API
+
+### 1. 리뷰 작성
+
+**POST** `/api/curriculums/{curriculumId}/reviews`
+
+**Request Body:**
+
+```json
+{
+  "isReview": true,
+  "rating": 4.5,
+  "content": "강의가 아주 만족스럽습니다!"
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "curriculumId": 100,
+  "curriculumTitle": "Spring Boot 기초 강의",
+  "authorId": 1,
+  "authorUsername": "김개발",
+  "isReview": true,
+  "rating": 4.5,
+  "content": "강의가 아주 만족스럽습니다!",
+  "isPublic": true,
+  "createdAt": "2025-01-01T10:00:00",
+  "updatedAt": "2025-01-01T10:00:00"
+}
+```
+
+### 2. 문의 작성
+
+**POST** `/api/curriculums/{curriculumId}/reviews/inquiries`
+
+**Request Body:**
+
+```json
+{
+  "isReview": false,
+  "rating": null,
+  "content": "강의 자료는 언제 제공되나요?",
+  "isPublic": true
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 2,
+  "curriculumId": 100,
+  "curriculumTitle": "Spring Boot 기초 강의",
+  "authorId": 1,
+  "authorUsername": "김개발",
+  "isReview": false,
+  "rating": null,
+  "content": "강의 자료는 언제 제공되나요?",
+  "isPublic": true,
+  "createdAt": "2025-01-01T10:00:00",
+  "updatedAt": "2025-01-01T10:00:00"
+}
+```
+
+### 3. 리뷰 수정
+
+**PUT** `/api/curriculums/{curriculumId}/reviews/{reviewId}`
+
+**Request Body:**
+
+```json
+{
+  "rating": 5.0,
+  "content": "수정된 리뷰 내용입니다."
+}
+```
+
+### 4. 문의 수정
+
+**PUT** `/api/curriculums/{curriculumId}/reviews/inquiries/{inquiryId}`
+
+**Request Body:**
+
+```json
+{
+  "content": "수정된 문의 내용입니다.",
+  "isPublic": false
+}
+```
+
+### 5. 리뷰/문의 삭제
+
+**DELETE** `/api/curriculums/{curriculumId}/reviews/{reviewId}`
+
+**Response (204 No Content)**
+
+### 6. 커리큘럼 리뷰 목록 조회
+
+**GET** `/api/curriculums/{curriculumId}/reviews?page=0&size=10`
+
+**Response (200 OK):**
+
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "curriculumId": 100,
+      "curriculumTitle": "Spring Boot 기초 강의",
+      "authorId": 1,
+      "authorUsername": "김개발",
+      "isReview": true,
+      "rating": 4.5,
+      "content": "강의가 아주 만족스럽습니다!",
+      "isPublic": true,
+      "createdAt": "2025-01-01T10:00:00",
+      "updatedAt": "2025-01-01T10:00:00"
+    }
+  ],
+  "totalElements": 25,
+  "totalPages": 3,
+  "number": 0,
+  "size": 10
+}
+```
+
+### 7. 커리큘럼 문의 목록 조회 (공개만)
+
+**GET** `/api/curriculums/{curriculumId}/reviews/inquiries?page=0&size=10`
+
+### 8. 내 리뷰 조회
+
+**GET** `/api/curriculums/{curriculumId}/reviews/my`
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "curriculumId": 100,
+  "curriculumTitle": "Spring Boot 기초 강의",
+  "authorId": 1,
+  "authorUsername": "김개발",
+  "isReview": true,
+  "rating": 4.5,
+  "content": "강의가 아주 만족스럽습니다!",
+  "isPublic": true,
+  "createdAt": "2025-01-01T10:00:00",
+  "updatedAt": "2025-01-01T10:00:00"
+}
+```
+
+### 9. 내 문의 목록 조회
+
+**GET** `/api/curriculums/{curriculumId}/reviews/my/inquiries`
+
+**Response (200 OK):**
+
+```json
+[
+  {
+    "id": 2,
+    "curriculumId": 100,
+    "curriculumTitle": "Spring Boot 기초 강의",
+    "authorId": 1,
+    "authorUsername": "김개발",
+    "isReview": false,
+    "rating": null,
+    "content": "강의 자료는 언제 제공되나요?",
+    "isPublic": true,
+    "createdAt": "2025-01-01T10:00:00",
+    "updatedAt": "2025-01-01T10:00:00"
+  }
+]
+```
+
+**에러 응답:**
+
+- **400 Bad Request**: 잘못된 요청 (예: 리뷰에 별점이 없음)
+- **401 Unauthorized**: X-User-Id 헤더 누락
+- **403 Forbidden**: 권한 없음 (본인이 작성한 리뷰/문의가 아님)
+- **404 Not Found**: 리뷰/문의를 찾을 수 없음
+- **500 Internal Server Error**: 서버 내부 오류
+
+**주요 특징:**
+
+- **리뷰**: 별점 있음, 항상 공개
+- **문의**: 별점 없음, 공개/비공개 선택 가능 (작성자와 관리자만 비공개 문의 볼 수 있음)
+
+---
+
 ## 🔗 관련 문서
 
 - [S3 모듈 상세 API](./API_SPECIFICATION_S3.md)

@@ -337,7 +337,51 @@
       "response": []
     },
     {
-      "name": "10. 리뷰 삭제",
+      "name": "10. 커리큘럼 평균 평점 조회",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-User-Id",
+            "value": "{{user_id}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/curriculums/{{curriculum_id}}/reviews/average-rating",
+          "host": ["{{base_url}}"],
+          "path": [
+            "api",
+            "curriculums",
+            "{{curriculum_id}}",
+            "reviews",
+            "average-rating"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', () => {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has curriculumId, averageRating, reviewCount', () => {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('curriculumId');",
+              "    pm.expect(jsonData).to.have.property('averageRating');",
+              "    pm.expect(jsonData).to.have.property('reviewCount');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. 리뷰 삭제",
       "request": {
         "method": "DELETE",
         "header": [

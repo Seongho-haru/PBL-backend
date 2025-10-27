@@ -172,5 +172,18 @@ public class CourseReviewController {
         );
         return ResponseEntity.ok(inquiries);
     }
+
+    /**
+     * 커리큘럼 평균 평점 조회
+     */
+    @GetMapping("/average-rating")
+    @Operation(summary = "커리큘럼 평균 평점 조회", description = "커리큘럼의 모든 리뷰 평균 평점을 조회합니다.")
+    public ResponseEntity<CourseReviewDTOs.AverageRatingResponse> getCurriculumAverageRating(
+            @PathVariable Long curriculumId
+    ) {
+        log.info("커리큘럼 평균 평점 조회 - 커리큘럼 ID: {}", curriculumId);
+        CourseReviewDTOs.AverageRatingResponse response = courseReviewService.getCurriculumAverageRating(curriculumId);
+        return ResponseEntity.ok(response);
+    }
 }
 

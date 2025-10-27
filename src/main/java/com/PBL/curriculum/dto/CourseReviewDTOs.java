@@ -14,6 +14,18 @@ import java.time.LocalDateTime;
 public class CourseReviewDTOs {
 
     /**
+     * 평균 평점 응답
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AverageRatingResponse {
+        private Long curriculumId;
+        private double averageRating;
+        private Long reviewCount;
+    }
+
+    /**
      * 리뷰/문의 작성 요청
      */
     @Data

@@ -1301,6 +1301,20 @@ X-User-Id: 1
 ]
 ```
 
+### 10. 커리큘럼 평균 평점 조회
+
+**GET** `/api/curriculums/{curriculumId}/reviews/average-rating`
+
+**Response (200 OK):**
+
+```json
+{
+  "curriculumId": 100,
+  "averageRating": 4.5,
+  "reviewCount": 23
+}
+```
+
 **에러 응답:**
 
 - **400 Bad Request**: 잘못된 요청 (예: 리뷰에 별점이 없음)

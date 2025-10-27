@@ -244,6 +244,23 @@ public class CourseReviewService {
     }
 
     /**
+     * 커리큘럼 평균 평점 조회
+     */
+    @Transactional(readOnly = true)
+    public CourseReviewDTOs.AverageRatingResponse getCurriculumAverageRating(Long curriculumId) {
+        log.info("커리큘럼 평균 평점 조회 - 커리큘럼 ID: {}", curriculumId);
+        
+        Double avgRating = courseReviewRepository.calculateAverageRating(curriculumId);
+        Long reviewCount = courseReviewRepository.countByCurriculumId(curriculumId);
+        
+        if (avgRating == null || reviewCount == 0) {
+            return new CourseReviewDTOs.AverageRatingResponse(curriculumId, 0.0, 0L);
+        }
+        
+        return new CourseReviewDTOs.AverageRatingResponse(curriculumId, avgRating, reviewCount);
+    }
+
+    /**
      * 커리큘럼 평균 평점 업데이트
      */
     private void updateCurriculumAverageRating(Long curriculumId) {

@@ -7,6 +7,7 @@ import com.PBL.qna.enums.QuestionStatus;
 import com.PBL.qna.repository.QuestionRepository;
 import com.PBL.user.User;
 import com.PBL.user.UserRepository;
+import com.PBL.user.service.UserValidationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -25,10 +26,14 @@ public class QuestionService {
 
     private final QuestionRepository questionRepository;
     private final UserRepository userRepository;
+    private final UserValidationService userValidationService;
 
     // 질문 생성
     @Transactional
     public Question createQuestion(QnADTOs.CreateQuestionRequest request, Long authorId) {
+        // 정지 상태 체크
+        userValidationService.validateUserCanCreateContent(authorId);
+        
         User author = userRepository.findById(authorId)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + authorId));
 
@@ -48,6 +53,9 @@ public class QuestionService {
     // 질문 수정
     @Transactional
     public Question updateQuestion(Long questionId, QnADTOs.UpdateQuestionRequest request, Long userId) {
+        // 정지 상태 체크
+        userValidationService.validateUserCanModifyContent(userId);
+
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("질문을 찾을 수 없습니다: " + questionId));
 

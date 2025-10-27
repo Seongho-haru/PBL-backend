@@ -1,6 +1,7 @@
 package com.PBL.curriculum;
 
 import com.PBL.curriculum.CurriculumDTOs.*;
+import com.PBL.user.service.UserValidationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,10 +25,12 @@ import java.util.Map;
 public class CurriculumController {
 
     private final CurriculumService curriculumService;
+    private final UserValidationService userValidationService;
 
     @Autowired
-    public CurriculumController(CurriculumService curriculumService) {
+    public CurriculumController(CurriculumService curriculumService, UserValidationService userValidationService) {
         this.curriculumService = curriculumService;
+        this.userValidationService = userValidationService;
     }
 
     // === 커리큘럼 기본 CRUD ===
@@ -67,6 +70,11 @@ public class CurriculumController {
             @RequestBody CreateCurriculumRequest request,
             @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         try {
+            // 정지 상태 체크
+            if (userId != null) {
+                userValidationService.validateUserCanCreateContent(userId);
+            }
+            
             CurriculumResponse response = curriculumService.createCurriculumWithAuth(request, userId);
             return ResponseEntity.ok(response);
         } catch (SecurityException e) {

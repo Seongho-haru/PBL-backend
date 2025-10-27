@@ -8,6 +8,7 @@ import com.PBL.curriculum.repository.CourseReviewRepository;
 import com.PBL.curriculum.CurriculumRepository;
 import com.PBL.user.User;
 import com.PBL.user.UserRepository;
+import com.PBL.user.service.UserValidationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,12 +34,16 @@ public class CourseReviewService {
     private final CurriculumRepository curriculumRepository;
     private final UserRepository userRepository;
     private final CurriculumService curriculumService;
+    private final UserValidationService userValidationService;
 
     /**
      * 리뷰 작성
      */
     public CourseReviewDTOs.CourseReviewResponse createReview(Long curriculumId, Long userId, CourseReviewDTOs.CreateCourseReviewRequest request) {
         log.info("리뷰 작성 요청 - 커리큘럼 ID: {}, 사용자 ID: {}", curriculumId, userId);
+
+        // 정지 상태 체크
+        userValidationService.validateUserCanCreateContent(userId);
 
         // 커리큘럼 조회
         Curriculum curriculum = curriculumRepository.findById(curriculumId)
@@ -73,6 +78,9 @@ public class CourseReviewService {
     public CourseReviewDTOs.CourseReviewResponse createInquiry(Long curriculumId, Long userId, CourseReviewDTOs.CreateCourseReviewRequest request) {
         log.info("문의 작성 요청 - 커리큘럼 ID: {}, 사용자 ID: {}", curriculumId, userId);
 
+        // 정지 상태 체크
+        userValidationService.validateUserCanCreateContent(userId);
+
         // 커리큘럼 조회
         Curriculum curriculum = curriculumRepository.findById(curriculumId)
                 .orElseThrow(() -> new RuntimeException("커리큘럼을 찾을 수 없습니다: " + curriculumId));
@@ -102,6 +110,9 @@ public class CourseReviewService {
      */
     public CourseReviewDTOs.CourseReviewResponse updateReview(Long curriculumId, Long reviewId, Long userId, CourseReviewDTOs.UpdateCourseReviewRequest request) {
         log.info("리뷰 수정 요청 - 리뷰 ID: {}, 사용자 ID: {}", reviewId, userId);
+
+        // 정지 상태 체크
+        userValidationService.validateUserCanModifyContent(userId);
 
         CourseReview review = courseReviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다: " + reviewId));
@@ -139,6 +150,9 @@ public class CourseReviewService {
      */
     public CourseReviewDTOs.CourseReviewResponse updateInquiry(Long curriculumId, Long inquiryId, Long userId, CourseReviewDTOs.UpdateCourseReviewRequest request) {
         log.info("문의 수정 요청 - 문의 ID: {}, 사용자 ID: {}", inquiryId, userId);
+
+        // 정지 상태 체크
+        userValidationService.validateUserCanModifyContent(userId);
 
         CourseReview inquiry = courseReviewRepository.findById(inquiryId)
                 .orElseThrow(() -> new RuntimeException("문의를 찾을 수 없습니다: " + inquiryId));

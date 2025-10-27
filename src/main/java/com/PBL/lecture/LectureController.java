@@ -4,6 +4,7 @@ import com.PBL.lecture.dto.*;
 import com.PBL.lecture.entity.Lecture;
 import com.PBL.user.User;
 import com.PBL.user.UserRepository;
+import com.PBL.user.service.UserValidationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,10 +30,12 @@ public class LectureController {
 
     private final LectureService lectureService;
     private final UserRepository userRepository;
+    private final UserValidationService userValidationService;
 
-    public LectureController(LectureService lectureService, UserRepository userRepository) {
+    public LectureController(LectureService lectureService, UserRepository userRepository, UserValidationService userValidationService) {
         this.lectureService = lectureService;
         this.userRepository = userRepository;
+        this.userValidationService = userValidationService;
     }
 
     // === 기본 CRUD API ===
@@ -52,6 +55,9 @@ public class LectureController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("error", "사용자 인증이 필요합니다."));
             }
+
+            // 정지 상태 체크
+            userValidationService.validateUserCanCreateContent(userId);
 
             // 작성자 정보 확인
             User author = userRepository.findById(userId)

@@ -1330,6 +1330,182 @@ X-User-Id: 1
 
 ---
 
+## 🚨 신고 관리 API
+
+### 1. 신고 작성
+
+**POST** `/api/reports`
+
+**Request Body:**
+
+```json
+{
+  "targetType": "QUESTION",
+  "targetId": 123,
+  "reason": "ABUSE",
+  "content": "욕설 및 혐오 표현이 포함되어 있습니다."
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "reporterId": 2,
+  "reporterUsername": "김사용",
+  "targetType": "QUESTION",
+  "targetId": 123,
+  "reason": "ABUSE",
+  "content": "욕설 및 혐오 표현이 포함되어 있습니다.",
+  "status": "PENDING",
+  "createdAt": "2025-01-01T10:00:00"
+}
+```
+
+### 2. 신고 목록 조회 (관리자 전용)
+
+**GET** `/api/reports?status=PENDING&targetType=QUESTION&page=0&size=20`
+
+**Response (200 OK):**
+
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "reporterId": 2,
+      "reporterUsername": "김사용",
+      "targetType": "QUESTION",
+      "targetId": 123,
+      "reason": "ABUSE",
+      "content": "욕설 및 혐오 표현이 포함되어 있습니다.",
+      "status": "PENDING",
+      "createdAt": "2025-01-01T10:00:00"
+    }
+  ],
+  "totalElements": 25,
+  "totalPages": 2,
+  "number": 0,
+  "size": 20
+}
+```
+
+### 3. 신고 처리 (관리자 전용)
+
+**PUT** `/api/reports/{id}/process`
+
+**Request Body:**
+
+```json
+{
+  "status": "RESOLVED",
+  "processAction": "MUTE_USER",
+  "processNote": "반복적인 부적절한 행동으로 인해 7일간 정지"
+}
+```
+
+**처리 방법 (processAction):**
+
+- `DELETE_CONTENT`: 콘텐츠 삭제
+- `MODIFY_REQUEST`: 수정 요청
+- `WARNING`: 경고 (3회 시 자동 정지)
+- `MUTE_USER`: 사용자 일시 정지
+- `DELETE_ACCOUNT`: 계정 탈퇴
+- `NO_ACTION`: 조치 없음
+- `OTHER`: 기타
+
+**응답:**
+
+```
+403 Forbidden: 관리자 권한 필요 (user ID가 1이 아닌 경우)
+```
+
+### 4. 신고 통계 조회 (관리자 전용)
+
+**GET** `/api/reports/stats`
+
+**Response (200 OK):**
+
+```json
+{
+  "totalReports": 150,
+  "pendingCount": 25,
+  "processingCount": 10,
+  "resolvedCount": 100,
+  "rejectedCount": 15,
+  "byTargetType": {
+    "CURRICULUM": 30,
+    "LECTURE": 45,
+    "QUESTION": 40,
+    "ANSWER": 25,
+    "COURSE_REVIEW": 10
+  },
+  "byReason": {
+    "SPAM": 50,
+    "ABUSE": 40,
+    "INAPPROPRIATE_CONTENT": 35,
+    "COPYRIGHT_VIOLATION": 15,
+    "OTHER": 10
+  },
+  "byProcessAction": {
+    "DELETE_CONTENT": 60,
+    "WARNING": 30,
+    "MUTE_USER": 10
+  }
+}
+```
+
+### 5. 내 신고 목록 조회
+
+**GET** `/api/reports/my`
+
+**Response (200 OK):**
+
+```json
+[
+  {
+    "id": 1,
+    "reporterId": 2,
+    "reporterUsername": "김사용",
+    "targetType": "QUESTION",
+    "targetId": 123,
+    "reason": "ABUSE",
+    "content": "욕설 및 혐오 표현이 포함되어 있습니다.",
+    "status": "PENDING",
+    "createdAt": "2025-01-01T10:00:00"
+  }
+]
+```
+
+### 6. 신고 취소
+
+**DELETE** `/api/reports/{id}`
+
+**Response (204 No Content)**
+
+**주의:** PENDING 상태의 신고만 취소 가능
+
+**에러 응답:**
+
+- **400 Bad Request**: 잘못된 요청
+- **401 Unauthorized**: X-User-Id 헤더 누락
+- **403 Forbidden**: 권한 없음 (관리자 전용 API 또는 본인 신고 아님)
+- **404 Not Found**: 신고를 찾을 수 없음
+- **409 Conflict**: 이미 처리 중인 신고
+- **500 Internal Server Error**: 서버 내부 오류
+
+**주의사항:**
+
+- **정지된 사용자**: 모든 콘텐츠 생성/수정/삭제가 차단됩니다
+  - 정지 기간 동안: 로그인 불가, 콘텐츠 작성 불가, 수강 불가
+  - 정지 해제 자동: `mutedUntil` 시간 이후 자동 해제
+  - 경고 3회: 자동 1일 정지
+- **관리자 권한**: User ID가 1인 경우만 관리자로 간주
+- **중복 신고 방지**: 동일 사용자의 동일 콘텐츠 중복 신고 불가
+
+---
+
 ## 🔗 관련 문서
 
 - [S3 모듈 상세 API](./API_SPECIFICATION_S3.md)

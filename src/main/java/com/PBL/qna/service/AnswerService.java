@@ -7,6 +7,7 @@ import com.PBL.qna.repository.AnswerRepository;
 import com.PBL.qna.repository.QuestionRepository;
 import com.PBL.user.User;
 import com.PBL.user.UserRepository;
+import com.PBL.user.service.UserValidationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -27,10 +28,14 @@ public class AnswerService {
     private final AnswerRepository answerRepository;
     private final QuestionRepository questionRepository;
     private final UserRepository userRepository;
+    private final UserValidationService userValidationService;
 
     // 답변 생성
     @Transactional
     public Answer createAnswer(Long questionId, QnADTOs.CreateAnswerRequest request, Long authorId) {
+        // 정지 상태 체크
+        userValidationService.validateUserCanCreateContent(authorId);
+        
         Question question = questionRepository.findById(questionId)
                 .orElseThrow(() -> new RuntimeException("질문을 찾을 수 없습니다: " + questionId));
 

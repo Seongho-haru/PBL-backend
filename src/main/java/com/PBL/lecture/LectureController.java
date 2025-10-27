@@ -69,6 +69,13 @@ public class LectureController {
 
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            // 정지된 사용자 또는 기타 런타임 예외
+            if (e.getMessage() != null && e.getMessage().contains("정지")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", e.getMessage()));
+            }
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             log.info("Exception: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

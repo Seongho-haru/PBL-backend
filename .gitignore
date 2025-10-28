@@ -87,3 +87,9 @@ judge0-data/
 *.temp
 *.bak
 *.backup
+lectures
+lectures/*
+metadata
+metadata/*
+.claude/*
+.claude

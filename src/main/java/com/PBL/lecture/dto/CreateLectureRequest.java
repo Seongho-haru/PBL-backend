@@ -32,4 +32,6 @@ public class CreateLectureRequest {
     private String content;
     private String input_content;
     private String output_content;
+
+    private Long languageId;
 }

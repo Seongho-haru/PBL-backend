@@ -45,6 +45,8 @@ public class LectureResponse {
     private String input_content;
     private String output_content;
 
+    private Long languageId;
+
 
     public static  LectureResponse from(Lecture lecture) {
 
@@ -60,6 +62,7 @@ public class LectureResponse {
                     .createdAt(lecture.getCreatedAt())
                     .updatedAt(lecture.getUpdatedAt())
                     .author(AuthorInfo.from(lecture.getAuthor()))
+                    .languageId(lecture.getLanguageId())
 
                     .tags(lecture.getTags())
                     .thumbnailImageUrl(lecture.getThumbnailImageUrl())
@@ -97,6 +100,7 @@ public class LectureResponse {
                     .durationMinutes(lecture.getDurationMinutes())
                     .input_content(lecture.getInputContent())
                     .output_content(lecture.getOutputContent())
+                    .languageId(lecture.getLanguageId())
                     .build();
         }else{
             return null;

@@ -5,7 +5,7 @@
 -- Python 강의 데이터
 -- ============================================
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('Python 첫걸음', 'Python의 기본 개념과 설치, 첫 프로그램 작성하기', '# Python 첫걸음
 
 Python은 배우기 쉽고 강력한 프로그래밍 언어로, 데이터 분석부터 웹 개발까지 다양한 분야에서 활용됩니다. 이 강의에서는 Python의 기본 개념을 이해하고 첫 프로그램을 작성해봅니다.
@@ -128,9 +128,9 @@ Python은 간결하고 읽기 쉬운 문법으로 초보자부터 전문가까�
 - ✅ 데이터 분석, 웹 개발, 자동화 등 다양한 분야에서 활용됩니다
 - ✅ REPL 환경에서 코드를 즉시 실행하고 테스트할 수 있습니다
 - ✅ print() 함수로 첫 프로그램을 작성하고 실행할 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('변수와 기본 자료형', 'Python 변수 선언, 기본 자료형, 동적 타이핑 및 형변환 학습', '# 변수와 기본 자료형
 
 변수는 데이터를 저장하는 공간입니다. Python은 동적 타이핑을 지원하여 변수 선언 시 타입을 지정하지 않아도 되며, 실행 시점에 자동으로 타입이 결정됩니다.
@@ -266,9 +266,9 @@ print(isinstance(3.14, float))  # True
 - ✅ `type()`과 `isinstance()`로 자료형 확인
 - ✅ 형변환 함수: `int()`, `float()`, `str()`, `bool()`
 - ✅ snake_case 변수 명명 규칙
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('연산자의 모든 것', 'Python의 다양한 연산자와 우선순위를 이해하고 활용', '# 연산자의 모든 것
 
 프로그래밍에서 연산자는 값을 계산하고 비교하며 논리적 판단을 내리는 핵심 도구입니다. Python은 직관적이고 강력한 연산자 시스템을 제공합니다.
@@ -437,9 +437,9 @@ Python의 연산자는 계산, 비교, 논리 판단의 기본 도구입니다. 
 - 논리 연산자의 단축 평가 동작 방식
 - 복합 할당 연산자로 코드 간결화
 - 비트 연산자의 기본 개념과 시프트 연산
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('입출력 다루기', 'print와 input 함수로 데이터를 주고받는 방법 학습', '# 입출력 다루기
 
 프로그램은 사용자와 소통하기 위해 데이터를 출력하고 입력받습니다. Python의 print()와 input() 함수를 사용하면 간단하게 입출력을 처리할 수 있습니다.
@@ -577,9 +577,9 @@ print() 함수로 데이터를 출력하고, input() 함수로 사용자 입력�
 - ✅ sep, end로 출력 형식 제어하기
 - ✅ input()으로 사용자 입력 받고 타입 변환하기
 - ✅ f-string, format(), % 방식의 문자열 포매팅
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('문자열 기초', '문자열의 불변성, 인덱싱, 슬라이싱 등 기본 개념 학습', '# 문자열 기초
 
 문자열(String)은 문자들의 순서 있는 집합으로, Python에서 가장 많이 사용되는 데이터 타입 중 하나입니다. 문자열을 다루는 기본 기술을 익히면 텍스트 처리, 데이터 분석, 웹 개발 등 다양한 분야에서 활용할 수 있습니다.
@@ -722,9 +722,9 @@ print(text)      # Python (원본은 그대로)
 - 인덱싱으로 개별 문자에 접근하고, 슬라이싱으로 부분 문자열을 추출한다
 - `len()` 함수로 문자열 길이를 구하고, `in` 연산자로 포함 여부를 확인한다
 - `+`와 `*` 연산자로 문자열을 연결하고 반복할 수 있다
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('문자열 메서드 완전 정복', '문자열 대소문자, 분리, 결합, 검색, 치환 메서드 활용법', '# 문자열 메서드 완전 정복
 
 Python 문자열은 다양한 내장 메서드를 제공하여 텍스트 데이터를 쉽게 처리할 수 있습니다. 이번 강의에서는 실무에서 가장 자주 사용되는 문자열 메서드들을 배워보겠습니다.
@@ -882,9 +882,9 @@ if "@" in email and email.endswith(".com"):
 - ✅ 공백 제거: strip(), lstrip(), rstrip()
 - ✅ 검색: find(), startswith(), endswith(), count()
 - ✅ 치환과 정렬: replace(), center(), ljust(), rjust(), zfill()
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('문자열 포매팅 심화', '% 연산자, format(), f-string을 사용한 문자열 포매팅', '# 문자열 포매팅 심화
 
 문자열 포매팅은 변수를 문자열에 삽입하는 기술입니다. Python은 % 연산자, format() 메서드, f-string 세 가지 방법을 제공하며, 각각의 장단점이 있습니다.
@@ -1035,9 +1035,9 @@ print(f"이름: {name}, 나이: {age}")
 - ✅ f-string으로 직관적이고 빠른 포매팅
 - ✅ 정렬, 자릿수, 진법 등 다양한 포매팅 옵션
 - ✅ 상황별 최적의 포매팅 방법 선택
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('리스트 기초', '리스트 생성, 인덱싱, 슬라이싱, 가변성 및 기본 연산 학습', '# 리스트 기초
 
 리스트는 Python에서 가장 많이 사용되는 컬렉션 자료형입니다. 여러 개의 값을 순서대로 저장하고 관리할 수 있으며, 필요에 따라 내용을 자유롭게 수정할 수 있습니다.
@@ -1167,9 +1167,9 @@ print(matrix[1][2])  # 6 (두 번째 행, 세 번째 열)
 - ✅ 리스트는 가변(mutable) 자료형으로 생성 후 내용 변경이 가능합니다
 - ✅ `+`, `*`, `in` 연산자와 `len()` 함수로 리스트를 다룰 수 있습니다
 - ✅ 리스트 안에 리스트를 넣어 2차원 이상의 구조를 만들 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('리스트 메서드와 활용', '리스트의 주요 메서드를 활용하여 데이터를 조작하는 방법', '# 리스트 메서드와 활용
 
 리스트는 Python에서 가장 자주 사용되는 자료형으로, 데이터를 추가, 삭제, 정렬하는 다양한 메서드를 제공합니다. 이 강의에서는 실무에서 자주 사용되는 리스트 메서드들을 익히고 활용하는 방법을 배웁니다.
@@ -1391,9 +1391,9 @@ print(unique)  # [1, 2, 3, 4, 5]
 - sort()는 원본 변경, sorted()는 새 리스트 반환
 - 중첩 리스트는 깊은 복사가 필요하다
 - index()와 count()로 요소를 검색할 수 있다
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('튜플 - 불변 시퀀스', '튜플의 불변성과 패킹/언패킹 활용법을 학습합니다', '# 튜플 - 불변 시퀀스
 
 튜플(tuple)은 한 번 생성되면 값을 변경할 수 없는 불변(immutable) 시퀀스입니다. 리스트와 비슷해 보이지만, 수정이 불가능하다는 특성 덕분에 데이터 보호와 성능 최적화에 유용하게 사용됩니다.
@@ -1519,9 +1519,9 @@ print(t1 * 3)     # (1, 2, 1, 2, 1, 2)
 - ✅ 단일 요소 튜플은 `(5,)`처럼 쉼표가 필수입니다
 - ✅ 패킹/언패킹으로 변수 할당과 함수 반환을 간결하게 처리할 수 있습니다
 - ✅ 불변성 덕분에 딕셔너리 키로 사용 가능하며, 리스트보다 빠르고 안전합니다
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('집합(Set) - 중복 없는 컬렉션', '집합의 특징과 연산, 메서드를 학습하고 활용법을 익힙니다', '# 집합(Set) - 중복 없는 컬렉션
 
 집합(Set)은 중복을 허용하지 않고 순서가 없는 파이썬의 자료형입니다. 수학의 집합 개념을 구현한 것으로, 중복 제거와 집합 연산이 필요할 때 매우 유용합니다.
@@ -1644,9 +1644,9 @@ print(nested)  # {frozenset({1, 2}), frozenset({3, 4})}
 - ✅ `add()`, `remove()`, `discard()`, `pop()` 메서드로 요소를 관리할 수 있습니다
 - ✅ 멤버십 테스트와 중복 제거에 효율적입니다
 - ✅ frozenset은 변경 불가능한 집합으로 딕셔너리 키나 집합의 요소로 사용 가능합니다
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('딕셔너리 - 키-값 저장소', '딕셔너리 생성, 키-값 관리, 메서드 활용 및 순회 방법 학습', '# 딕셔너리 - 키-값 저장소
 
 딕셔너리는 키(key)와 값(value)을 쌍으로 저장하는 Python의 핵심 자료형입니다. 리스트가 숫자 인덱스로 값을 관리한다면, 딕셔너리는 의미 있는 이름(키)으로 값을 저장하고 찾을 수 있습니다.
@@ -1797,9 +1797,9 @@ print(passed)  # {''국어'': 90, ''수학'': 95}
 - ✅ `get()` 메서드는 키가 없어도 에러 없이 안전하게 값을 조회합니다
 - ✅ `keys()`, `values()`, `items()`로 딕셔너리 요소를 조회할 수 있습니다
 - ✅ `for key, value in dict.items():`로 모든 키-값 쌍을 순회할 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('조건문 - if, elif, else', '조건에 따라 코드 실행을 제어하는 if 문 마스터하기', '# 조건문 - if, elif, else
 
 프로그램은 상황에 따라 다른 동작을 해야 합니다. 조건문은 특정 조건이 참일 때만 코드를 실행하도록 하여, 프로그램이 상황에 맞게 대응할 수 있게 합니다.
@@ -1955,9 +1955,9 @@ Python에서는 수학적 표현처럼 비교 연산자를 연결할 수 있어 
 - ✅ and, or, not 연산자로 복잡한 조건을 표현하고, 중첩 if로 세밀한 제어가 가능합니다
 - ✅ 0, None, 빈 컨테이너 등은 False로 평가되며, 이를 활용해 간결한 조건식을 작성할 수 있습니다
 - ✅ Python의 비교 연산자 체이닝으로 범위 검사를 직관적으로 표현할 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('for 반복문', 'for 문을 활용한 시퀀스 순회와 반복 제어 방법 학습', '# for 반복문
 
 for 문은 리스트, 문자열, 튜플 등의 시퀀스를 순회하며 반복 작업을 수행하는 제어문입니다. 같은 작업을 여러 번 반복해야 할 때 효율적으로 코드를 작성할 수 있습니다.
@@ -2080,9 +2080,9 @@ for 문은 시퀀스의 요소를 순회하며 반복 작업을 수행하는 강
 - ✅ enumerate()로 인덱스와 값을 동시에 얻을 수 있습니다
 - ✅ 중첩 for 문으로 다차원 반복이 가능합니다
 - ✅ break는 반복 종료, continue는 다음 반복으로 건너뜁니다
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('while 반복문', '조건에 따라 반복을 수행하는 while 문 사용법', '# while 반복문
 
 while 문은 조건이 참인 동안 코드를 반복 실행하는 제어 구조입니다. 반복 횟수를 미리 알 수 없을 때 유용하게 사용됩니다.
@@ -2205,9 +2205,9 @@ while 문은 조건이 참인 동안 코드를 반복하는 강력한 제어 구
 - continue는 현재 반복을 건너뛰고 다음 반복으로 이동합니다
 - for는 횟수 기반, while은 조건 기반 반복에 적합합니다
 - while-else는 break 없이 정상 종료될 때 else 블록을 실행합니다
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('함수 정의와 호출', 'def 키워드로 함수를 정의하고 호출하는 방법을 학습합니다', '# 함수 정의와 호출
 
 함수는 특정 작업을 수행하는 코드 블록입니다. 반복되는 코드를 하나로 묶어 재사용할 수 있어 프로그램을 효율적으로 작성할 수 있습니다.
@@ -2326,9 +2326,9 @@ greet("영희", "반갑습니다")  # 출력: 영희님, 반갑습니다!
 - `return` 문으로 값을 반환하며, 없으면 `None`이 반환됩니다
 - 지역 변수는 함수 내부에서만 사용 가능하고, 전역 변수는 프로그램 전체에서 접근 가능합니다
 - 기본값을 설정하여 선택적 매개변수를 만들 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('함수 매개변수 심화', '기본값, 키워드 인자, *args, **kwargs 활용법', '# 함수 매개변수 심화
 
 함수의 매개변수를 유연하게 다루면 더 편리하고 재사용 가능한 코드를 작성할 수 있습니다. 기본값 설정, 키워드 인자, 가변 인자 등 다양한 방법을 배워봅시다.
@@ -2464,9 +2464,9 @@ print(calculate(**params))  # 60
 - *args로 가변 개수의 위치 인자를, **kwargs로 가변 개수의 키워드 인자를 받을 수 있습니다
 - 매개변수는 정해진 순서 규칙을 따라야 합니다
 - *, **를 사용하여 시퀀스와 딕셔너리를 언패킹할 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('스코프와 네임스페이스', 'LEGB 규칙과 global/nonlocal 키워드로 변수 스코프 제어하기', '# 스코프와 네임스페이스
 
 Python에서 변수를 사용할 때 "어디서 정의된 변수인가?"가 매우 중요합니다. 스코프는 변수가 접근 가능한 범위를 의미하며, 이를 이해하면 예상치 못한 오류를 방지할 수 있습니다.
@@ -2677,9 +2677,9 @@ print(times_5(10))  # 50
 - ✅ `nonlocal` 키워드로 외부 함수의 변수를 중첩 함수에서 수정 가능
 - ✅ 클로저는 함수가 자신이 생성된 환경(외부 변수)을 기억하는 것
 - ✅ 변수를 읽기만 할 때는 키워드 없이 접근 가능
-', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '기초', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('리스트 컴프리헨션', '리스트를 간결하고 효율적으로 생성하는 컴프리헨션 문법', '# 리스트 컴프리헨션
 
 리스트 컴프리헨션은 기존 리스트나 반복 가능한 객체로부터 새로운 리스트를 간결하게 생성하는 Python의 강력한 문법입니다. 반복문과 조건문을 한 줄로 표현하여 코드의 가독성과 성능을 동시에 향상시킬 수 있습니다.
@@ -2806,9 +2806,9 @@ print(f"컴프리헨션: {time2:.4f}초")
 - 중첩 컴프리헨션: 다차원 데이터 처리와 평탄화에 활용
 - 성능 장점: 일반 반복문보다 30-40% 빠른 실행 속도
 - 가독성 고려: 복잡한 로직은 일반 반복문 사용 권장
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('딕셔너리와 집합 컴프리헨션', '딕셔너리와 집합을 간결하게 생성하는 컴프리헨션 문법', '# 딕셔너리와 집합 컴프리헨션
 
 리스트 컴프리헨션처럼 딕셔너리와 집합도 컴프리헨션으로 간결하게 생성할 수 있습니다. 데이터 변환과 필터링이 필요한 실무에서 자주 사용됩니다.
@@ -2920,9 +2920,9 @@ print(word_lengths)
 - zip()과 items()를 활용한 데이터 변환
 - 조건문을 추가한 필터링 기법
 - 실무에서 자주 사용하는 패턴들
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('map과 filter 함수', 'map과 filter로 데이터를 효율적으로 변환하고 필터링하기', '# map과 filter 함수
 
 함수형 프로그래밍의 핵심 도구인 map과 filter는 데이터를 간결하게 변환하고 필터링할 수 있게 해줍니다. 반복문 없이도 컬렉션 전체를 처리할 수 있습니다.
@@ -3068,9 +3068,9 @@ map과 filter는 함수형 프로그래밍의 기본 도구로, 데이터 변환
 - ✅ lambda와 결합하여 간결한 코드 작성
 - ✅ 여러 iterable을 동시에 처리
 - ✅ 리스트 컴프리헨션과의 차이점 이해
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('lambda와 reduce', '익명 함수 lambda와 누적 연산 reduce 활용법', '# lambda와 reduce
 
 lambda는 이름 없는 익명 함수로, 간단한 함수를 한 줄로 표현할 때 사용합니다. reduce는 시퀀스의 요소들을 누적하여 하나의 값으로 만드는 함수형 프로그래밍 도구입니다.
@@ -3205,9 +3205,9 @@ lambda는 간단한 함수를 한 줄로 표현하는 익명 함수이며, reduc
 - reduce()는 시퀀스의 요소를 누적하여 하나의 값으로 만듭니다
 - filter()와 map()에서 lambda를 사용하여 간결한 데이터 변환이 가능합니다
 - 가독성이 중요한 경우 lambda보다 일반 함수를 사용하세요
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('파일 읽기와 쓰기', 'open()으로 파일 입출력하고 with문으로 안전하게 처리하기', '# 파일 읽기와 쓰기
 
 프로그램에서 데이터를 영구적으로 저장하거나 외부 데이터를 읽어오려면 파일 입출력이 필요합니다. Python은 open() 함수와 다양한 메서드를 제공하여 파일을 쉽게 다룰 수 있습니다.
@@ -3403,9 +3403,9 @@ Python의 파일 입출력은 open() 함수와 with 문을 중심으로 이루�
 - ✅ write(), writelines()로 파일에 데이터를 씁니다
 - ✅ with 문을 사용하면 자동으로 파일이 닫힙니다
 - ✅ 텍스트 파일은 인코딩을, 바이너리 파일은 ''b'' 모드를 사용합니다
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('예외 처리 - try, except, finally', '예외를 처리하여 안정적인 프로그램 작성하기', '# 예외 처리 - try, except, finally
 
 프로그램 실행 중 예상치 못한 오류가 발생하면 프로그램이 중단됩니다. 예외 처리를 사용하면 이러한 오류 상황에 대응하여 프로그램을 안정적으로 실행할 수 있습니다.
@@ -3541,9 +3541,9 @@ except Exception as e:
 - ✅ 여러 except 절로 예외 타입별 대응이 가능합니다
 - ✅ finally 절은 예외와 관계없이 항상 실행되어 정리 작업에 유용합니다
 - ✅ raise 문으로 필요에 따라 예외를 발생시킬 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('사용자 정의 예외', '나만의 예외 클래스를 만들어 더 명확한 에러 처리하기', '# 사용자 정의 예외
 
 내장 예외만으로는 부족할 때, 나만의 예외를 만들어 더 명확하고 구체적인 에러 처리를 할 수 있습니다.
@@ -3730,9 +3730,9 @@ except ConfigError as e:
 - ✅ 예외 계층 구조를 설계하여 유연한 처리 구현
 - ✅ raise from을 사용한 예외 체이닝으로 원인 정보 보존
 - ✅ 실전에서 활용 가능한 예외 처리 전략 수립
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('모듈 시스템', 'Python 모듈의 개념과 import 문 사용법 학습', '# 모듈 시스템
 
 Python 모듈은 재사용 가능한 코드를 구조화하는 기본 단위입니다. 모듈을 통해 코드를 논리적으로 분리하고 다른 프로그램에서 재사용할 수 있습니다.
@@ -3907,9 +3907,9 @@ import my_module
 - ✅ `__name__ == ''__main__''`으로 직접 실행 여부 확인
 - ✅ sys.path를 통해 모듈 검색 경로 관리
 - ✅ 별칭(as)으로 긴 모듈 이름을 줄일 수 있음
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('패키지와 __init__.py', '패키지 구조와 import 메커니즘 이해하기', '# 패키지와 __init__.py
 
 모듈을 디렉토리로 구조화하여 대규모 프로젝트를 체계적으로 관리하는 방법을 학습합니다.
@@ -4094,9 +4094,9 @@ for filename in os.listdir(package_dir):
 - ✅ 절대 임포트는 전체 경로, 상대 임포트는 `.`과 `..`을 사용합니다
 - ✅ 서브패키지로 계층적 구조를 만들 수 있습니다
 - ✅ `__all__`은 `import *` 시 공개 항목을 정의합니다
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('표준 라이브러리 활용', 'Python 표준 라이브러리의 주요 모듈 활용법', '# 표준 라이브러리 활용
 
 Python은 설치와 동시에 사용할 수 있는 강력한 표준 라이브러리를 제공합니다. 외부 패키지 없이도 다양한 기능을 구현할 수 있습니다.
@@ -4250,9 +4250,9 @@ Python 공식 문서는 표준 라이브러리 학습의 최고 자료입니다:
 - ✅ random, math로 수학 연산 처리
 - ✅ datetime, collections, itertools 등 유용한 도구 활용
 - ✅ 공식 문서를 통한 모듈 학습 방법
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('클래스 기초', '객체지향 프로그래밍의 핵심인 클래스 정의와 사용법을 학습합니다', '# 클래스 기초
 
 클래스는 관련된 데이터와 기능을 하나로 묶어 관리하는 객체지향 프로그래밍의 핵심 개념입니다. 이번 강의에서는 클래스의 기본 개념과 사용법을 배웁니다.
@@ -4427,9 +4427,9 @@ book.return_book()   # ''파이썬 프로그래밍'' 반납되었습니다
 - ✅ self는 인스턴스 자신을 가리키며, 모든 메서드의 첫 번째 매개변수입니다
 - ✅ 인스턴스 변수는 self.변수명으로 정의하고, 각 인스턴스마다 독립적입니다
 - ✅ 클래스를 사용하면 관련 데이터와 기능을 체계적으로 관리할 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('클래스 변수와 메서드', '클래스 변수와 다양한 메서드 유형 이해하기', '# 클래스 변수와 메서드
 
 Python의 클래스는 다양한 유형의 변수와 메서드를 가질 수 있습니다. 인스턴스 변수와 클래스 변수의 차이를 이해하고, 상황에 맞는 메서드 유형을 선택하는 것이 효율적인 객체지향 프로그래밍의 핵심입니다.
@@ -4590,9 +4590,9 @@ print(Product.is_expensive(200000))  # True
 - `@classmethod`는 대체 생성자와 클래스 상태 수정에 활용
 - `@staticmethod`는 클래스와 무관한 유틸리티 함수에 적합
 - 각 메서드 유형은 `self`/`cls` 유무로 구분
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('상속(Inheritance)', '부모 클래스를 상속받아 코드 재사용성을 높이는 방법', '# 상속(Inheritance)
 
 상속은 기존 클래스의 속성과 메서드를 새로운 클래스가 물려받는 객체지향 프로그래밍의 핵심 개념입니다. 코드 재사용성을 높이고 계층적 관계를 표현할 수 있습니다.
@@ -4756,9 +4756,9 @@ duck.quack() # 출력: 꽥꽥
 - ✅ 메서드 오버라이딩으로 부모 메서드를 재정의하여 새로운 동작을 구현할 수 있습니다
 - ✅ isinstance()와 issubclass()로 객체와 클래스의 관계를 확인할 수 있습니다
 - ✅ 다중 상속을 통해 여러 부모 클래스로부터 기능을 물려받을 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('다형성과 특수 메서드', '다형성 개념과 덕 타이핑, 특수 메서드 활용법을 학습합니다', '# 다형성과 특수 메서드
 
 Python의 다형성은 같은 인터페이스를 통해 다양한 타입의 객체를 다룰 수 있게 합니다. 특수 메서드를 활용하면 내장 함수나 연산자와 자연스럽게 통합되는 클래스를 만들 수 있습니다.
@@ -4927,9 +4927,9 @@ save_data(FileWriter(), "파일 저장")
 - ✅ 덕 타이핑은 타입보다 메서드 존재를 중시
 - ✅ `__str__`은 사용자용, `__repr__`은 개발자용 문자열 표현
 - ✅ 특수 메서드로 연산자와 내장 함수를 커스터마이징 가능
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('캡슐화와 접근 제어', 'Python의 캡슐화 개념과 접근 제어 규칙을 학습합니다', '# 캡슐화와 접근 제어
 
 객체의 내부 데이터를 보호하고 외부 접근을 제어하는 캡슐화는 객체지향 프로그래밍의 핵심 원칙입니다.
@@ -5101,9 +5101,9 @@ print(circle.area)  # 출력: 78.53975
 - ✅ `_`는 protected, `__`는 private을 나타내는 관례입니다
 - ✅ 네임 맹글링은 `_클래스명__속성명` 형태로 이름을 변환합니다
 - ✅ @property는 메서드를 속성처럼 사용하게 하며 getter/setter를 구현합니다
-', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '중급', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('collections 모듈 완전 정복', 'namedtuple, Counter, defaultdict, deque 등 실무 필수 자료구조', '# collections 모듈 완전 정복
 
 Python의 collections 모듈은 내장 자료형(list, dict, tuple)을 확장한 고성능 컨테이너를 제공합니다. 실무에서 자주 사용되는 필수 자료구조들을 학습합니다.
@@ -5290,9 +5290,9 @@ collections 모듈은 표준 자료구조를 확장하여 특정 상황에 최�
 - defaultdict: 자동 기본값 생성으로 KeyError 방지
 - deque: 양방향 큐로 빠른 append/pop 연산
 - ChainMap: 여러 딕셔너리를 하나로 체인
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('itertools 모듈 마스터하기', '메모리 효율적인 반복자와 조합론 함수 활용법', '# itertools 모듈 마스터하기
 
 itertools는 메모리 효율적이고 강력한 반복자를 제공하는 Python 표준 라이브러리입니다. 대용량 데이터나 무한 시퀀스를 처리할 때 필수적인 도구입니다.
@@ -5446,9 +5446,9 @@ itertools는 메모리 효율적인 반복 처리를 위한 강력한 도구입�
 - chain(), groupby()로 데이터 체이닝과 그룹핑
 - filterfalse(), takewhile(), dropwhile()로 효율적인 필터링
 - islice()를 활용한 배치 처리 패턴
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('functools 모듈 심화', '함수형 프로그래밍을 위한 고급 도구 활용법', '# functools 모듈 심화
 
 functools는 고차 함수(함수를 다루는 함수)를 위한 표준 라이브러리로, 함수형 프로그래밍을 더 효율적으로 구현할 수 있게 해줍니다.
@@ -5640,9 +5640,9 @@ functools 모듈은 함수형 프로그래밍의 핵심 도구를 제공합니�
 - ✅ wraps로 데코레이터의 메타데이터 보존
 - ✅ total_ordering으로 비교 연산자 자동 구현
 - ✅ reduce로 반복 가능한 객체의 누적 연산
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('os 모듈 - 운영체제 인터페이스', '파일 시스템 조작과 환경 변수 활용 방법 학습', '# os 모듈 - 운영체제 인터페이스
 
 os 모듈은 파일 시스템, 디렉토리, 환경 변수 등 운영체제와 상호작용하는 기능을 제공합니다. 크로스 플랫폼으로 작동하여 Windows, Linux, macOS에서 동일한 코드를 사용할 수 있습니다.
@@ -5830,9 +5830,9 @@ os 모듈은 파일 시스템과 운영체제를 다루는 핵심 도구입니�
 - ✅ `listdir()`, `walk()`로 파일 시스템 탐색
 - ✅ `os.path.join()`, `exists()` 등으로 경로 조작
 - ✅ `os.getenv()`, `os.environ`으로 환경 변수 활용
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('sys 모듈 - 시스템 인터페이스', 'Python에서 시스템 정보 조회 및 명령줄 인자 처리 방법', '# sys 모듈 - 시스템 인터페이스
 
 sys 모듈은 Python 인터프리터와 시스템 간의 인터페이스를 제공하는 표준 라이브러리입니다. 명령줄 인자 처리, 시스템 정보 조회, 표준 입출력 제어 등 프로그램이 실행되는 환경과 상호작용할 수 있습니다.
@@ -5965,9 +5965,9 @@ sys 모듈은 Python 프로그램이 실행 환경과 상호작용하는 핵심 
 - sys.path로 모듈 검색 경로를 관리할 수 있습니다
 - sys.platform과 sys.version_info로 실행 환경을 파악할 수 있습니다
 - sys.exit()로 프로그램 종료 상태를 명시적으로 제어할 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('re 모듈 - 정규표현식', '정규표현식 패턴 매칭과 re 모듈 활용법 학습', '# re 모듈 - 정규표현식
 
 정규표현식은 특정 패턴의 문자열을 검색, 추출, 치환하는 강력한 도구입니다. Python의 re 모듈을 사용하면 복잡한 텍스트 처리 작업을 간결하게 수행할 수 있습니다.
@@ -6170,9 +6170,9 @@ for text in texts:
 - ✅ 그룹 `()`과 `\1`, `\2`로 패턴을 캡처하고 재사용했습니다
 - ✅ `sub()`와 `split()`으로 문자열을 치환하고 분리했습니다
 - ✅ `IGNORECASE`, `MULTILINE` 등의 플래그로 검색 옵션을 제어했습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('datetime 모듈 - 날짜와 시간', '날짜와 시간을 다루는 datetime 모듈 활용법', '# datetime 모듈 - 날짜와 시간
 
 날짜와 시간 데이터를 다루는 것은 프로그래밍에서 매우 흔한 작업입니다. Python의 datetime 모듈은 날짜와 시간을 생성하고, 조작하고, 형식화하는 강력한 기능을 제공합니다.
@@ -6346,9 +6346,9 @@ datetime 모듈은 Python에서 날짜와 시간을 다루는 표준 방법입�
 - ✅ timedelta를 사용한 날짜/시간 연산
 - ✅ strftime()과 strptime()으로 문자열 변환
 - ✅ 날짜 비교와 실용적인 활용 방법
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('pathlib 모듈 - 객체지향 경로', 'Path 객체로 파일/디렉토리를 객체지향 방식으로 다루기', '# pathlib 모듈 - 객체지향 경로
 
 pathlib은 파일 시스템 경로를 객체지향 방식으로 다루는 Python 3.4+ 표준 라이브러리입니다. 기존 os.path보다 직관적이고 강력한 인터페이스를 제공합니다.
@@ -6501,9 +6501,9 @@ pathlib은 파일 시스템 작업을 객체지향 방식으로 수행할 수 �
 - 디렉토리 탐색 (glob, rglob, iterdir)
 - 파일 읽기/쓰기 (read_text, write_text, read_bytes, write_bytes)
 - os.path 대비 pathlib의 객체지향적 장점
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('json 모듈 - JSON 직렬화', 'Python 객체와 JSON 간 변환 및 커스텀 직렬화 구현', '# json 모듈 - JSON 직렬화
 
 JSON(JavaScript Object Notation)은 데이터 교환을 위한 경량 텍스트 형식입니다. Python의 json 모듈은 Python 객체를 JSON으로 변환(직렬화)하고, JSON을 Python 객체로 변환(역직렬화)하는 기능을 제공합니다.
@@ -6657,9 +6657,9 @@ json 모듈은 Python 객체와 JSON 문자열 간 변환을 제공하는 표준
 - ✅ dumps/loads(문자열), dump/load(파일) 함수 사용법
 - ✅ indent와 sort_keys로 JSON 출력 포맷 제어
 - ✅ JSONEncoder/object_hook으로 커스텀 객체 직렬화/역직렬화
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('csv 모듈 - CSV 파일 처리', 'CSV 파일 읽기/쓰기와 다양한 방언 처리 방법', '# csv 모듈 - CSV 파일 처리
 
 CSV(Comma-Separated Values)는 데이터를 주고받을 때 가장 널리 사용되는 텍스트 파일 형식입니다. Python의 csv 모듈은 CSV 파일을 쉽게 읽고 쓸 수 있는 기능을 제공합니다.
@@ -6864,9 +6864,9 @@ csv 모듈은 CSV 파일을 안전하고 효율적으로 처리할 수 있게 �
 - delimiter, quotechar, quoting 옵션으로 다양한 형식을 처리했습니다
 - CSV 방언(dialect)을 이해하고 커스텀 방언을 등록했습니다
 - 실전 데이터 처리와 에러 핸들링 방법을 배웠습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('매직 메서드 완전 정복', '특수 메서드로 파이썬 객체의 동작을 커스터마이징하기', '# 매직 메서드 완전 정복
 
 매직 메서드는 `__`(더블 언더스코어)로 시작하고 끝나는 특수 메서드로, 파이썬 객체의 내부 동작을 커스터마이징할 수 있게 합니다.
@@ -7036,9 +7036,9 @@ print(v3)  # Vector(4, 6)
 - ✅ 컨테이너 프로토콜로 시퀀스처럼 동작하는 객체를 만들 수 있습니다
 - ✅ `__enter__`와 `__exit__`으로 컨텍스트 매니저를 구현합니다
 - ✅ 연산자 오버로딩으로 직관적인 API를 제공할 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('연산자 오버로딩', '매직 메서드를 활용한 사용자 정의 클래스의 연산자 구현', '# 연산자 오버로딩
 
 연산자 오버로딩은 클래스에 특수 메서드(매직 메서드)를 정의하여 기본 연산자의 동작을 사용자 정의 객체에 맞게 구현하는 기법입니다.
@@ -7204,9 +7204,9 @@ print(bool(pl))  # True
 - ✅ 단항 연산자(`__neg__`, `__abs__`)로 단일 피연산자 연산 처리
 - ✅ 복합 할당 연산자(`__iadd__`)로 in-place 연산 최적화
 - ✅ 특수 메서드(`__len__`, `__contains__`)로 Python 내장 기능 활용
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('프로퍼티와 디스크립터', '속성 접근을 제어하는 고급 OOP 기법 학습', '# 프로퍼티와 디스크립터
 
 속성 접근을 제어하고 검증 로직을 추가하는 파이썬의 강력한 메커니즘을 학습합니다. 프로퍼티와 디스크립터는 객체지향 프로그래밍에서 캡슐화와 데이터 무결성을 보장하는 핵심 도구입니다.
@@ -7403,9 +7403,9 @@ print(person.name, person.age)  # Alice 30
 - 디스크립터 프로토콜(__get__, __set__, __delete__)로 재사용 가능한 속성 로직 구현
 - 데이터 디스크립터가 비데이터 디스크립터보다 높은 우선순위
 - 타입 검증, 값 검증 등 실전 활용 사례
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('데코레이터 기초', '함수를 꾸미는 데코레이터의 개념과 사용법을 학습합니다', '# 데코레이터 기초
 
 데코레이터는 함수를 수정하지 않고 기능을 추가하는 강력한 도구입니다. 로깅, 권한 검사, 실행 시간 측정 등 반복적인 작업을 간결하게 처리할 수 있습니다.
@@ -7606,9 +7606,9 @@ process_data("python") # 호출 횟수: 3
 - ✅ *args, **kwargs로 모든 종류의 인자를 처리할 수 있습니다
 - ✅ functools.wraps로 함수의 메타데이터를 보존합니다
 - ✅ 로깅, 타이밍, 검증 등 다양한 용도로 활용 가능합니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('데코레이터 심화', '인자를 받는 데코레이터, 클래스 기반 데코레이터, 실전 활용법', '# 데코레이터 심화
 
 데코레이터는 함수를 수정하지 않고 기능을 추가하는 강력한 도구입니다. 이 강의에서는 인자를 받는 데코레이터, 클래스 기반 데코레이터, 그리고 실전 활용 사례를 학습합니다.
@@ -7818,9 +7818,9 @@ print(User.is_adult(20))  # True
 - ✅ 데코레이터 체이닝으로 여러 기능 조합 가능
 - ✅ 로깅, 타이밍, 캐싱, 권한 검사 등 실전 활용 가능
 - ✅ @property, @classmethod, @staticmethod는 자주 사용하는 내장 데코레이터
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('제너레이터 기초', 'yield를 사용한 메모리 효율적인 제너레이터 작성법', '# 제너레이터 기초
 
 제너레이터는 이터레이터를 생성하는 간편한 방법으로, 대용량 데이터를 처리할 때 메모리를 효율적으로 사용할 수 있게 해줍니다.
@@ -7969,9 +7969,9 @@ def read_large_file(file_path):
 - next() 함수로 제너레이터를 수동으로 제어할 수 있습니다
 - 리스트 대비 메모리를 크게 절약할 수 있습니다
 - 한 번 순회 후에는 재사용할 수 없으므로 필요 시 재생성해야 합니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('제너레이터 심화와 이터레이터', '제너레이터 표현식, send() 메서드, 이터레이터 프로토콜 활용', '# 제너레이터 심화와 이터레이터
 
 제너레이터는 단순히 값을 생성하는 것을 넘어 양방향 통신, 커스텀 이터레이터 구현 등 강력한 기능을 제공합니다. 이 강의에서는 제너레이터의 고급 활용법과 이터레이터 프로토콜을 깊이 있게 학습합니다.
@@ -8155,9 +8155,9 @@ class MyIterator:
 - ✅ 이터러블은 `__iter__()`만 구현하면 됨
 - ✅ yield from으로 서브 제너레이터를 간단히 위임
 - ✅ throw()와 close()로 제너레이터를 제어
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('컨텍스트 매니저', 'with 문과 컨텍스트 매니저로 리소스를 안전하게 관리하는 방법', '# 컨텍스트 매니저
 
 컨텍스트 매니저는 리소스를 사용할 때 자동으로 설정(setup)과 정리(cleanup)를 수행하는 파이썬의 강력한 기능입니다. 파일, 네트워크 연결, 데이터베이스 커넥션 등을 안전하게 관리할 수 있습니다.
@@ -8335,9 +8335,9 @@ with closing(urlopen(''http://www.python.org'')) as page:
 - ✅ `@contextmanager` 데코레이터로 함수 기반 컨텍스트 매니저 작성
 - ✅ `contextlib` 모듈의 `suppress`, `closing` 등 유틸리티 활용
 - ✅ 예외 처리와 리소스 정리를 컨텍스트 매니저로 자동화
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('threading 모듈 - 멀티스레딩 기초', '스레드 생성과 동기화, GIL의 이해', '# threading 모듈 - 멀티스레딩 기초
 
 여러 작업을 동시에 실행하고 싶을 때 스레드를 사용합니다. Python의 threading 모듈은 멀티스레딩을 쉽게 구현할 수 있게 해줍니다.
@@ -8520,9 +8520,9 @@ threading 모듈은 I/O 작업이 많은 프로그램에서 효율성을 높여�
 - ✅ Lock, RLock을 사용한 동기화
 - ✅ GIL의 특성과 적절한 사용 시나리오
 - ✅ 데몬 스레드와 스레드 안전성
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('multiprocessing 모듈 - 멀티프로세싱', '프로세스 기반 병렬 처리로 CPU 집약적 작업 최적화하기', '# multiprocessing 모듈 - 멀티프로세싱
 
 CPU 집약적 작업을 병렬로 처리하여 성능을 극대화하는 멀티프로세싱 기법을 학습합니다.
@@ -8682,9 +8682,9 @@ multiprocessing 모듈은 GIL 제약을 우회하여 진정한 병렬 처리를 
 - ✅ Pool.map()을 사용하면 간단하게 병렬 처리를 구현할 수 있습니다
 - ✅ Queue는 FIFO 방식의 프로세스 간 통신을, Pipe는 양방향 통신을 제공합니다
 - ✅ CPU 집약적 작업에서 멀티프로세싱은 순차 처리 대비 큰 성능 향상을 제공합니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('queue 모듈 - 스레드 안전 큐', '스레드 안전한 Queue, LifoQueue, PriorityQueue 활용', '# queue 모듈 - 스레드 안전 큐
 
 멀티스레드 환경에서 안전하게 데이터를 주고받을 수 있는 queue 모듈을 학습합니다.
@@ -8832,9 +8832,9 @@ queue 모듈은 멀티스레드 환경에서 안전하게 데이터를 공유할
 - ✅ Queue, LifoQueue, PriorityQueue는 각각 FIFO, LIFO, 우선순위 방식으로 동작합니다
 - ✅ put()과 get()으로 데이터를 추가하고 꺼내며, 타임아웃 설정이 가능합니다
 - ✅ 생산자-소비자 패턴은 task_done()과 join()을 활용하여 구현할 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('pickle 모듈 - 객체 직렬화', 'Python 객체를 파일로 저장하고 복원하는 직렬화 방법', '# pickle 모듈 - 객체 직렬화
 
 Python 객체를 파일로 저장하고 나중에 다시 불러오는 방법을 배웁니다. pickle은 복잡한 데이터 구조를 그대로 보존할 수 있는 강력한 직렬화 도구입니다.
@@ -8981,9 +8981,9 @@ pickle 모듈은 Python 객체를 파일로 저장하고 복원할 수 있는 �
 - ✅ pickle은 Python 전용이며 거의 모든 객체를 직렬화할 수 있습니다
 - ✅ 신뢰할 수 없는 pickle 파일은 절대 로드하지 말아야 합니다
 - ✅ 간단한 데이터 교환에는 JSON이 더 안전하고 범용적입니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('copy 모듈 - 얕은 복사와 깊은 복사', '얕은 복사와 깊은 복사의 차이를 이해하고 활용하기', '# copy 모듈 - 얕은 복사와 깊은 복사
 
 Python에서 변수 할당은 객체를 복사하지 않고 참조만 생성합니다. 중첩된 객체를 다룰 때 의도치 않은 변경을 방지하려면 올바른 복사 방법을 이해해야 합니다.
@@ -9133,9 +9133,9 @@ copy 모듈은 객체를 안전하게 복사하는 기능을 제공합니다. �
 - ✅ copy.deepcopy()로 깊은 복사 수행
 - ✅ 중첩 객체의 복사 동작 이해
 - ✅ 복사 방법 선택 기준
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('bisect 모듈 - 이진 탐색', '정렬된 리스트에서 효율적인 탐색과 삽입을 위한 bisect 모듈', '# bisect 모듈 - 이진 탐색
 
 bisect 모듈은 정렬된 리스트를 유지하면서 효율적으로 탐색하고 삽입하는 기능을 제공합니다. 선형 탐색 O(n) 대신 이진 탐색 O(log n)을 사용하여 대용량 데이터를 빠르게 처리합니다.
@@ -9260,9 +9260,9 @@ bisect 모듈은 정렬된 리스트에서 이진 탐색을 활용하여 효율�
 - ✅ bisect_left는 같은 값의 왼쪽, bisect_right는 오른쪽에 삽입합니다
 - ✅ insort()로 정렬 상태를 유지하며 삽입할 수 있습니다
 - ✅ 성적 등급 계산, 범위 검색 등 실무 문제에 활용할 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('heapq 모듈 - 힙 자료구조', '힙 자료구조와 우선순위 큐를 효율적으로 구현하는 방법', '# heapq 모듈 - 힙 자료구조
 
 힙은 효율적인 우선순위 큐를 구현하기 위한 자료구조입니다. Python의 heapq 모듈을 사용하면 최소 힙을 쉽게 구현하고 활용할 수 있습니다.
@@ -9400,9 +9400,9 @@ heapq 모듈은 우선순위 큐와 효율적인 최댓값/최솟값 탐색을 �
 - ✅ heappush/heappop으로 힙을 조작하고, heapify로 리스트를 힙으로 변환합니다
 - ✅ 튜플을 활용하여 우선순위 큐를 구현할 수 있습니다
 - ✅ nlargest/nsmallest는 상위/하위 k개 원소를 효율적으로 찾습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('array 모듈 - 효율적인 배열', '메모리 효율적인 배열 처리를 위한 array 모듈 활용법', '# array 모듈 - 효율적인 배열
 
 Python의 리스트는 편리하지만 대량의 숫자 데이터를 다룰 때는 메모리를 많이 사용합니다. array 모듈은 동일한 타입의 데이터를 메모리 효율적으로 저장할 수 있는 방법을 제공합니다.
@@ -9572,9 +9572,9 @@ array 모듈은 메모리 효율적으로 동일 타입의 데이터를 저장�
 - ✅ ''i'', ''f'', ''d'' 등의 타입 코드로 정수, 실수 배열을 생성할 수 있다
 - ✅ array는 리스트보다 메모리를 50% 이상 절약할 수 있다
 - ✅ tofile(), fromfile()로 바이너리 데이터를 효율적으로 처리할 수 있다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('struct 모듈 - 바이너리 데이터 처리', 'struct 모듈로 바이너리 데이터를 패킹/언패킹하는 방법', '# struct 모듈 - 바이너리 데이터 처리
 
 네트워크 통신이나 파일 포맷 처리 시 바이너리 데이터를 다뤄야 할 때가 있습니다. struct 모듈은 Python 객체를 바이너리로 변환하거나, 바이너리를 Python 객체로 파싱하는 강력한 도구입니다.
@@ -9732,9 +9732,9 @@ struct 모듈은 Python 데이터와 바이너리 데이터 간 변환을 제공
 - ✅ 포맷 문자열(i, f, d, s)로 데이터 타입 지정
 - ✅ 엔디안(<, >, !)으로 바이트 순서 제어
 - ✅ calcsize()로 바이너리 크기 계산
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('io 모듈 - 고급 입출력', 'io 모듈의 스트림 계층과 메모리 내 파일 객체 활용법', '# io 모듈 - 고급 입출력
 
 Python의 io 모듈은 파일과 스트림을 다루는 핵심 도구입니다. 메모리 내에서 파일처럼 동작하는 객체를 만들거나, 텍스트와 바이너리 데이터를 효율적으로 처리할 수 있습니다.
@@ -9878,9 +9878,9 @@ io 모듈은 메모리 내에서 파일처럼 동작하는 객체를 제공하�
 - ✅ TextIOWrapper로 인코딩 처리
 - ✅ BufferedReader로 효율적인 버퍼링
 - ✅ 파일 대신 메모리 스트림을 사용하는 테스트 기법
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('base64 모듈 - Base64 인코딩', 'Base64 인코딩으로 바이너리 데이터를 텍스트로 변환하기', '# base64 모듈 - Base64 인코딩
 
 바이너리 데이터를 텍스트로 전송해야 할 때 Base64 인코딩을 사용합니다. 이메일 첨부파일, API 응답, 이미지 데이터 전송 등에서 필수적으로 활용됩니다.
@@ -10032,9 +10032,9 @@ Base64 인코딩은 바이너리 데이터를 텍스트 기반 시스템에서 �
 - ✅ urlsafe_b64encode()는 URL에 안전한 문자(-, _)를 사용합니다
 - ✅ Base64는 암호화가 아니라 인코딩 방식이므로 보안 목적으로 사용하면 안 됩니다
 - ✅ 이미지 임베딩, API 인증, 이메일 첨부 등 다양한 실무 활용 사례가 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('hashlib 모듈 - 해시 함수', '해시 함수로 데이터 무결성을 검증하는 방법 학습', '# hashlib 모듈 - 해시 함수
 
 hashlib은 MD5, SHA-1, SHA-256 같은 보안 해시 함수를 제공합니다. 데이터 무결성 검증, 비밀번호 저장, 파일 중복 검사 등에 활용됩니다.
@@ -10201,9 +10201,9 @@ hashlib 모듈은 데이터 무결성 검증과 보안 목적의 해시 함수�
 - update()로 데이터를 점진적으로 추가하여 해시 계산 가능
 - 파일 무결성 검증, 비밀번호 해싱 등에 활용
 - 보안 용도로는 SHA-256 이상의 알고리즘 사용 권장
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('secrets 모듈 - 보안 난수 생성', '암호학적으로 안전한 난수 생성과 토큰 생성 방법', '# secrets 모듈 - 보안 난수 생성
 
 비밀번호, 토큰, API 키 등 보안이 중요한 상황에서는 일반 난수가 아닌 암호학적으로 안전한 난수가 필요합니다. secrets 모듈은 이러한 보안 요구사항을 충족하는 난수 생성 기능을 제공합니다.
@@ -10385,9 +10385,9 @@ secrets 모듈은 비밀번호, 토큰, API 키 등 보안이 중요한 난수 �
 - ✅ token_bytes(), token_hex(), token_urlsafe()로 다양한 형식의 토큰 생성
 - ✅ choice()와 randbelow()로 안전한 무작위 선택
 - ✅ 비밀번호, API 키, 세션 토큰 생성 실무 예제
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('timeit 모듈 - 코드 실행 시간 측정', 'timeit으로 코드 성능을 측정하고 비교하는 방법', '# timeit 모듈 - 코드 실행 시간 측정
 
 코드의 실행 시간을 정확하게 측정하는 것은 성능 최적화의 첫 걸음입니다. timeit 모듈은 작은 코드 조각의 실행 시간을 정밀하게 측정할 수 있는 도구를 제공합니다.
@@ -10556,9 +10556,9 @@ timeit 모듈은 코드의 실행 시간을 정확하게 측정하여 성능 비
 - ✅ setup과 stmt를 분리하여 정확한 측정을 수행했습니다
 - ✅ repeat()로 여러 번 측정하여 신뢰성을 높였습니다
 - ✅ 여러 방법의 성능을 비교하여 최적의 코드를 선택했습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('cProfile과 pstats - 프로파일링', '프로파일링으로 성능 병목 지점 찾기', '# cProfile과 pstats - 프로파일링
 
 코드가 느릴 때 어디를 최적화해야 할까요? 프로파일링은 함수별 실행 시간과 호출 횟수를 측정하여 성능 병목 지점을 찾아내는 기법입니다.
@@ -10737,9 +10737,9 @@ cProfile과 pstats는 코드의 성능 병목을 찾는 필수 도구입니다. 
 - ✅ pstats.Stats로 결과를 정렬하고 분석하여 병목 지점을 찾았습니다
 - ✅ cumulative, tottime, ncalls 등 다양한 정렬 기준으로 성능을 분석했습니다
 - ✅ 프로파일링 결과를 해석하여 최적화가 필요한 함수를 식별했습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('tracemalloc - 메모리 사용량 추적', '메모리 프로파일링과 누수 탐지를 위한 tracemalloc 활용', '# tracemalloc - 메모리 사용량 추적
 
 메모리 누수와 과도한 메모리 사용은 애플리케이션 성능 문제의 주요 원인입니다. tracemalloc 모듈은 Python에서 메모리 할당을 추적하고 분석할 수 있는 강력한 도구를 제공합니다.
@@ -10918,9 +10918,9 @@ tracemalloc은 Python 애플리케이션의 메모리 사용을 추적하고 분
 - ✅ 스냅샷을 생성하고 비교하여 메모리 증가를 측정할 수 있습니다
 - ✅ 메모리 사용량 상위 항목을 찾아 최적화 대상을 식별할 수 있습니다
 - ✅ 필터를 사용하여 특정 코드의 메모리 사용만 추적할 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('gc 모듈 - 가비지 컬렉션', 'Python의 메모리 관리와 가비지 컬렉션 제어 방법', '# gc 모듈 - 가비지 컬렉션
 
 Python은 자동 메모리 관리를 제공하지만, 때로는 메모리 관리를 직접 제어해야 할 때가 있습니다. gc 모듈을 사용하면 가비지 컬렉션을 제어하고 메모리 누수를 디버깅할 수 있습니다.
@@ -11086,9 +11086,9 @@ gc 모듈은 Python의 메모리 관리를 제어하고 최적화하는 강력�
 - ✅ 세대별 가비지 컬렉션은 객체의 생존 시간에 따라 효율적으로 메모리를 관리한다
 - ✅ gc.collect(), gc.disable(), gc.enable()로 가비지 컬렉션을 제어할 수 있다
 - ✅ gc.get_objects()와 gc.get_referrers()로 메모리 누수를 디버깅할 수 있다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('weakref 모듈 - 약한 참조', '약한 참조의 개념과 메모리 관리 최적화 기법', '# weakref 모듈 - 약한 참조
 
 약한 참조는 객체를 가비지 컬렉션으로부터 보호하지 않는 참조입니다. 캐시나 순환 참조 문제를 해결할 때 유용합니다.
@@ -11224,9 +11224,9 @@ weakref 모듈은 메모리 관리를 최적화하는 강력한 도구입니다.
 - ✅ ref()로 약한 참조, WeakValueDictionary로 자동 정리 캐시 구현
 - ✅ proxy()는 투명한 접근을 제공하지만 객체 소멸 시 예외 발생
 - ✅ 순환 참조 방지와 캐시 구현의 핵심 기법
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('argparse 모듈 - 명령줄 인터페이스', 'CLI 프로그램 개발을 위한 argparse 모듈', '# argparse 모듈 - 명령줄 인터페이스
 
 argparse는 사용자 친화적인 명령줄 인터페이스(CLI)를 쉽게 만들 수 있는 Python 표준 라이브러리입니다. 자동 도움말 생성, 타입 검증, 오류 처리 기능을 제공합니다.
@@ -11418,9 +11418,9 @@ argparse는 전문적인 CLI 프로그램을 쉽게 만들 수 있게 해주는 
 - ✅ 위치 인자와 옵션 인자의 차이를 이해하고 정의했습니다
 - ✅ type, default, choices 등으로 인자의 동작을 제어했습니다
 - ✅ 서브파서를 사용하여 git 스타일의 서브커맨드를 구현했습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('logging 모듈 - 로깅 시스템', 'Python 로깅 시스템으로 효과적인 디버깅과 모니터링 구현', '# logging 모듈 - 로깅 시스템
 
 프로그램이 복잡해질수록 디버깅과 모니터링이 중요해집니다. logging 모듈은 print()보다 강력하고 유연한 로그 기록 시스템을 제공합니다.
@@ -11644,9 +11644,9 @@ logging 모듈은 print()를 대체하는 강력한 도구입니다. 로그 레�
 - ✅ Logger, Handler, Formatter를 조합한 고급 설정
 - ✅ 파일과 콘솔에 동시 로그 출력 구현
 - ✅ 로거 계층 구조와 모범 사례
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('unittest 모듈 - 단위 테스트', 'Python의 unittest 모듈로 단위 테스트 작성하기', '# unittest 모듈 - 단위 테스트
 
 unittest는 Python 표준 라이브러리에 포함된 단위 테스트 프레임워크입니다. 코드의 정확성을 자동으로 검증하여 버그를 조기에 발견하고 리팩토링을 안전하게 수행할 수 있습니다.
@@ -11800,9 +11800,9 @@ unittest 모듈은 Python 코드의 품질을 보장하는 강력한 도구입�
 - setUp()과 tearDown()으로 테스트 환경 설정
 - python -m unittest 명령으로 테스트 실행
 - 독립적이고 명확한 테스트 작성의 중요성
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('doctest 모듈 - 문서화 테스트', '독스트링에 테스트를 작성하는 doctest 활용법', '# doctest 모듈 - 문서화 테스트
 
 doctest는 독스트링에 작성된 대화형 Python 예제를 찾아 실행하고 검증하는 모듈입니다. 문서화와 테스트를 동시에 수행할 수 있는 효율적인 도구입니다.
@@ -11965,9 +11965,9 @@ doctest는 독스트링에 대화형 예제를 작성하여 문서화와 테스�
 - ✅ `testmod()`로 모듈의 모든 doctest를 실행할 수 있습니다
 - ✅ 예외는 Traceback 형식으로 테스트할 수 있습니다
 - ✅ doctest는 문서화 우선, unittest는 테스트 우선 도구입니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('enum 모듈 - 열거형', 'Enum 클래스로 상수 집합을 정의하고 활용하는 방법', '# enum 모듈 - 열거형
 
 열거형(Enumeration)은 관련된 상수들을 하나의 타입으로 그룹화하여 코드의 가독성과 안정성을 높이는 기능입니다. Python의 enum 모듈을 사용하면 타입 안전성을 보장하는 상수 집합을 정의할 수 있습니다.
@@ -12100,9 +12100,9 @@ enum 모듈은 관련된 상수들을 타입 안전하게 관리할 수 있는 �
 - ✅ name, value 속성으로 멤버 정보에 접근
 - ✅ auto()로 자동 값 할당, IntEnum으로 정수 비교 지원
 - ✅ Flag로 비트 연산 기반의 조합 가능한 플래그 정의
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 20, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('dataclasses 모듈 - 데이터 클래스', '데이터 클래스로 간결한 클래스 작성하기', '# dataclasses 모듈 - 데이터 클래스
 
 Python 3.7부터 추가된 dataclasses 모듈은 데이터를 저장하는 클래스를 간단하게 작성할 수 있게 해줍니다.
@@ -12253,9 +12253,9 @@ dataclasses 모듈은 데이터 중심 클래스를 간결하게 작성할 수 �
 - ✅ `frozen=True`로 불변 객체 생성
 - ✅ `order=True`로 정렬 가능한 클래스 생성
 - ✅ `__post_init__`으로 초기화 후 추가 처리
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('typing 모듈 - 타입 힌트', 'Python 타입 힌트와 typing 모듈 활용법', '# typing 모듈 - 타입 힌트
 
 타입 힌트는 Python 3.5부터 도입된 기능으로, 코드의 가독성과 유지보수성을 높여줍니다. 실행 시점에는 영향을 주지 않지만, IDE와 타입 체커가 오류를 미리 발견할 수 있게 도와줍니다.
@@ -12397,9 +12397,9 @@ str_box = Box[str]("Hello")
 - ✅ TypeVar와 Generic으로 제네릭 함수와 클래스 작성 가능
 - ✅ mypy 같은 타입 체커로 실행 전 타입 오류 발견 가능
 - ✅ Python 3.9+에서는 내장 타입으로도 제네릭 표현 가능
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('abc 모듈 - 추상 베이스 클래스', '추상 베이스 클래스로 강력한 인터페이스 설계하기', '# abc 모듈 - 추상 베이스 클래스
 
 abc 모듈은 추상 베이스 클래스(Abstract Base Class)를 정의하여 클래스의 인터페이스를 강제할 수 있게 해줍니다. 이를 통해 코드의 안정성을 높이고 명확한 설계를 할 수 있습니다.
@@ -12574,9 +12574,9 @@ abc 모듈은 추상 베이스 클래스를 통해 명확한 인터페이스를 
 - ✅ @abstractmethod로 하위 클래스가 반드시 구현해야 할 메서드를 지정할 수 있습니다
 - ✅ 추상 프로퍼티와 일반 메서드를 결합하여 유연한 인터페이스를 설계할 수 있습니다
 - ✅ isinstance()를 통해 인터페이스 준수 여부를 타입 체크할 수 있습니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 25, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
-INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, author_id, constraints_id, created_at, updated_at) VALUES
+INSERT INTO lectures (title, description, content, input_content, output_content, type, category, difficulty, is_public, thumbnail_image_url, duration_minutes, language_id, author_id, constraints_id, created_at, updated_at) VALUES
 ('Python 코딩 모범 사례와 스타일 가이드', 'PEP 8과 Pythonic 코드 작성법을 배우고 코드 품질을 향상시킵니다', '# Python 코딩 모범 사례와 스타일 가이드
 
 좋은 코드는 동작하는 코드를 넘어 읽기 쉽고 유지보수하기 쉬운 코드입니다. Python 커뮤니티가 합의한 모범 사례와 스타일 가이드를 학습합니다.
@@ -12758,7 +12758,7 @@ Python 모범 사례는 코드의 일관성과 가독성을 높여 유지보수�
 - 가변 기본 인자 등 일반적인 안티패턴을 피할 수 있습니다
 - black, flake8, pylint로 코드 품질을 관리합니다
 - The Zen of Python 원칙을 실천합니다
-', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
+', NULL, NULL, 'MARKDOWN', 'Python', '고급', true, NULL, 30, 71, (SELECT id FROM users WHERE login_id = 'admin'), NULL, NOW(), NOW());
 
 
 -- ============================================

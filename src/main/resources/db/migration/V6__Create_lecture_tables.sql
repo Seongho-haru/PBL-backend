@@ -16,11 +16,16 @@ CREATE TABLE IF NOT EXISTS lectures (
     is_public BOOLEAN NOT NULL DEFAULT false,
     thumbnail_image_url VARCHAR(500),
     duration_minutes INTEGER,
+    language_id BIGINT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_lectures_constraints
         FOREIGN KEY (constraints_id)
         REFERENCES submission_constraints(id)
+        ON DELETE SET NULL,
+    CONSTRAINT fk_lectures_language
+        FOREIGN KEY (language_id)
+        REFERENCES languages(id)
         ON DELETE SET NULL
 );
 
@@ -50,6 +55,7 @@ CREATE INDEX IF NOT EXISTS idx_lectures_difficulty ON lectures(difficulty);
 CREATE INDEX IF NOT EXISTS idx_lectures_is_public ON lectures(is_public);
 CREATE INDEX IF NOT EXISTS idx_lectures_created_at ON lectures(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_lectures_constraints_id ON lectures(constraints_id);
+CREATE INDEX IF NOT EXISTS idx_lectures_language_id ON lectures(language_id);
 CREATE INDEX IF NOT EXISTS idx_test_cases_lecture_id ON test_cases(lecture_id);
 CREATE INDEX IF NOT EXISTS idx_test_cases_order ON test_cases(lecture_id, order_index);
 CREATE INDEX IF NOT EXISTS idx_lecture_tags_lecture_id ON lecture_tags(lecture_id);
@@ -83,5 +89,6 @@ COMMENT ON COLUMN lectures.output_content IS '문제 출력 형식 설명 - PROB
 COMMENT ON COLUMN lectures.is_public IS '공개 강의 여부 (true: 공개, false: 비공개)';
 COMMENT ON COLUMN lectures.thumbnail_image_url IS '강의 썸네일 이미지 URL (S3)';
 COMMENT ON COLUMN lectures.duration_minutes IS '강의 예상 소요시간 (분 단위)';
+COMMENT ON COLUMN lectures.language_id IS '프로그래밍 언어 ID (MARKDOWN 타입에서 사용) - languages 테이블 참조';
 COMMENT ON COLUMN lectures.constraints_id IS '강의에 적용되는 실행 제약조건 (CPU 시간, 메모리 등)';
 

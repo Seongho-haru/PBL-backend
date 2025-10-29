@@ -47,7 +47,7 @@ public class S3DTOs {
                     .id(metadata.getId())
                     .originalFilename(metadata.getOriginalFilename())
                     .storedFilename(metadata.getStoredFilename())
-                    .imageUrl(metadata.getImageUrl(baseUrl))
+                    .imageUrl(metadata.getObjectKey())
                     .contentType(metadata.getContentType())
                     .fileSize(metadata.getFileSize())
                     .width(metadata.getWidth())

@@ -277,6 +277,9 @@ public class Lecture {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column
+    private Long languageId;
+
     /**
      * 실행 제약조건 (1:1 관계)
      * - 시간/메모리 제한, 컴파일러 옵션, 추가 파일 등
@@ -317,6 +320,7 @@ public class Lecture {
                 .isPublic(request.getIsPublic() != null ? request.getIsPublic() : false)
                 .author(author)
                 .testCases(new ArrayList<>())
+                .languageId(request.getLanguageId())
 
                 .tags(request.getTags())
                 .thumbnailImageUrl(request.getThumbnailImageUrl())

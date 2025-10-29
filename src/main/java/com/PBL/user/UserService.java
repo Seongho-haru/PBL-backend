@@ -4,7 +4,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 사용자 비즈니스 로직 서비스
@@ -161,5 +164,37 @@ public class UserService {
     @Transactional(readOnly = true)
     public boolean isUsernameAvailable(String username) {
         return !userRepository.existsByUsername(username);
+    }
+
+    // === 제재 관리 ===
+
+    /**
+     * 제재된 사용자 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public List<UserDTOs.MutedUserResponse> getMutedUsers() {
+        List<User> mutedUsers = userRepository.findByIsMutedTrue();
+        
+        // 정지 기간 만료된 사용자는 자동으로 제외
+        return mutedUsers.stream()
+                .filter(user -> user.getMutedUntil() == null || LocalDateTime.now().isBefore(user.getMutedUntil()))
+                .map(UserDTOs.MutedUserResponse::new)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 사용자 제재 해제
+     */
+    @Transactional
+    public void unmuteUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다: " + userId));
+
+        if (!Boolean.TRUE.equals(user.getIsMuted())) {
+            throw new IllegalArgumentException("제재되지 않은 사용자입니다.");
+        }
+
+        user.unmute();
+        userRepository.save(user);
     }
 }

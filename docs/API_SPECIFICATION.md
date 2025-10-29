@@ -81,6 +81,70 @@ X-User-Id: {사용자ID}
 - `400 Bad Request`: 잘못된 요청
 - `401 Unauthorized`: 로그인 실패 (아이디 없음 또는 비밀번호 틀림)
 
+### 3. 제재된 사용자 목록 조회
+
+**GET** `/api/auth/users/muted`
+
+관리자 전용 API로, 현재 제재 중인 모든 사용자를 조회합니다.
+
+**Headers:**
+
+```
+X-User-Id: {관리자ID}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "users": [
+    {
+      "id": 3,
+      "username": "김철수",
+      "loginId": "kimcs",
+      "mutedUntil": "2025-11-03T17:27:53",
+      "warningCount": 0,
+      "createdAt": "2025-01-01T00:00:00"
+    }
+  ],
+  "count": 1
+}
+```
+
+**Error Response:**
+
+- `403 Forbidden`: 관리자 권한 필요
+- `500 Internal Server Error`: 서버 오류
+
+### 4. 사용자 제재 해제
+
+**PUT** `/api/auth/users/{userId}/unmute`
+
+관리자 전용 API로, 제재된 사용자의 제재를 해제합니다.
+
+**Headers:**
+
+```
+X-User-Id: {관리자ID}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "message": "사용자 제재가 해제되었습니다."
+}
+```
+
+**Error Response:**
+
+- `400 Bad Request`: 제재되지 않은 사용자
+- `403 Forbidden`: 관리자 권한 필요
+- `404 Not Found`: 사용자를 찾을 수 없음
+- `500 Internal Server Error`: 서버 오류
+
 ---
 
 ## 📚 강의 관리 API

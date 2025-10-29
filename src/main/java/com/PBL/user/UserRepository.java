@@ -30,4 +30,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * 사용자명 존재 여부 확인
      */
     boolean existsByUsername(String username);
+
+    /**
+     * 제재된 사용자 목록 조회
+     */
+    java.util.List<User> findByIsMutedTrue();
 }

@@ -23,7 +23,7 @@ public class AuthController {
 
     // === 회원가입 ===
 
-    @PostMapping("/signup")
+    @PostMapping("/register")
     @Operation(summary = "회원가입", description = "새로운 사용자 계정을 생성합니다.")
     public ResponseEntity<Map<String, Object>> signUp(@RequestBody UserDTOs.SignUpRequest request) {
         try {
@@ -151,6 +151,67 @@ public class AuthController {
             return ResponseEntity.internalServerError().body(Map.of(
                     "success", false,
                     "message", "사용자 정보 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    // === 제재 관리 ===
+
+    @GetMapping("/users/muted")
+    @Operation(summary = "제재된 사용자 목록 조회", description = "현재 제재 중인 모든 사용자를 조회합니다.")
+    public ResponseEntity<Map<String, Object>> getMutedUsers(
+            @RequestHeader(value = "X-User-Id", required = false) Long adminUserId) {
+        try {
+            // 관리자 권한 체크 (임시: user ID가 1인 경우)
+            if (adminUserId == null || !adminUserId.equals(1L)) {
+                return ResponseEntity.status(403).body(Map.of(
+                        "success", false,
+                        "message", "관리자 권한이 필요합니다."
+                ));
+            }
+
+            var mutedUsers = userService.getMutedUsers();
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "users", mutedUsers,
+                    "count", mutedUsers.size()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "제재된 사용자 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    @PutMapping("/users/{userId}/unmute")
+    @Operation(summary = "사용자 제재 해제", description = "제재된 사용자의 제재를 해제합니다.")
+    public ResponseEntity<Map<String, Object>> unmuteUser(
+            @Parameter(description = "사용자 ID") @PathVariable Long userId,
+            @RequestHeader(value = "X-User-Id", required = false) Long adminUserId) {
+        try {
+            // 관리자 권한 체크 (임시: user ID가 1인 경우)
+            if (adminUserId == null || !adminUserId.equals(1L)) {
+                return ResponseEntity.status(403).body(Map.of(
+                        "success", false,
+                        "message", "관리자 권한이 필요합니다."
+                ));
+            }
+
+            userService.unmuteUser(userId);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "사용자 제재가 해제되었습니다."
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "제재 해제 중 오류가 발생했습니다: " + e.getMessage()
             ));
         }
     }

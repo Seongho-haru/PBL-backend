@@ -201,4 +201,78 @@ public class UserDTOs {
             this.user = user;
         }
     }
+
+    /**
+     * 제재된 사용자 정보 응답 DTO
+     */
+    public static class MutedUserResponse {
+        private Long id;
+        private String username;
+        private String loginId;
+        private LocalDateTime mutedUntil;
+        private Integer warningCount;
+        private LocalDateTime createdAt;
+
+        // 기본 생성자
+        public MutedUserResponse() {}
+
+        // User 엔티티로부터 생성
+        public MutedUserResponse(User user) {
+            this.id = user.getId();
+            this.username = user.getUsername();
+            this.loginId = user.getLoginId();
+            this.mutedUntil = user.getMutedUntil();
+            this.warningCount = user.getWarningCount();
+            this.createdAt = user.getCreatedAt();
+        }
+
+        // Getter/Setter
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getLoginId() {
+            return loginId;
+        }
+
+        public void setLoginId(String loginId) {
+            this.loginId = loginId;
+        }
+
+        public LocalDateTime getMutedUntil() {
+            return mutedUntil;
+        }
+
+        public void setMutedUntil(LocalDateTime mutedUntil) {
+            this.mutedUntil = mutedUntil;
+        }
+
+        public Integer getWarningCount() {
+            return warningCount;
+        }
+
+        public void setWarningCount(Integer warningCount) {
+            this.warningCount = warningCount;
+        }
+
+        public LocalDateTime getCreatedAt() {
+            return createdAt;
+        }
+
+        public void setCreatedAt(LocalDateTime createdAt) {
+            this.createdAt = createdAt;
+        }
+    }
 }

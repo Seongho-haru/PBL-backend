@@ -6,6 +6,16 @@ import com.PBL.report.repository.ReportRepository;
 import com.PBL.report.enums.ReportStatus;
 import com.PBL.user.User;
 import com.PBL.user.UserRepository;
+import com.PBL.curriculum.Curriculum;
+import com.PBL.curriculum.CurriculumRepository;
+import com.PBL.lecture.entity.Lecture;
+import com.PBL.lecture.repository.LectureRepository;
+import com.PBL.qna.entity.Question;
+import com.PBL.qna.repository.QuestionRepository;
+import com.PBL.qna.entity.Answer;
+import com.PBL.qna.repository.AnswerRepository;
+import com.PBL.curriculum.entity.CourseReview;
+import com.PBL.curriculum.repository.CourseReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -29,6 +39,11 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
+    private final CurriculumRepository curriculumRepository;
+    private final LectureRepository lectureRepository;
+    private final QuestionRepository questionRepository;
+    private final AnswerRepository answerRepository;
+    private final CourseReviewRepository courseReviewRepository;
     
     // 임시 관리자 ID (실제로는 role 기반으로 체크)
     private static final Long ADMIN_USER_ID = 1L;
@@ -143,24 +158,48 @@ public class ReportService {
 
         switch (processAction) {
             case "MUTE_USER":
-                // TODO: 대상 사용자 찾아서 정지 처리
-                // 사용자 타입에 따라 targetType을 사용해 사용자 찾기
-                log.info("사용자 정지 처리 - {}: {}", targetType, targetId);
+                // 대상 사용자 찾아서 정지 처리
+                Long authorId = findAuthorId(targetType, targetId);
+                if (authorId != null) {
+                    User user = userRepository.findById(authorId)
+                            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + authorId));
+                    user.mute(7); // 7일 정지
+                    userRepository.save(user);
+                    log.info("사용자 정지 처리 완료 - 사용자 ID: {}, 정지 해제일: {}", authorId, user.getMutedUntil());
+                } else {
+                    log.warn("사용자를 찾을 수 없음 - {}: {}", targetType, targetId);
+                }
                 break;
                 
             case "WARNING":
-                // TODO: 대상 사용자에게 경고 추가
-                log.info("경고 추가 - {}: {}", targetType, targetId);
+                // 대상 사용자에게 경고 추가
+                authorId = findAuthorId(targetType, targetId);
+                if (authorId != null) {
+                    User user = userRepository.findById(authorId)
+                            .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + authorId));
+                    user.addWarning();
+                    userRepository.save(user);
+                    log.info("경고 추가 완료 - 사용자 ID: {}, 경고 횟수: {}", authorId, user.getWarningCount());
+                } else {
+                    log.warn("사용자를 찾을 수 없음 - {}: {}", targetType, targetId);
+                }
                 break;
                 
             case "DELETE_CONTENT":
-                // TODO: 대상 콘텐츠 삭제
-                log.info("콘텐츠 삭제 - {}: {}", targetType, targetId);
+                // 대상 콘텐츠 삭제
+                deleteContent(targetType, targetId);
+                log.info("콘텐츠 삭제 완료 - {}: {}", targetType, targetId);
                 break;
                 
             case "DELETE_ACCOUNT":
-                // TODO: 사용자 계정 삭제
-                log.info("계정 삭제 - {}: {}", targetType, targetId);
+                // 사용자 계정 삭제
+                authorId = findAuthorId(targetType, targetId);
+                if (authorId != null) {
+                    userRepository.deleteById(authorId);
+                    log.info("계정 삭제 완료 - 사용자 ID: {}", authorId);
+                } else {
+                    log.warn("사용자를 찾을 수 없음 - {}: {}", targetType, targetId);
+                }
                 break;
                 
             default:
@@ -251,6 +290,76 @@ public class ReportService {
      */
     private boolean isAdmin(Long userId) {
         return ADMIN_USER_ID.equals(userId);
+    }
+
+    /**
+     * 대상 콘텐츠의 작성자 ID 조회
+     */
+    private Long findAuthorId(String targetType, Long targetId) {
+        try {
+            switch (targetType) {
+                case "CURRICULUM":
+                    Curriculum curriculum = curriculumRepository.findById(targetId).orElse(null);
+                    return curriculum != null && curriculum.getAuthor() != null ? curriculum.getAuthor().getId() : null;
+                    
+                case "LECTURE":
+                    Lecture lecture = lectureRepository.findById(targetId).orElse(null);
+                    return lecture != null && lecture.getAuthor() != null ? lecture.getAuthor().getId() : null;
+                    
+                case "QUESTION":
+                    Question question = questionRepository.findById(targetId).orElse(null);
+                    return question != null && question.getAuthor() != null ? question.getAuthor().getId() : null;
+                    
+                case "ANSWER":
+                    Answer answer = answerRepository.findById(targetId).orElse(null);
+                    return answer != null && answer.getAuthor() != null ? answer.getAuthor().getId() : null;
+                    
+                case "COURSE_REVIEW":
+                    CourseReview review = courseReviewRepository.findById(targetId).orElse(null);
+                    return review != null && review.getAuthor() != null ? review.getAuthor().getId() : null;
+                    
+                default:
+                    log.warn("알 수 없는 타입: {}", targetType);
+                    return null;
+            }
+        } catch (Exception e) {
+            log.error("작성자 ID 조회 실패 - {}: {}", targetType, targetId, e);
+            return null;
+        }
+    }
+
+    /**
+     * 대상 콘텐츠 삭제
+     */
+    private void deleteContent(String targetType, Long targetId) {
+        try {
+            switch (targetType) {
+                case "CURRICULUM":
+                    curriculumRepository.deleteById(targetId);
+                    break;
+                    
+                case "LECTURE":
+                    lectureRepository.deleteById(targetId);
+                    break;
+                    
+                case "QUESTION":
+                    questionRepository.deleteById(targetId);
+                    break;
+                    
+                case "ANSWER":
+                    answerRepository.deleteById(targetId);
+                    break;
+                    
+                case "COURSE_REVIEW":
+                    courseReviewRepository.deleteById(targetId);
+                    break;
+                    
+                default:
+                    log.warn("알 수 없는 타입: {}", targetType);
+            }
+        } catch (Exception e) {
+            log.error("콘텐츠 삭제 실패 - {}: {}", targetType, targetId, e);
+        }
     }
 }
 

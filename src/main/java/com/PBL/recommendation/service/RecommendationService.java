@@ -85,6 +85,165 @@ public class RecommendationService {
     }
 
     /**
+     * 통합 추천 (커리큘럼 + 강의 혼합)
+     * 공개된 커리큘럼과 강의를 점수 기준으로 혼합하여 추천
+     */
+    public List<RecommendationDTOs.UnifiedRecommendationResponse> getUnifiedRecommendations(Long userId, int limit) {
+        log.info("통합 추천 요청 - 사용자 ID: {}, 추천 개수: {}", userId, limit);
+
+        // 1. 사용자 수강 이력 분석
+        List<Enrollment> enrollments = enrollmentRepository.findByUserIdOrderByEnrolledAtDesc(userId);
+        Set<String> userCategories = extractCategoriesFromEnrollments(enrollments);
+        Set<String> userTags = extractTagsFromEnrollments(enrollments);
+        String preferredDifficulty = extractPreferredDifficulty(enrollments);
+
+        log.debug("사용자 카테고리: {}, 태그: {}, 선호 난이도: {}", userCategories, userTags, preferredDifficulty);
+
+        // 2. 공개 커리큘럼 추천
+        List<Curriculum> allCurriculums = curriculumRepository.findPublicCurriculumsWithAuthor();
+        Set<Long> enrolledCurriculumIds = enrollments.stream()
+                .map(e -> e.getCurriculum().getId())
+                .collect(Collectors.toSet());
+        List<UnifiedScore> curriculumScores = allCurriculums.stream()
+                .filter(c -> !enrolledCurriculumIds.contains(c.getId()))
+                .map(c -> {
+                    BigDecimal score = calculateCurriculumScore(c, userCategories, userTags, preferredDifficulty);
+                    String reason = getRecommendationReason(c, userCategories, userTags, preferredDifficulty);
+                    return new UnifiedScore("CURRICULUM", c.getId(), c, null, score, reason);
+                })
+                .filter(us -> us.score.compareTo(BigDecimal.ZERO) > 0)
+                .collect(Collectors.toList());
+
+        // 3. 공개 강의 추천 (개인화)
+        List<Lecture> allPublicLectures = lectureRepository.findByIsPublicTrueOrderByCreatedAtDesc();
+        Set<Long> excludedLectureIds = getExcludedLectureIds(userId, null);
+        List<UnifiedScore> lectureScores = allPublicLectures.stream()
+                .filter(l -> !excludedLectureIds.contains(l.getId()))
+                .map(l -> {
+                    BigDecimal score = calculateLecturePersonalizedScore(l, userCategories, userTags, preferredDifficulty);
+                    String reason = getLecturePersonalizedReason(l, userCategories, userTags, preferredDifficulty);
+                    return new UnifiedScore("LECTURE", l.getId(), null, l, score, reason);
+                })
+                .filter(us -> us.score.compareTo(BigDecimal.ZERO) > 0)
+                .collect(Collectors.toList());
+
+        // 4. 커리큘럼과 강의를 점수 기준으로 혼합 정렬
+        List<UnifiedScore> allScores = new ArrayList<>();
+        allScores.addAll(curriculumScores);
+        allScores.addAll(lectureScores);
+        allScores.sort((a, b) -> b.score.compareTo(a.score));
+        
+        // 5. 상위 N개 추천
+        List<UnifiedScore> topScores = allScores.stream()
+                .limit(limit)
+                .collect(Collectors.toList());
+
+        log.debug("통합 추천 결과 - 커리큘럼: {}개, 강의: {}개", 
+                topScores.stream().filter(s -> s.type.equals("CURRICULUM")).count(),
+                topScores.stream().filter(s -> s.type.equals("LECTURE")).count());
+
+        // 6. DTO 변환
+        return topScores.stream()
+                .map(us -> {
+                    if ("CURRICULUM".equals(us.type)) {
+                        Curriculum c = us.curriculum;
+                        return RecommendationDTOs.UnifiedRecommendationResponse.builder()
+                                .type("CURRICULUM")
+                                .id(c.getId())
+                                .title(c.getTitle())
+                                .description(c.getSummary())
+                                .category(c.getCategory())
+                                .difficulty(c.getDifficulty())
+                                .recommendationScore(us.score)
+                                .recommendationReason(us.reason)
+                                .tags(c.getTags())
+                                .averageRating(c.getAverageRating())
+                                .studentCount(c.getStudentCount())
+                                .authorName(c.getAuthor() != null ? c.getAuthor().getUsername() : null)
+                                .thumbnailImageUrl(c.getThumbnailImageUrl())
+                                .build();
+                    } else {
+                        Lecture l = us.lecture;
+                        return RecommendationDTOs.UnifiedRecommendationResponse.builder()
+                                .type("LECTURE")
+                                .id(l.getId())
+                                .title(l.getTitle())
+                                .description(l.getDescription())
+                                .category(l.getCategory())
+                                .difficulty(l.getDifficulty())
+                                .recommendationScore(us.score)
+                                .recommendationReason(us.reason)
+                                .lectureType(l.getType().toString())
+                                .build();
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 개인화 강의 점수 계산
+     */
+    private BigDecimal calculateLecturePersonalizedScore(Lecture lecture, Set<String> userCategories,
+                                                        Set<String> userTags, String preferredDifficulty) {
+        BigDecimal score = BigDecimal.ZERO;
+
+        // 1. 카테고리 매칭 (30점)
+        if (lecture.getCategory() != null && userCategories.contains(lecture.getCategory())) {
+            score = score.add(BigDecimal.valueOf(30));
+        }
+
+        // 2. 태그 매칭 (20점)
+        Set<String> tags = extractTagsFromLecture(lecture);
+        long matchingTags = tags.stream()
+                .filter(userTags::contains)
+                .count();
+        if (matchingTags > 0) {
+            score = score.add(BigDecimal.valueOf(Math.min(20, matchingTags * 5)));
+        }
+
+        // 3. 난이도 매칭 (20점)
+        if (lecture.getDifficulty() != null && Objects.equals(lecture.getDifficulty(), preferredDifficulty)) {
+            score = score.add(BigDecimal.valueOf(20));
+        }
+
+        // 4. 인기도 (최근 생성된 강의 우선) (30점)
+        // 최근 생성된 강의일수록 높은 점수 (단순화: 공개 강의는 모두 인기 있다고 가정)
+        score = score.add(BigDecimal.valueOf(30));
+
+        return score;
+    }
+
+    /**
+     * 개인화 강의 추천 이유 생성
+     */
+    private String getLecturePersonalizedReason(Lecture lecture, Set<String> userCategories,
+                                               Set<String> userTags, String preferredDifficulty) {
+        List<String> reasons = new ArrayList<>();
+
+        if (lecture.getCategory() != null && userCategories.contains(lecture.getCategory())) {
+            reasons.add("당신이 좋아하는 카테고리");
+        }
+
+        Set<String> tags = extractTagsFromLecture(lecture);
+        long matchingTags = tags.stream()
+                .filter(userTags::contains)
+                .count();
+        if (matchingTags > 0) {
+            reasons.add("관심 있는 주제");
+        }
+
+        if (Objects.equals(lecture.getDifficulty(), preferredDifficulty)) {
+            reasons.add("적합한 난이도");
+        }
+
+        if (reasons.isEmpty()) {
+            reasons.add("인기 강의");
+        }
+
+        return String.join(", ", reasons);
+    }
+
+    /**
      * 유사 문제 강의 추천
      * Priority 1 - 가장 중요한 기능
      */
@@ -312,7 +471,9 @@ public class RecommendationService {
      */
     private Set<Long> getExcludedLectureIds(Long userId, Long lectureId) {
         Set<Long> excludedIds = new HashSet<>();
-        excludedIds.add(lectureId);
+        if (lectureId != null) {
+            excludedIds.add(lectureId);
+        }
 
         // 사용자가 이미 학습한 강의들
         List<LectureProgress> progresses = lectureProgressRepository.findByEnrollmentIdIn(
@@ -393,6 +554,27 @@ public class RecommendationService {
         String reason;
 
         LectureScore(Lecture lecture, BigDecimal score, String reason) {
+            this.lecture = lecture;
+            this.score = score;
+            this.reason = reason;
+        }
+    }
+
+    /**
+     * 통합 추천 점수 래퍼 (커리큘럼 + 강의)
+     */
+    private static class UnifiedScore {
+        String type; // "CURRICULUM" or "LECTURE"
+        Long id;
+        Curriculum curriculum;
+        Lecture lecture;
+        BigDecimal score;
+        String reason;
+
+        UnifiedScore(String type, Long id, Curriculum curriculum, Lecture lecture, BigDecimal score, String reason) {
+            this.type = type;
+            this.id = id;
+            this.curriculum = curriculum;
             this.lecture = lecture;
             this.score = score;
             this.reason = reason;

@@ -1570,6 +1570,208 @@ X-User-Id: 1
 
 ---
 
+## 🔍 통합 검색 API
+
+### 1. 통합 검색
+
+**GET** `/api/search`
+
+커리큘럼과 강의를 동시에 검색합니다. 공개된 콘텐츠만 검색됩니다.
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Query Parameters:**
+
+- `title` (optional): 검색할 제목 (부분 일치)
+- `category` (optional): 카테고리 필터 (강의만 적용)
+- `difficulty` (optional): 난이도 필터 (강의만 적용) - `기초`, `중급`, `고급`
+- `type` (optional): 강의 유형 필터 (강의만 적용) - `MARKDOWN`, `PROBLEM`
+- `page` (optional): 페이지 번호 (기본값: 0)
+- `size` (optional): 페이지 크기 (기본값: 10)
+
+**Response (200 OK):**
+
+```json
+{
+  "curriculums": {
+    "curriculums": [
+      {
+        "id": 1,
+        "title": "검색된 커리큘럼",
+        "description": "커리큘럼 설명",
+        "isPublic": true,
+        "difficulty": "기초",
+        "summary": "커리큘럼 간단 소개",
+        "averageRating": 4.5,
+        "studentCount": 15,
+        "totalLectureCount": 2,
+        "author": {
+          "id": 1,
+          "username": "작성자명",
+          "loginId": "작성자로그인ID"
+        },
+        "createdAt": "2025-01-01T00:00:00"
+      }
+    ],
+    "meta": {
+      "currentPage": 0,
+      "totalElements": 1,
+      "totalPages": 1,
+      "hasNext": false,
+      "hasPrevious": false
+    }
+  },
+  "lectures": {
+    "lectures": [
+      {
+        "id": 1,
+        "title": "검색된 강의",
+        "description": "강의 설명",
+        "type": "MARKDOWN",
+        "category": "Frontend",
+        "difficulty": "기초",
+        "isPublic": true,
+        "author": {
+          "id": 1,
+          "username": "작성자명",
+          "loginId": "작성자로그인ID"
+        },
+        "createdAt": "2025-01-01T00:00:00"
+      }
+    ],
+    "meta": {
+      "currentPage": 0,
+      "totalElements": 1,
+      "totalPages": 1,
+      "hasNext": false,
+      "hasPrevious": false
+    }
+  }
+}
+```
+
+**Error Response:**
+
+- `400 Bad Request`: 잘못된 요청
+- `500 Internal Server Error`: 서버 오류
+
+**참고:**
+
+- `title` 파라미터가 없거나 비어있으면 빈 결과를 반환합니다.
+- `category`, `difficulty`, `type` 파라미터는 강의 검색에만 적용됩니다.
+- 커리큘럼과 강의는 각각 독립적으로 페이징됩니다.
+
+---
+
+## 🎯 통합 추천 API
+
+### 1. 통합 추천 (커리큘럼 + 강의 혼합)
+
+**GET** `/api/recommendations/unified`
+
+공개된 커리큘럼과 강의를 점수 기준으로 혼합하여 추천합니다. 사용자의 수강 이력과 선호도를 분석하여 개인화된 추천을 제공합니다. 커리큘럼과 강의가 점수 기준으로 정렬되어 혼합되어 반환됩니다.
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Query Parameters:**
+
+- `limit` (optional): 추천 개수 (기본값: 10)
+
+**Response (200 OK):**
+
+```json
+[
+  {
+    "type": "CURRICULUM",
+    "id": 1,
+    "title": "커리큘럼 제목",
+    "description": "커리큘럼 간단 소개",
+    "category": "프로그래밍",
+    "difficulty": "기초",
+    "recommendationScore": 85.5,
+    "recommendationReason": "당신이 좋아하는 카테고리, 관심 있는 주제",
+    "tags": ["Python", "기초"],
+    "averageRating": 4.5,
+    "studentCount": 15,
+    "authorName": "작성자명",
+    "thumbnailImageUrl": "https://example.com/image.jpg"
+  },
+  {
+    "type": "LECTURE",
+    "id": 5,
+    "title": "강의 제목",
+    "description": "강의 설명",
+    "category": "프로그래밍",
+    "difficulty": "기초",
+    "recommendationScore": 80.0,
+    "recommendationReason": "당신이 좋아하는 카테고리, 적합한 난이도",
+    "lectureType": "PROBLEM"
+  },
+  {
+    "type": "CURRICULUM",
+    "id": 3,
+    "title": "또 다른 커리큘럼",
+    "description": "커리큘럼 설명",
+    "category": "알고리즘",
+    "difficulty": "중급",
+    "recommendationScore": 75.0,
+    "recommendationReason": "관심 있는 주제",
+    "tags": ["알고리즘", "자료구조"],
+    "averageRating": 4.0,
+    "studentCount": 10,
+    "authorName": "작성자명2",
+    "thumbnailImageUrl": null
+  }
+]
+```
+
+**Response 필드 설명:**
+
+- `type`: 콘텐츠 타입 (`"CURRICULUM"` 또는 `"LECTURE"`)
+- `id`: 커리큘럼 또는 강의 ID
+- `title`: 제목
+- `description`: 설명 (커리큘럼의 경우 summary, 강의의 경우 description)
+- `category`: 카테고리
+- `difficulty`: 난이도
+- `recommendationScore`: 추천 점수 (0 이상)
+- `recommendationReason`: 추천 이유
+
+**커리큘럼 전용 필드:**
+
+- `tags`: 태그 배열
+- `averageRating`: 평균 평점
+- `studentCount`: 수강생 수
+- `authorName`: 작성자명
+- `thumbnailImageUrl`: 썸네일 이미지 URL
+
+**강의 전용 필드:**
+
+- `lectureType`: 강의 유형 (`"MARKDOWN"` 또는 `"PROBLEM"`)
+
+**Error Response:**
+
+- `400 Bad Request`: 잘못된 요청
+- `401 Unauthorized`: X-User-Id 헤더 누락
+- `500 Internal Server Error`: 서버 오류
+
+**참고:**
+
+- 공개된 커리큘럼과 강의만 추천됩니다.
+- 점수가 0보다 큰 콘텐츠만 추천됩니다.
+- 이미 수강 중인 커리큘럼과 학습한 강의는 제외됩니다.
+- 커리큘럼과 강의가 점수 기준으로 혼합되어 정렬됩니다.
+- 추천 점수는 사용자의 수강 이력, 카테고리, 태그, 난이도, 평점 등을 기반으로 계산됩니다.
+
+---
+
 ## 🔗 관련 문서
 
 - [S3 모듈 상세 API](./API_SPECIFICATION_S3.md)

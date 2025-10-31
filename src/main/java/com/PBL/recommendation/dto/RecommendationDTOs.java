@@ -127,5 +127,33 @@ public class RecommendationDTOs {
         private Long totalClicks;
         private BigDecimal clickThroughRate; // CTR
     }
+
+    /**
+     * 통합 추천 응답 (커리큘럼 + 강의 혼합)
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UnifiedRecommendationResponse {
+        private String type; // "CURRICULUM" or "LECTURE"
+        private Long id;
+        private String title;
+        private String description; // 강의의 경우 description, 커리큘럼의 경우 summary
+        private String category;
+        private String difficulty;
+        private BigDecimal recommendationScore;
+        private String recommendationReason;
+        
+        // 커리큘럼 전용 필드
+        private List<String> tags;
+        private BigDecimal averageRating;
+        private Integer studentCount;
+        private String authorName;
+        private String thumbnailImageUrl;
+        
+        // 강의 전용 필드
+        private String lectureType;
+    }
 }
 

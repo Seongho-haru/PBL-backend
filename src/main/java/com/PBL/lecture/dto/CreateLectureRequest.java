@@ -19,6 +19,7 @@ import java.util.List;
 public class CreateLectureRequest {
     private String title;
     private String description;
+
     private LectureType type;
     private String category;
     private String difficulty;

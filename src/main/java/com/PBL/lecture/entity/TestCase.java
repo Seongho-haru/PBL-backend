@@ -81,7 +81,7 @@ public class TestCase {
      * - Judge0 API의 expected_output 파라미터로 전달
      * - 채점 결과에서 status.id == 3 (Accepted) 확인
      */
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT",name = "expected_output")
     private String expectedOutput;
 
     /**
@@ -117,7 +117,7 @@ public class TestCase {
      * - 현재는 자동 관리되지 않음 (수동 설정 필요)
      * - 추후 자동 순서 관리 로직 추가 가능
      */
-    @Column(nullable = false)
+    @Column(nullable = false,name = "order_index")
     @Builder.Default
     private Integer orderIndex = 1;
 

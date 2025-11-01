@@ -1,7 +1,6 @@
 package com.PBL.lab.core.entity;
 
 import com.PBL.lab.core.dto.ConstraintsResponse;
-import com.PBL.lecture.entity.Lecture;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;

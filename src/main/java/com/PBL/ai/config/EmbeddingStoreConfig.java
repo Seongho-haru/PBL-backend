@@ -1,33 +1,25 @@
 package com.PBL.ai.config;
 
+import com.PBL.ai.enums.CollectionType;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import dev.langchain4j.store.embedding.chroma.ChromaEmbeddingStore;
+import dev.langchain4j.store.embedding.qdrant.QdrantEmbeddingStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
-import static dev.langchain4j.store.embedding.chroma.ChromaApiVersion.V2;
-
 @Configuration
 public class EmbeddingStoreConfig {
-    @Value("${langchain4j.chroma.url}")
-    private String baseUrl;
+    @Value("${langchain4j.qdrant.host}")
+    private String host;
 
-    // 강의 임베딩 스토어
-    public EmbeddingStore<TextSegment> createLectureStore() {
-        return create("lecture_embeddings");
-    }
+    @Value("${langchain4j.qdrant.port}")
+    private int port;
 
-    // 커리큘럼 임베딩 스토어
-    public EmbeddingStore<TextSegment> createCurriculumStore() {
-        return create("curriculum_embeddings");
-    }
-
-    private EmbeddingStore<TextSegment> create(String collectionName) {
-        return ChromaEmbeddingStore.builder()
-                .baseUrl(baseUrl)
-                .collectionName(collectionName)
-                .apiVersion(V2)  // ✅ V2 API 사용!
+    public EmbeddingStore<TextSegment> create(CollectionType collectionName) {
+        return QdrantEmbeddingStore.builder()
+                .host(host)
+                .port(port)
+                .collectionName(collectionName.name())
                 .build();
     }
 }

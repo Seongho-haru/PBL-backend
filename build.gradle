@@ -90,8 +90,8 @@ dependencies {
     //reactor - Flux 지원
     implementation 'dev.langchain4j:langchain4j-reactor:1.7.1-beta14'
 
-    //벡터 DB - 크로마 DB
-    implementation('dev.langchain4j:langchain4j-chroma:1.7.1-beta14') {
+    //벡터 DB - qdrant DB
+    implementation('dev.langchain4j:langchain4j-qdrant:1.7.1-beta14') {
         exclude group: 'dev.langchain4j', module: 'langchain4j-http-client-jdk'
     }
 }

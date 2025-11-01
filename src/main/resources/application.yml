@@ -1,6 +1,6 @@
 spring:
   application:
-    name: judge0-spring
+    name: PBL-Backend
   datasource:
     url: jdbc:postgresql://localhost:5432/judge0
     username: judge0
@@ -50,8 +50,9 @@ langchain4j:
     api-key: ??
     model-name: gpt-4o-mini
     embedding-model-name: text-embedding-3-small
-  chroma:
-    url: http://localhost:8000
+  qdrant:
+    host: http://localhost
+    port: 6333
 org:
   jobrunr:
     background-job-server:

@@ -3,6 +3,7 @@ package com.PBL.ai.service;
 import com.PBL.ai.config.Assisdent;
 import com.PBL.ai.config.RAGconfig;
 import com.PBL.ai.dto.GradingRequest;
+import com.PBL.ai.tools.*;
 import com.PBL.lab.grading.entity.Grading;
 import com.PBL.lab.grading.service.GradingService;
 import com.PBL.lecture.LectureService;
@@ -23,7 +24,11 @@ public class AssistantService {
     @Autowired
     private final StreamingChatModel streamingChatModel; // 스트리밍용 모델
 
-    private final ToolService toolService;
+    private final BookTools bookTools;
+    private final SubmissionTools submissionTools;
+    private final LectureTools lectureTools;
+    private final CurriculumTools curriculumTools;
+    private final CommunityTools communityTools;
     private final RAGconfig ragconfig;
     private final GradingService gradingService;
     private final LectureService lectureService;
@@ -35,7 +40,7 @@ public class AssistantService {
                 .streamingChatModel(streamingChatModel)
                 .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
                 .contentRetriever(ragconfig.lectureContentRetriever())
-                .tools(toolService)
+                .tools(bookTools, submissionTools, lectureTools, curriculumTools, communityTools)
                 .build();
     }
 

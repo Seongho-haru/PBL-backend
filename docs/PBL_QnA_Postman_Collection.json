@@ -220,7 +220,7 @@
           "response": []
         },
         {
-          "name": "Mark Question as Resolved",
+          "name": "Toggle Question Resolution",
           "request": {
             "method": "PUT",
             "header": [
@@ -235,7 +235,7 @@
               "host": ["{{base_url}}"],
               "path": ["api", "qna", "questions", "1", "resolve"]
             },
-            "description": "질문을 해결 상태로 변경합니다."
+            "description": "질문의 해결 상태를 토글합니다. 해결 상태면 미해결로, 미해결 상태면 해결로 변경됩니다."
           },
           "response": []
         },

@@ -261,26 +261,30 @@ public class QuestionController {
         }
     }
 
-    // 질문 해결 상태 변경
+    // 질문 해결 상태 토글
     @PutMapping("/{questionId}/resolve")
-    @Operation(summary = "질문 해결 처리", description = "질문을 해결 상태로 변경합니다.")
+    @Operation(summary = "질문 해결 상태 토글", description = "질문의 해결 상태를 토글합니다. 해결 상태면 미해결로, 미해결 상태면 해결로 변경됩니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "질문 해결 처리 성공"),
+            @ApiResponse(responseCode = "200", description = "질문 상태 토글 성공"),
             @ApiResponse(responseCode = "401", description = "X-User-Id 헤더 누락"),
             @ApiResponse(responseCode = "403", description = "권한 없음 (본인의 질문이 아님)"),
             @ApiResponse(responseCode = "404", description = "질문을 찾을 수 없음"),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    public ResponseEntity<?> markQuestionAsResolved(
+    public ResponseEntity<?> toggleQuestionResolution(
             @Parameter(description = "질문 ID", required = true) @PathVariable Long questionId,
             @Parameter(description = "사용자 ID", required = true) @RequestHeader("X-User-Id") Long userId) {
         try {
-            log.info("질문 해결 처리 요청 - ID: {}, 사용자: {}", questionId, userId);
-            questionService.markQuestionAsResolved(questionId, userId);
-            log.info("질문 해결 처리 완료 - ID: {}", questionId);
-            return ResponseEntity.ok(Map.of("message", "질문이 해결 상태로 변경되었습니다."));
+            log.info("질문 해결 상태 토글 요청 - ID: {}, 사용자: {}", questionId, userId);
+            boolean isNowResolved = questionService.toggleQuestionResolution(questionId, userId);
+            String message = isNowResolved ? "질문이 해결 상태로 변경되었습니다." : "질문이 미해결 상태로 변경되었습니다.";
+            log.info("질문 해결 상태 토글 완료 - ID: {}, 상태: {}", questionId, isNowResolved ? "해결" : "미해결");
+            return ResponseEntity.ok(Map.of(
+                    "message", message,
+                    "status", isNowResolved ? "RESOLVED" : "UNRESOLVED"
+            ));
         } catch (RuntimeException e) {
-            log.warn("질문 해결 처리 실패 - ID: {}, 오류: {}", questionId, e.getMessage());
+            log.warn("질문 해결 상태 토글 실패 - ID: {}, 오류: {}", questionId, e.getMessage());
             if (e.getMessage().contains("찾을 수 없습니다")) {
                 return ResponseEntity.notFound().build();
             } else if (e.getMessage().contains("권한이 없습니다")) {
@@ -288,9 +292,9 @@ public class QuestionController {
             }
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            log.error("질문 해결 처리 중 오류 발생", e);
+            log.error("질문 해결 상태 토글 중 오류 발생", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "질문 해결 처리 중 오류가 발생했습니다."));
+                    .body(Map.of("error", "질문 해결 상태 토글 중 오류가 발생했습니다."));
         }
     }
 

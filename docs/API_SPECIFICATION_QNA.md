@@ -237,11 +237,11 @@ X-User-Id: 1
 }
 ```
 
-### 8. 질문 해결 처리
+### 8. 질문 해결 상태 토글
 
 **PUT** `/api/qna/questions/{questionId}/resolve`
 
-질문을 해결 상태로 변경합니다.
+질문의 해결 상태를 토글합니다. 해결 상태면 미해결로, 미해결 상태면 해결로 변경됩니다.
 
 #### 요청 헤더
 
@@ -249,13 +249,35 @@ X-User-Id: 1
 X-User-Id: 1
 ```
 
-#### 응답 (200 OK)
+#### 응답 (200 OK) - 해결 상태로 변경된 경우
 
 ```json
 {
-  "message": "질문이 해결 상태로 변경되었습니다."
+  "message": "질문이 해결 상태로 변경되었습니다.",
+  "status": "RESOLVED"
 }
 ```
+
+#### 응답 (200 OK) - 미해결 상태로 변경된 경우
+
+```json
+{
+  "message": "질문이 미해결 상태로 변경되었습니다.",
+  "status": "UNRESOLVED"
+}
+```
+
+#### 동작 방식
+
+- 질문이 미해결(`UNRESOLVED`) 상태일 때 API 호출 → 해결(`RESOLVED`) 상태로 변경
+- 질문이 해결(`RESOLVED`) 상태일 때 API 호출 → 미해결(`UNRESOLVED`) 상태로 변경
+
+#### 에러 응답
+
+- **401 Unauthorized**: X-User-Id 헤더 누락
+- **403 Forbidden**: 권한 없음 (본인의 질문이 아님)
+- **404 Not Found**: 질문을 찾을 수 없음
+- **500 Internal Server Error**: 서버 내부 오류
 
 ### 9. 인기 질문 조회
 

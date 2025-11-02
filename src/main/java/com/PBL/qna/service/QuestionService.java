@@ -186,7 +186,31 @@ public class QuestionService {
         questionRepository.save(question);
     }
 
-    // 질문 해결 상태 변경
+    // 질문 해결 상태 토글 (해결 <-> 미해결)
+    @Transactional
+    public boolean toggleQuestionResolution(Long questionId, Long userId) {
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new RuntimeException("질문을 찾을 수 없습니다: " + questionId));
+
+        // 작성자 확인
+        if (!question.getAuthor().getId().equals(userId)) {
+            throw new RuntimeException("질문 상태를 변경할 권한이 없습니다.");
+        }
+
+        // 현재 상태 확인 후 토글
+        boolean isResolved = question.getStatus() == QuestionStatus.RESOLVED;
+        if (isResolved) {
+            question.markAsUnresolved();
+        } else {
+            question.markAsResolved();
+        }
+        questionRepository.save(question);
+
+        // 변경된 상태 반환 (true: 해결됨, false: 미해결)
+        return !isResolved;
+    }
+
+    // 질문 해결 상태 변경 (하위 호환성을 위해 유지)
     @Transactional
     public void markQuestionAsResolved(Long questionId, Long userId) {
         Question question = questionRepository.findById(questionId)
@@ -201,7 +225,7 @@ public class QuestionService {
         questionRepository.save(question);
     }
 
-    // 질문 미해결 상태 변경
+    // 질문 미해결 상태 변경 (하위 호환성을 위해 유지)
     @Transactional
     public void markQuestionAsUnresolved(Long questionId, Long userId) {
         Question question = questionRepository.findById(questionId)

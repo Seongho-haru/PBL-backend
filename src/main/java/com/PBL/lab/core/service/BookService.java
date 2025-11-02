@@ -161,7 +161,7 @@ public class BookService {
 
     public List<Book> findTopRatedBooksByCategory(String category) {
         log.info("Finding top-rated books in category: {}", category);
-        return bookRepository.findByCategoryOrderByRatingDesc(category);
+        return bookRepository.findByCategory(category);
     }
 
     // ===== 언어/EPUB 필터링 =====

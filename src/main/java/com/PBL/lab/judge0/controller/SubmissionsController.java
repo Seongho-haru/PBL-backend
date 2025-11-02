@@ -67,6 +67,7 @@ public class SubmissionsController {
      */
     @GetMapping("/submissions")
     public ResponseEntity<?> index(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(defaultValue = "false") boolean base64_encoded,
             @RequestParam(required = false) String fields) {
@@ -96,14 +97,23 @@ public class SubmissionsController {
      */
     @GetMapping("/submissions/{token}")
     public ResponseEntity<?> show(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PathVariable String token,
             @RequestParam(defaultValue = "false") boolean base64_encoded,
             @RequestParam(required = false) String fields) {
 
         try {
             Submission submission = submissionService.findByToken(token);
+
+            // 접근 권한 검증
+            submissionService.validateAccess(submission, userId);
+
             SubmissionResponse response = SubmissionResponse.from(submission, base64_encoded, parseFields(fields));
             return ResponseEntity.ok(response);
+        } catch (com.PBL.lab.core.exception.AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "error", e.getMessage()
+            ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
@@ -119,6 +129,7 @@ public class SubmissionsController {
      */
     @PostMapping("/submissions")
     public ResponseEntity<?> create(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @RequestBody SubmissionRequest request,
             @RequestParam(defaultValue = "false") boolean wait,
             @RequestParam(defaultValue = "false") boolean base64_encoded,
@@ -150,7 +161,7 @@ public class SubmissionsController {
             }
 
             // 제출 생성
-            Submission submission = submissionService.createSubmission(request);
+            Submission submission = submissionService.createSubmission(request, userId);
 
             if (wait) {
                 // 동기 실행
@@ -186,6 +197,7 @@ public class SubmissionsController {
      */
     @DeleteMapping("/submissions/{token}")
     public ResponseEntity<?> destroy(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PathVariable String token,
             @RequestParam(required = false) String fields) {
 
@@ -197,12 +209,19 @@ public class SubmissionsController {
         try {
             Submission submission = submissionService.findByToken(token);
 
+            // 접근 권한 검증
+            submissionService.validateAccess(submission, userId);
+
             // 삭제 응답에서는 base64_encoded=true 강제 적용
             SubmissionResponse response = SubmissionResponse.from(submission, true, parseFields(fields));
 
             submissionService.deleteSubmission(token);
 
             return ResponseEntity.ok(response);
+        } catch (com.PBL.lab.core.exception.AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "error", e.getMessage()
+            ));
         } catch (IllegalArgumentException e) {
             if (e.getMessage().contains("not found")) {
                 return ResponseEntity.notFound().build();

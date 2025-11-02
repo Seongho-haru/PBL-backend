@@ -3,6 +3,7 @@ package com.PBL.lab.judge0.service;
 import com.PBL.lab.core.config.SystemConfig;
 import com.PBL.lab.core.config.FeatureFlagsConfig;
 import com.PBL.lab.core.entity.ExecutionInputOutput;
+import com.PBL.lab.core.exception.AccessDeniedException;
 import com.PBL.lab.core.service.Base64Service;
 import com.PBL.lab.core.dto.ExecutionResult;
 import com.PBL.lab.core.service.LanguageService;
@@ -13,6 +14,8 @@ import com.PBL.lab.core.enums.Status;
 import com.PBL.lab.judge0.repository.SubmissionRepository;
 import com.PBL.lab.core.repository.ConstraintsRepository;
 import com.PBL.lab.core.entity.Constraints;
+import com.PBL.user.User;
+import com.PBL.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -73,6 +76,7 @@ public class SubmissionService {
     private final FeatureFlagsConfig featureFlagsConfig;
     private final SystemConfig systemConfig;
     private final com.PBL.lab.core.repository.ExecutionInputOutputRepository executionInputOutputRepository;
+    private final UserRepository userRepository;
 
     /**
      * 새로운 제출을 생성합니다.
@@ -90,8 +94,8 @@ public class SubmissionService {
      * @throws IllegalArgumentException 잘못된 언어 ID, 상호배타성 위반, 제약 위반 시
      */
     @Transactional
-    public Submission createSubmission(SubmissionRequest request) {
-        log.debug("Creating submission for language ID: {}", request.getLanguageId());
+    public Submission createSubmission(SubmissionRequest request, Long userId) {
+        log.debug("Creating submission for language ID: {}, userId: {}", request.getLanguageId(), userId);
 
         // 1) 언어 검증: 존재 여부 + 아카이브(사용 불가) 여부
         Language language = languageService.findById(request.getLanguageId());
@@ -107,6 +111,13 @@ public class SubmissionService {
         submission.setToken(generateToken()); // UUID 기반, 중복 시 재시도
         submission.setLanguageId(request.getLanguageId());
         submission.setLanguage(language);
+
+        // 3) User 설정 (userId가 제공된 경우)
+        if (userId != null) {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User with id " + userId + " doesn't exist"));
+            submission.setUser(user);
+        }
 
         // 3) 소스/추가파일 처리: 프로젝트형 vs 비프로젝트형 상호배타성 보장
         if (language.isProject()) {
@@ -452,5 +463,35 @@ public class SubmissionService {
 
     public ExecutionInputOutput findById(Long id) {
         return executionInputOutputRepository.findById(id).orElse(null);
+    }
+
+    /**
+     * 제출에 대한 사용자 접근 권한을 검증합니다.
+     *
+     * 접근 제어 규칙:
+     * 1. submission.user == null (익명 제출) → 누구나 접근 가능
+     * 2. submission.user != null && requestUserId == null → 접근 거부
+     * 3. submission.user != null && requestUserId != submission.user.id → 접근 거부
+     * 4. submission.user != null && requestUserId == submission.user.id → 접근 허용
+     *
+     * @param submission 접근 대상 제출
+     * @param requestUserId 요청한 사용자 ID (헤더에서 전달, nullable)
+     * @throws AccessDeniedException 접근 권한이 없을 때
+     */
+    public void validateAccess(Submission submission, Long requestUserId) {
+        // 익명 제출은 누구나 접근 가능
+        if (submission.getUser() == null) {
+            return;
+        }
+
+        // 회원 제출인데 요청자가 인증되지 않음
+        if (requestUserId == null) {
+            throw new AccessDeniedException("This submission requires authentication");
+        }
+
+        // 회원 제출인데 다른 사용자가 접근 시도
+        if (!submission.getUser().getId().equals(requestUserId)) {
+            throw new AccessDeniedException("You don't have permission to access this submission");
+        }
     }
 }

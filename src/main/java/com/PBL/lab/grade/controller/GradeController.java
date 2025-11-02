@@ -46,6 +46,7 @@ public class GradeController {
      */
     @GetMapping({"/grade", "/grading"})
     public ResponseEntity<?> index(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(name = "problem_id" , required = false) Long problemId,
             @RequestParam(defaultValue = "false") boolean base64_encoded,
@@ -83,6 +84,7 @@ public class GradeController {
      */
     @GetMapping({"/grade/{token}", "/grading/{token}"})
     public ResponseEntity<?> show(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PathVariable String token,
             @RequestParam(defaultValue = "false") boolean base64_encoded,
             @RequestParam(defaultValue = "false") boolean progress,
@@ -90,6 +92,9 @@ public class GradeController {
 
         try {
             Grade grade = gradeService.findByToken(token);
+
+            // 접근 권한 검증
+            gradeService.validateAccess(grade, userId);
 
             // progress=true이고 채점이 아직 완료되지 않은 경우 SSE로 전환
             if (progress && !grade.getStatus().isTerminal()) {
@@ -102,6 +107,10 @@ public class GradeController {
             // 일반 JSON 응답
             GradeResponse response = GradeResponse.from(grade, base64_encoded, parseFields(fields));
             return ResponseEntity.ok(response);
+        } catch (com.PBL.lab.core.exception.AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "error", e.getMessage()
+            ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
@@ -118,6 +127,7 @@ public class GradeController {
      */
     @PostMapping({"/grade/{problemId}", "/grading/{problemId}"})
     public ResponseEntity<?> create(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @RequestBody GradeRequest request,
             @PathVariable Long problemId,
             @RequestParam(defaultValue = "false") boolean wait,
@@ -148,7 +158,7 @@ public class GradeController {
             }
             //제출 토큰 생성
             request.setProblemId(problemId);
-            Grade grade = gradeService.createGrade(request);
+            Grade grade = gradeService.createGrade(request, userId);
 
             /*
              * 동기 실행 (wait=true)
@@ -195,6 +205,7 @@ public class GradeController {
      */
     @GetMapping(value = {"/grade/{token}/progress", "/grading/{token}/progress"}, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter getGradeProgressSSE(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PathVariable String token,
             boolean base64_encoded,
             String fields) {
@@ -203,6 +214,9 @@ public class GradeController {
         try {
             // 채점이 존재하는지 확인
             Grade grade = gradeService.findByToken(token);
+
+            // 접근 권한 검증
+            gradeService.validateAccess(grade, userId);
 
             // 실제 진행상황 업데이트를 위한 이벤트 리스너 등록
             gradeProgressService.registerProgressListener(token, emitter);
@@ -226,6 +240,9 @@ public class GradeController {
                 gradeProgressService.unregisterProgressListener(token);
             });
 
+        } catch (com.PBL.lab.core.exception.AccessDeniedException e) {
+            log.error("Access denied for grade: {}", token);
+            emitter.completeWithError(new RuntimeException("Access denied: " + e.getMessage()));
         } catch (IllegalArgumentException e) {
             log.error("Grade not found: {}", token);
             emitter.completeWithError(new RuntimeException("Grade not found: " + token));
@@ -243,6 +260,7 @@ public class GradeController {
      */
     @DeleteMapping({"/grade/{token}", "/grading/{token}"})
     public ResponseEntity<?> destroy(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PathVariable String token,
             @RequestParam(required = false) String fields) {
 
@@ -254,12 +272,19 @@ public class GradeController {
         try {
             Grade grade = gradeService.findByToken(token);
 
+            // 접근 권한 검증
+            gradeService.validateAccess(grade, userId);
+
             // 삭제 응답에서는 base64_encoded=true 강제 적용
             GradeResponse response = GradeResponse.from(grade, true, parseFields(fields));
 
             gradeService.deleteGrade(token);
 
             return ResponseEntity.ok(response);
+        } catch (com.PBL.lab.core.exception.AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "error", e.getMessage()
+            ));
         } catch (IllegalArgumentException e) {
             if (e.getMessage().contains("not found")) {
                 return ResponseEntity.notFound().build();

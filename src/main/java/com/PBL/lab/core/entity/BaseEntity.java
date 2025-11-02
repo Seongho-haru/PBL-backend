@@ -4,6 +4,7 @@ import com.PBL.lab.core.dto.CodeExecutionRequest;
 import com.PBL.lab.core.dto.SecurityConstraints;
 import com.PBL.lab.core.enums.FileSystemAccess;
 import com.PBL.lab.core.enums.Status;
+import com.PBL.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -131,6 +132,15 @@ public abstract class BaseEntity {
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "input_output_id", nullable = false)
     private ExecutionInputOutput inputOutput;
+
+    /**
+     * 제출한 사용자
+     * - User 엔티티와 ManyToOne 관계
+     * - nullable: 비회원 제출도 가능하도록 허용
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    protected User user;
 
     // ========== 시간 추적 정보 (Timing Information) ==========
 

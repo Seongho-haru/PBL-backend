@@ -5,6 +5,7 @@ import com.PBL.lab.core.entity.Language;
 import com.PBL.lab.core.entity.Constraints;
 import com.PBL.lab.core.enums.Status;
 import com.PBL.lab.core.webhook.WebhookCallbackEntity;
+import com.PBL.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;

@@ -4,6 +4,7 @@ import com.PBL.lab.core.config.SystemConfig;
 import com.PBL.lab.core.config.FeatureFlagsConfig;
 import com.PBL.lab.core.entity.Language;
 import com.PBL.lab.core.entity.Constraints;
+import com.PBL.lab.core.exception.AccessDeniedException;
 import com.PBL.lab.grade.dto.GradeRequest;
 import com.PBL.lab.grade.entity.Grade;
 import com.PBL.lab.core.enums.Status;
@@ -14,6 +15,8 @@ import com.PBL.lab.core.dto.ExecutionResult;
 import com.PBL.lecture.LectureService;
 import com.PBL.lecture.entity.TestCase;
 import com.PBL.lecture.repository.TestCaseRepository;
+import com.PBL.user.User;
+import com.PBL.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -37,6 +40,7 @@ public class GradeService {
     private final FeatureFlagsConfig featureFlagsConfig;
     private final SystemConfig systemConfig;
     private final LectureService lectureService;
+    private final UserRepository userRepository;
 
 
     public Page<Grade> findAll(Pageable pageable) {
@@ -79,7 +83,7 @@ public class GradeService {
     }
 
     @Transactional
-    public Grade createGrade(GradeRequest request) {
+    public Grade createGrade(GradeRequest request, Long userId) {
 
         // 1) 언어 검증: 존재 여부 + 아카이브(사용 불가) 여부
         Language language = languageService.findById(request.getLanguageId());
@@ -90,11 +94,19 @@ public class GradeService {
             throw new IllegalArgumentException("Language with id " + request.getLanguageId() + " is archived and cannot be used anymore");
         }
 
+        // 2) User 설정 (userId가 제공된 경우)
+        User user = null;
+        if (userId != null) {
+            user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User with id " + userId + " doesn't exist"));
+        }
+
         Grade grade = Grade.builder()
                 .sourceCode(request.getSourceCode())
                 .language(language)
                 .languageId(request.getLanguageId())
                 .problemId(request.getProblemId())
+                .user(user)
                 .build();
 
         // 3) 소스/추가파일 처리: 프로젝트형 vs 비프로젝트형 상호배타성 보장
@@ -193,5 +205,35 @@ public class GradeService {
 
         gradeRepository.save(grade);
         log.debug("Updated grade {} result with status {}", token, result.getStatus().getName());
+    }
+
+    /**
+     * 채점에 대한 사용자 접근 권한을 검증합니다.
+     *
+     * 접근 제어 규칙:
+     * 1. grade.user == null (익명 제출) → 누구나 접근 가능
+     * 2. grade.user != null && requestUserId == null → 접근 거부
+     * 3. grade.user != null && requestUserId != grade.user.id → 접근 거부
+     * 4. grade.user != null && requestUserId == grade.user.id → 접근 허용
+     *
+     * @param grade 접근 대상 채점
+     * @param requestUserId 요청한 사용자 ID (헤더에서 전달, nullable)
+     * @throws AccessDeniedException 접근 권한이 없을 때
+     */
+    public void validateAccess(Grade grade, Long requestUserId) {
+        // 익명 제출은 누구나 접근 가능
+        if (grade.getUser() == null) {
+            return;
+        }
+
+        // 회원 제출인데 요청자가 인증되지 않음
+        if (requestUserId == null) {
+            throw new AccessDeniedException("This grade requires authentication");
+        }
+
+        // 회원 제출인데 다른 사용자가 접근 시도
+        if (!grade.getUser().getId().equals(requestUserId)) {
+            throw new AccessDeniedException("You don't have permission to access this grade");
+        }
     }
 }

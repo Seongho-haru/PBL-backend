@@ -1,18 +1,21 @@
 package com.PBL.lab.judge0.service;
 
+import com.PBL.lab.core.config.SystemConfig;
+import com.PBL.lab.core.config.FeatureFlagsConfig;
+import com.PBL.lab.core.entity.ExecutionInputOutput;
+import com.PBL.lab.core.exception.AccessDeniedException;
 import com.PBL.lab.core.service.Base64Service;
-import com.PBL.lab.core.service.ConfigService;
-import com.PBL.lab.core.service.ExecutionResult;
+import com.PBL.lab.core.dto.ExecutionResult;
 import com.PBL.lab.core.service.LanguageService;
 import com.PBL.lab.judge0.dto.SubmissionRequest;
 import com.PBL.lab.core.entity.Language;
 import com.PBL.lab.judge0.entity.Submission;
-import com.PBL.lab.judge0.entity.SubmissionInputOutput;
 import com.PBL.lab.core.enums.Status;
-import com.PBL.lab.judge0.repository.SubmissionInputOutputRepository;
 import com.PBL.lab.judge0.repository.SubmissionRepository;
 import com.PBL.lab.core.repository.ConstraintsRepository;
 import com.PBL.lab.core.entity.Constraints;
+import com.PBL.user.User;
+import com.PBL.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -70,8 +73,10 @@ public class SubmissionService {
     private final ConstraintsRepository constraintsRepository;
     private final LanguageService languageService;
     private final Base64Service base64Service;
-    private final ConfigService configService;
-    private final SubmissionInputOutputRepository submissionInputOutputRepository;
+    private final FeatureFlagsConfig featureFlagsConfig;
+    private final SystemConfig systemConfig;
+    private final com.PBL.lab.core.repository.ExecutionInputOutputRepository executionInputOutputRepository;
+    private final UserRepository userRepository;
 
     /**
      * 새로운 제출을 생성합니다.
@@ -89,8 +94,8 @@ public class SubmissionService {
      * @throws IllegalArgumentException 잘못된 언어 ID, 상호배타성 위반, 제약 위반 시
      */
     @Transactional
-    public Submission createSubmission(SubmissionRequest request) {
-        log.debug("Creating submission for language ID: {}", request.getLanguageId());
+    public Submission createSubmission(SubmissionRequest request, Long userId) {
+        log.debug("Creating submission for language ID: {}, userId: {}", request.getLanguageId(), userId);
 
         // 1) 언어 검증: 존재 여부 + 아카이브(사용 불가) 여부
         Language language = languageService.findById(request.getLanguageId());
@@ -106,6 +111,13 @@ public class SubmissionService {
         submission.setToken(generateToken()); // UUID 기반, 중복 시 재시도
         submission.setLanguageId(request.getLanguageId());
         submission.setLanguage(language);
+
+        // 3) User 설정 (userId가 제공된 경우)
+        if (userId != null) {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("User with id " + userId + " doesn't exist"));
+            submission.setUser(user);
+        }
 
         // 3) 소스/추가파일 처리: 프로젝트형 vs 비프로젝트형 상호배타성 보장
         if (language.isProject()) {
@@ -124,9 +136,9 @@ public class SubmissionService {
             submission.setSourceCode(request.getSourceCode());
         }
 
-        // 4) 표준입력/기대출력 설정 (SubmissionInputOutput 엔티티 사용)
+        // 4) 표준입력/기대출력 설정 (ExecutionInputOutput 엔티티 사용)
         if (submission.getInputOutput() == null) {
-            submission.setInputOutput(new SubmissionInputOutput());
+            submission.setInputOutput(new com.PBL.lab.core.entity.ExecutionInputOutput());
         }
         submission.getInputOutput().setStdin(request.getStdin());
         submission.getInputOutput().setExpectedOutput(request.getExpectedOutput());
@@ -145,6 +157,7 @@ public class SubmissionService {
 
         // 10) 영속화
         submission = submissionRepository.save(submission);
+        log.debug("Created a new submission : {}", submission.getConstraints() );
         log.info("Created submission with token: {}", submission.getToken());
 
         return submission;
@@ -229,9 +242,12 @@ public class SubmissionService {
     public void updateResult(String token, ExecutionResult result) {
         Submission submission = findByToken(token);
 
-        // SubmissionInputOutput 설정
+        // ExecutionInputOutput 설정 - null인 경우 새로 생성하고 영속화
         if (submission.getInputOutput() == null) {
-            submission.setInputOutput(new SubmissionInputOutput());
+            com.PBL.lab.core.entity.ExecutionInputOutput inputOutput = new com.PBL.lab.core.entity.ExecutionInputOutput();
+            // 먼저 저장하여 영속 상태로 만듦
+            inputOutput = executionInputOutputRepository.save(inputOutput);
+            submission.setInputOutput(inputOutput);
         }
         submission.getInputOutput().setStdout(result.getStdout());
         submission.getInputOutput().setStderr(result.getStderr());
@@ -262,7 +278,7 @@ public class SubmissionService {
      * @throws IllegalStateException 삭제 비허용 또는 비종결 상태일 때
      */
     public void deleteSubmission(String token) {
-        if (!configService.isSubmissionDeleteEnabled()) {
+        if (!featureFlagsConfig.isEnableSubmissionDelete()) {
             throw new IllegalStateException("Submission deletion is not allowed");
         }
 
@@ -361,7 +377,7 @@ public class SubmissionService {
 
         // 1) 컴파일러 옵션 검증
         if (submission.getConstraints().getCompilerOptions() != null && !submission.getConstraints().getCompilerOptions().trim().isEmpty()) {
-            if (!configService.isCompilerOptionsEnabled()) {
+            if (!featureFlagsConfig.isEnableCompilerOptions()) {
                 throw new IllegalArgumentException("Setting compiler options is not allowed");
             }
 
@@ -371,7 +387,7 @@ public class SubmissionService {
             }
 
             // 허용 언어 프리픽스 화이트리스트가 존재하면 언어명 startsWith 로 판별
-            List<String> allowedLanguages = configService.getAllowedLanguagesForCompilerOptions();
+            List<String> allowedLanguages = systemConfig.getAllowedLanguagesForCompilerOptions();
             if (!allowedLanguages.isEmpty() &&
                     allowedLanguages.stream().noneMatch(lang -> submission.getLanguage().getName().startsWith(lang))) {
                 throw new IllegalArgumentException("Setting compiler options is not allowed for " + submission.getLanguage().getName());
@@ -380,28 +396,28 @@ public class SubmissionService {
 
         // 2) 명령행 인자 허용 여부
         if (submission.getConstraints().getCommandLineArguments() != null && !submission.getConstraints().getCommandLineArguments().trim().isEmpty()) {
-            if (!configService.isCommandLineArgumentsEnabled()) {
+            if (!featureFlagsConfig.isEnableCommandLineArguments()) {
                 throw new IllegalArgumentException("Setting command line arguments is not allowed");
             }
         }
 
         // 3) 콜백 URL 허용 여부
         if (submission.getConstraints().getCallbackUrl() != null && !submission.getConstraints().getCallbackUrl().trim().isEmpty()) {
-            if (!configService.isCallbacksEnabled()) {
+            if (!featureFlagsConfig.isEnableCallbacks()) {
                 throw new IllegalArgumentException("Setting callback is not allowed");
             }
         }
 
         // 4) 추가파일 허용 여부
         if (submission.hasAdditionalFiles()) {
-            if (!configService.isAdditionalFilesEnabled()) {
+            if (!featureFlagsConfig.isEnableAdditionalFiles()) {
                 throw new IllegalArgumentException("Setting additional files is not allowed");
             }
         }
 
         // 5) 네트워크 사용 허용 여부
         if (Boolean.TRUE.equals(submission.getConstraints().getEnableNetwork())) {
-            if (!configService.isNetworkAllowed()) {
+            if (!featureFlagsConfig.isAllowEnableNetwork()) {
                 throw new IllegalArgumentException("Enabling network is not allowed");
             }
         }
@@ -434,81 +450,71 @@ public class SubmissionService {
                     .orElseThrow(() -> new IllegalArgumentException(
                             "Constraints with id " + request.getConstraintsId() + " not found"));
         }
+
         
-        // 2. 개별 제약조건 값들이 있는지 확인
-        if (hasCustomConstraints(request)) {
-            // 새로운 제약조건 생성 (기본값으로 채움)
-            return createAndSaveConstraints(request);
-        }
-        
-        // 3. 기본 제약조건(id=1) 사용
+        // 2. 기본 제약조건(id=1) 사용
         return constraintsRepository.findDefaultConstraints()
                 .orElseThrow(() -> new IllegalStateException("Default constraints (id=1) not found"));
-    }
-    
-    /**
-     * 요청에 개별 제약조건 값들이 있는지 확인
-     */
-    private boolean hasCustomConstraints(SubmissionRequest request) {
-        return request.getNumberOfRuns() != null ||
-               request.getCpuTimeLimit() != null ||
-               request.getCpuExtraTime() != null ||
-               request.getWallTimeLimit() != null ||
-               request.getMemoryLimit() != null ||
-               request.getStackLimit() != null ||
-               request.getMaxProcessesAndOrThreads() != null ||
-               request.getEnablePerProcessAndThreadTimeLimit() != null ||
-               request.getEnablePerProcessAndThreadMemoryLimit() != null ||
-               request.getMaxFileSize() != null ||
-               request.getCompilerOptions() != null ||
-               request.getCommandLineArguments() != null ||
-               request.getRedirectStderrToStdout() != null ||
-               request.getCallbackUrl() != null ||
-               request.getEnableNetwork() != null;
-    }
-    
-    /**
-     * 새로운 제약조건 생성 및 저장
-     * 사용자가 설정하지 않은 부분은 기본 제약조건에서 가져옴
-     */
-    private Constraints createAndSaveConstraints(SubmissionRequest request) {
-        // 기본 제약조건 가져오기
-        Constraints defaultConstraints = constraintsRepository.findDefaultConstraints()
-                .orElseThrow(() -> new IllegalStateException("Default constraints (id=1) not found"));
-        
-        // 새로운 제약조건 생성
-        Constraints newConstraints = new Constraints();
-        
-        // 사용자가 설정한 값이 있으면 사용, 없으면 기본값 사용
-        newConstraints.setNumberOfRuns(getValueOrDefault(request.getNumberOfRuns(), defaultConstraints.getNumberOfRuns()));
-        newConstraints.setCpuTimeLimit(getValueOrDefault(request.getCpuTimeLimit(), defaultConstraints.getCpuTimeLimit()));
-        newConstraints.setCpuExtraTime(getValueOrDefault(request.getCpuExtraTime(), defaultConstraints.getCpuExtraTime()));
-        newConstraints.setWallTimeLimit(getValueOrDefault(request.getWallTimeLimit(), defaultConstraints.getWallTimeLimit()));
-        newConstraints.setMemoryLimit(getValueOrDefault(request.getMemoryLimit(), defaultConstraints.getMemoryLimit()));
-        newConstraints.setStackLimit(getValueOrDefault(request.getStackLimit(), defaultConstraints.getStackLimit()));
-        newConstraints.setMaxProcessesAndOrThreads(getValueOrDefault(request.getMaxProcessesAndOrThreads(), defaultConstraints.getMaxProcessesAndOrThreads()));
-        newConstraints.setEnablePerProcessAndThreadTimeLimit(getValueOrDefault(request.getEnablePerProcessAndThreadTimeLimit(), defaultConstraints.getEnablePerProcessAndThreadTimeLimit()));
-        newConstraints.setEnablePerProcessAndThreadMemoryLimit(getValueOrDefault(request.getEnablePerProcessAndThreadMemoryLimit(), defaultConstraints.getEnablePerProcessAndThreadMemoryLimit()));
-        newConstraints.setMaxFileSize(getValueOrDefault(request.getMaxFileSize(), defaultConstraints.getMaxFileSize()));
-        newConstraints.setCompilerOptions(getValueOrDefault(request.getCompilerOptions(), defaultConstraints.getCompilerOptions()));
-        newConstraints.setCommandLineArguments(getValueOrDefault(request.getCommandLineArguments(), defaultConstraints.getCommandLineArguments()));
-        newConstraints.setRedirectStderrToStdout(getValueOrDefault(request.getRedirectStderrToStdout(), defaultConstraints.getRedirectStderrToStdout()));
-        newConstraints.setCallbackUrl(getValueOrDefault(request.getCallbackUrl(), defaultConstraints.getCallbackUrl()));
-        newConstraints.setEnableNetwork(getValueOrDefault(request.getEnableNetwork(), defaultConstraints.getEnableNetwork()));
-        
-        // 추가 파일 처리
-        if (request.getAdditionalFiles() != null && !request.getAdditionalFiles().trim().isEmpty()) {
-            newConstraints.setAdditionalFiles(base64Service.decodeToBytes(request.getAdditionalFiles()));
-        }
-        
-        return constraintsRepository.save(newConstraints);
     }
 
     private <T> T getValueOrDefault(T value, T defaultValue) {
         return value != null ? value : defaultValue;
     }
 
-    public SubmissionInputOutput findById(Long id) {
-        return submissionInputOutputRepository.findById(id).orElse(null);
+    public ExecutionInputOutput findById(Long id) {
+        return executionInputOutputRepository.findById(id).orElse(null);
+    }
+
+    /**
+     * 특정 사용자의 제출 목록을 조회합니다.
+     *
+     * @param userId 사용자 ID
+     * @param pageable 페이지네이션 정보
+     * @return 사용자의 제출 목록
+     */
+    @Transactional(readOnly = true)
+    public Page<Submission> findByUserId(Long userId, Pageable pageable) {
+        return submissionRepository.findByUser_Id(userId, pageable);
+    }
+
+    /**
+     * 익명 제출 목록을 조회합니다 (user가 null인 제출만).
+     *
+     * @param pageable 페이지네이션 정보
+     * @return 익명 제출 목록
+     */
+    @Transactional(readOnly = true)
+    public Page<Submission> findAnonymousSubmissions(Pageable pageable) {
+        return submissionRepository.findByUserIsNull(pageable);
+    }
+
+    /**
+     * 제출에 대한 사용자 접근 권한을 검증합니다.
+     *
+     * 접근 제어 규칙:
+     * 1. submission.user == null (익명 제출) → 누구나 접근 가능
+     * 2. submission.user != null && requestUserId == null → 접근 거부
+     * 3. submission.user != null && requestUserId != submission.user.id → 접근 거부
+     * 4. submission.user != null && requestUserId == submission.user.id → 접근 허용
+     *
+     * @param submission 접근 대상 제출
+     * @param requestUserId 요청한 사용자 ID (헤더에서 전달, nullable)
+     * @throws AccessDeniedException 접근 권한이 없을 때
+     */
+    public void validateAccess(Submission submission, Long requestUserId) {
+        // 익명 제출은 누구나 접근 가능
+        if (submission.getUser() == null) {
+            return;
+        }
+
+        // 회원 제출인데 요청자가 인증되지 않음
+        if (requestUserId == null) {
+            throw new AccessDeniedException("This submission requires authentication");
+        }
+
+        // 회원 제출인데 다른 사용자가 접근 시도
+        if (!submission.getUser().getId().equals(requestUserId)) {
+            throw new AccessDeniedException("You don't have permission to access this submission");
+        }
     }
 }

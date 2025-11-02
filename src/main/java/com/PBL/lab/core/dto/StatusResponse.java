@@ -1,7 +1,6 @@
 package com.PBL.lab.core.dto;
 
 import com.PBL.lab.core.enums.Status;
-import com.PBL.lab.grading.dto.GradingResponse;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;

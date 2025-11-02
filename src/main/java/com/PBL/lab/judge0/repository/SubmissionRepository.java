@@ -164,9 +164,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                    "LEFT JOIN FETCH s.constraints " +
                    "LEFT JOIN FETCH s.inputOutput " +
                    "LEFT JOIN FETCH s.language " +
-                   "WHERE s.isGrading = false " +
                    "ORDER BY s.createdAt DESC",
-           countQuery = "SELECT COUNT(DISTINCT s) FROM Submission s WHERE s.isGrading = false")
+           countQuery = "SELECT COUNT(DISTINCT s) FROM Submission s")
     Page<Submission> findAllOrderedByCreatedAt(Pageable pageable);
 
     /**
@@ -186,4 +185,32 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     @Query("SELECT s.statusId, COUNT(s) FROM Submission s GROUP BY s.statusId")
     List<Object[]> findSubmissionStatistics();
+
+    /**
+     * Find submissions by user ID
+     * - 특정 사용자의 모든 제출 조회
+     * - Fetch Join으로 constraints, language, inputOutput을 미리 로딩
+     */
+    @Query(value = "SELECT DISTINCT s FROM Submission s " +
+                   "LEFT JOIN FETCH s.constraints " +
+                   "LEFT JOIN FETCH s.inputOutput " +
+                   "LEFT JOIN FETCH s.language " +
+                   "WHERE s.user.id = :userId " +
+                   "ORDER BY s.createdAt DESC",
+           countQuery = "SELECT COUNT(DISTINCT s) FROM Submission s WHERE s.user.id = :userId")
+    Page<Submission> findByUser_Id(@Param("userId") Long userId, Pageable pageable);
+
+    /**
+     * Find anonymous submissions (user is null)
+     * - user가 null인 익명 제출만 조회
+     * - Fetch Join으로 constraints, language, inputOutput을 미리 로딩
+     */
+    @Query(value = "SELECT DISTINCT s FROM Submission s " +
+                   "LEFT JOIN FETCH s.constraints " +
+                   "LEFT JOIN FETCH s.inputOutput " +
+                   "LEFT JOIN FETCH s.language " +
+                   "WHERE s.user IS NULL " +
+                   "ORDER BY s.createdAt DESC",
+           countQuery = "SELECT COUNT(DISTINCT s) FROM Submission s WHERE s.user IS NULL")
+    Page<Submission> findByUserIsNull(Pageable pageable);
 }

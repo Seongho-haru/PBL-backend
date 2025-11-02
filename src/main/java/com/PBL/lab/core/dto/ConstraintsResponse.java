@@ -28,7 +28,7 @@ public class ConstraintsResponse {
     private Integer numberOfRuns;
 
     /**
-     * CPU 실행 시간 제한 (초)c
+     * CPU 실행 시간 제한 (초)
      * 범위: 0.0~15.0, 기본값: 5.0
      */
     @JsonProperty("cpu_time_limit")

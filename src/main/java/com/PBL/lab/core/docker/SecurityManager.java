@@ -1,11 +1,13 @@
 package com.PBL.lab.core.docker;
 
-import com.PBL.lab.core.service.ExecutionResult;
+import com.PBL.lab.core.config.ExecutionLimitsConfig;
+import com.PBL.lab.core.config.SystemConfig;
+import com.PBL.lab.core.dto.ExecutionResult;
+import com.PBL.lab.core.dto.SecurityConstraints;
+import com.PBL.lab.core.enums.FileSystemAccess;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Capability;
 import com.PBL.lab.core.entity.Language;
-import com.PBL.lab.core.service.ConfigService;
-import com.PBL.lab.judge0.service.ExecutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -40,20 +42,21 @@ import java.util.List;
 @Slf4j
 public class SecurityManager {
 
-    private final ConfigService configService; // 보안 설정 관리 서비스
+    private final ExecutionLimitsConfig executionLimitsConfig; // 실행 제한 설정
+    private final SystemConfig systemConfig; // 시스템 설정 (보안 포함)
 
     /**
      * 언어별 보안 제약사항 생성 - 프로그래밍 언어에 따른 적절한 보안 정책 설정
      * @param language 프로그래밍 언어 정보 (시간/메모리 제한 포함)
      * @return 적용할 보안 제약사항
      */
-    public ExecutionService.SecurityConstraints createConstraints(Language language) {
-        return ExecutionService.SecurityConstraints.builder()
-                .timeLimit(language.getTimeLimit() != null ? language.getTimeLimit() : configService.getCpuTimeLimit())
-                .memoryLimit(language.getMemoryLimit() != null ? language.getMemoryLimit() : configService.getMemoryLimit())
-                .processLimit(configService.getMaxProcessesAndOrThreads())
+    public SecurityConstraints createConstraints(Language language) {
+        return SecurityConstraints.builder()
+                .timeLimit(language.getTimeLimit() != null ? language.getTimeLimit() : executionLimitsConfig.getCpuTimeLimit())
+                .memoryLimit(language.getMemoryLimit() != null ? language.getMemoryLimit() : executionLimitsConfig.getMemoryLimit())
+                .processLimit(executionLimitsConfig.getMaxProcessesAndOrThreads())
                 .networkAccess(false) // 기본값: 네트워크 접근 차단
-                .fileSystemAccess(ExecutionService.FileSystemAccess.READ_ONLY) // 파일시스템 읽기 전용
+                .fileSystemAccess(FileSystemAccess.READ_ONLY) // 파일시스템 읽기 전용
                 .build();
     }
 
@@ -62,12 +65,12 @@ public class SecurityManager {
      * @param constraints 검증할 보안 제약사항
      * @return 유효성 여부
      */
-    public boolean validateConstraints(ExecutionService.SecurityConstraints constraints) {
+    public boolean validateConstraints(SecurityConstraints constraints) {
         try {
             // 시간 제한 검증 - 0보다 크고 최대 허용 시간 이하여야 함
             if (constraints.getTimeLimit() != null) {
                 if (constraints.getTimeLimit().compareTo(BigDecimal.ZERO) < 0 ||
-                    constraints.getTimeLimit().compareTo(configService.getMaxCpuTimeLimit()) > 0) {
+                    constraints.getTimeLimit().compareTo(executionLimitsConfig.getMaxCpuTimeLimit()) > 0) {
                     log.warn("Invalid time limit: {}", constraints.getTimeLimit());
                     return false;
                 }
@@ -76,7 +79,7 @@ public class SecurityManager {
             // 메모리 제한 검증 - 최소 2MB, 최대 허용 메모리 이하여야 함
             if (constraints.getMemoryLimit() != null) {
                 if (constraints.getMemoryLimit() < 2048 ||
-                    constraints.getMemoryLimit() > configService.getMaxMemoryLimit()) {
+                    constraints.getMemoryLimit() > executionLimitsConfig.getMaxMemoryLimit()) {
                     log.warn("Invalid memory limit: {}", constraints.getMemoryLimit());
                     return false;
                 }
@@ -85,7 +88,7 @@ public class SecurityManager {
             // 프로세스 제한 검증 - 최소 1개, 최대 허용 프로세스 수 이하여야 함
             if (constraints.getProcessLimit() != null) {
                 if (constraints.getProcessLimit() < 1 ||
-                    constraints.getProcessLimit() > configService.getMaxMaxProcessesAndOrThreads()) {
+                    constraints.getProcessLimit() > executionLimitsConfig.getMaxMaxProcessesAndOrThreads()) {
                     log.warn("Invalid process limit: {}", constraints.getProcessLimit());
                     return false;
                 }
@@ -103,7 +106,7 @@ public class SecurityManager {
      * @param containerId 대상 컨테이너 ID
      * @param constraints 적용할 보안 제약사항
      */
-    public void applySecurityPolicy(String containerId, ExecutionService.SecurityConstraints constraints) {
+    public void applySecurityPolicy(String containerId, SecurityConstraints constraints) {
         try {
             log.debug("Applying security policy to container: {}", containerId);
             
@@ -122,7 +125,7 @@ public class SecurityManager {
      * @param constraints 보안 제약사항
      * @return Docker 호스트 설정
      */
-    public HostConfig createSecureHostConfig(ExecutionService.SecurityConstraints constraints) {
+    public HostConfig createSecureHostConfig(SecurityConstraints constraints) {
         HostConfig hostConfig = new HostConfig();
 
         // 메모리 제한 설정 (KB를 바이트로 변환)
@@ -148,7 +151,7 @@ public class SecurityManager {
         }
 
         // 파일시스템 제약사항 - 읽기 전용 루트 파일시스템
-        if (constraints.getFileSystemAccess() == ExecutionService.FileSystemAccess.READ_ONLY) {
+        if (constraints.getFileSystemAccess() == FileSystemAccess.READ_ONLY) {
             hostConfig.withReadonlyRootfs(true);
         }
 
@@ -193,7 +196,7 @@ public class SecurityManager {
             return true;
         }
 
-        List<String> allowedSyscalls = configService.getAllowedSyscalls();
+        List<String> allowedSyscalls = systemConfig.getAllowedSyscalls();
         if (allowedSyscalls.isEmpty()) {
             return true; // No restrictions
         }

@@ -1,17 +1,17 @@
 package com.PBL.lab.judge0.controller;
 
+import com.PBL.lab.core.config.FeatureFlagsConfig;
+import com.PBL.lab.core.config.SystemConfig;
 import com.PBL.lab.judge0.dto.SubmissionRequest;
 import com.PBL.lab.judge0.dto.SubmissionResponse;
 import com.PBL.lab.judge0.entity.Submission;
+import com.PBL.lab.judge0.service.SubmissionExecutionService;
 import com.PBL.lab.judge0.service.SubmissionService;
-import com.PBL.lab.judge0.service.ExecutionService;
-import com.PBL.lab.core.service.ConfigService;
 import com.PBL.lab.core.service.Base64Service;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -56,22 +56,37 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SubmissionsController {
     private final SubmissionService submissionService;
-    private final ExecutionService executionService;
-    private final ConfigService configService;
+    private final SubmissionExecutionService submissionExecutionService;
+    private final SystemConfig systemConfig;
+    private final FeatureFlagsConfig featureFlagsConfig;
     private final Base64Service base64Service;
 
     /**
      * GET /submissions
      * 제출 목록을 페이지네이션하여 조회
+     *
+     * 필터링 규칙:
+     * - X-User-Id 없음: user가 null인 제출만 (익명 제출만)
+     * - X-User-Id: 1: User 1의 제출만
      */
     @GetMapping("/submissions")
     public ResponseEntity<?> index(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(defaultValue = "false") boolean base64_encoded,
             @RequestParam(required = false) String fields) {
 
         try {
-            Page<Submission> submissionPage = submissionService.findAll(pageable);
+            Page<Submission> submissionPage;
+
+            // userId 헤더가 있으면 해당 사용자의 제출만 조회
+            if (userId != null) {
+                submissionPage = submissionService.findByUserId(userId, pageable);
+            }
+            // userId 헤더가 없으면 익명 제출만 조회 (user가 null인 제출만)
+            else {
+                submissionPage = submissionService.findAnonymousSubmissions(pageable);
+            }
 
             List<SubmissionResponse> submissions = submissionPage.getContent().stream()
                     .map(submission -> SubmissionResponse.from(submission, base64_encoded, parseFields(fields)))
@@ -95,14 +110,23 @@ public class SubmissionsController {
      */
     @GetMapping("/submissions/{token}")
     public ResponseEntity<?> show(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PathVariable String token,
             @RequestParam(defaultValue = "false") boolean base64_encoded,
             @RequestParam(required = false) String fields) {
 
         try {
             Submission submission = submissionService.findByToken(token);
+
+            // 접근 권한 검증
+            submissionService.validateAccess(submission, userId);
+
             SubmissionResponse response = SubmissionResponse.from(submission, base64_encoded, parseFields(fields));
             return ResponseEntity.ok(response);
+        } catch (com.PBL.lab.core.exception.AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "error", e.getMessage()
+            ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
@@ -118,24 +142,25 @@ public class SubmissionsController {
      */
     @PostMapping("/submissions")
     public ResponseEntity<?> create(
-            @Valid @RequestBody SubmissionRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
+            @RequestBody SubmissionRequest request,
             @RequestParam(defaultValue = "false") boolean wait,
             @RequestParam(defaultValue = "false") boolean base64_encoded,
             @RequestParam(required = false) String fields) {
 
         // 유지보수 모드 확인
-        if (configService.isMaintenanceMode()) {
+        if (systemConfig.isMaintenanceMode()) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("error", configService.getMaintenanceMessage()));
+                    .body(Map.of("error", systemConfig.getMaintenanceMessage()));
         }
 
         // wait 파라미터 허용 여부 확인
-        if (wait && !configService.isEnableWaitResult()) {
+        if (wait && !featureFlagsConfig.isEnableWaitResult()) {
             return ResponseEntity.badRequest().body(Map.of("error", "wait not allowed"));
         }
 
         // 대기열 크기 확인
-        if (submissionService.countSubmissionsInQueue() >= configService.getMaxQueueSize()) {
+        if (submissionService.countSubmissionsInQueue() >= systemConfig.getMaxQueueSize()) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(Map.of("error", "queue is full"));
         }
@@ -149,12 +174,12 @@ public class SubmissionsController {
             }
 
             // 제출 생성
-            Submission submission = submissionService.createSubmission(request);
+            Submission submission = submissionService.createSubmission(request, userId);
 
             if (wait) {
                 // 동기 실행
                 try {
-                    executionService.executeSync(submission);
+                    submissionExecutionService.executeSync(submission);
                     submission = submissionService.findByToken(submission.getToken());
                     SubmissionResponse response = SubmissionResponse.from(submission, base64_encoded, parseFields(fields));
                     return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -166,7 +191,7 @@ public class SubmissionsController {
                 }
             } else {
                 // 비동기 실행
-                executionService.executeAsync(submission);
+                submissionExecutionService.schedule(submission.getToken());
                 return ResponseEntity.status(HttpStatus.CREATED)
                         .body(SubmissionResponse.minimal(submission.getToken()));
             }
@@ -185,16 +210,20 @@ public class SubmissionsController {
      */
     @DeleteMapping("/submissions/{token}")
     public ResponseEntity<?> destroy(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PathVariable String token,
             @RequestParam(required = false) String fields) {
 
         // 삭제 기능 활성화 여부 확인
-        if (!configService.isSubmissionDeleteEnabled()) {
+        if (!featureFlagsConfig.isEnableSubmissionDelete()) {
             return ResponseEntity.badRequest().body(Map.of("error", "delete not allowed"));
         }
 
         try {
             Submission submission = submissionService.findByToken(token);
+
+            // 접근 권한 검증
+            submissionService.validateAccess(submission, userId);
 
             // 삭제 응답에서는 base64_encoded=true 강제 적용
             SubmissionResponse response = SubmissionResponse.from(submission, true, parseFields(fields));
@@ -202,6 +231,10 @@ public class SubmissionsController {
             submissionService.deleteSubmission(token);
 
             return ResponseEntity.ok(response);
+        } catch (com.PBL.lab.core.exception.AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "error", e.getMessage()
+            ));
         } catch (IllegalArgumentException e) {
             if (e.getMessage().contains("not found")) {
                 return ResponseEntity.notFound().build();

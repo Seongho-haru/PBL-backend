@@ -3,10 +3,6 @@ package com.PBL.ai.controller;
 import com.PBL.ai.dto.GradingRequest;
 import com.PBL.ai.dto.StreamResponse;
 import com.PBL.ai.service.AssistantService;
-import com.PBL.lab.grading.entity.Grading;
-import com.PBL.lab.grading.service.GradingService;
-import com.PBL.lecture.entity.Lecture;
-import com.PBL.lecture.LectureService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +17,6 @@ import reactor.core.publisher.Flux;
 @RequiredArgsConstructor
 @Slf4j
 class AssistantController {
-    private final GradingService gradingService;
-    private final LectureService lectureService;
     private final AssistantService assistantService;
     private final ObjectMapper objectMapper;
 

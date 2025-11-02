@@ -1,72 +1,38 @@
 package com.PBL.lab.judge0.dto;
 
-import com.PBL.lab.core.dto.ConstraintsResponse;
+import com.PBL.lab.core.dto.BaseExecutionResponse;
+import com.PBL.lab.core.dto.ExecutionInputOutputDTO;
 import com.PBL.lab.core.dto.StatusResponse;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.PBL.lab.judge0.entity.Submission;
-import com.PBL.lab.core.enums.Status;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
  * Submission Response DTO
- * 
+ *
  * Data Transfer Object for returning submission data.
  * Represents the response payload for submission endpoints.
  */
 @Data
-@Builder
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class SubmissionResponse {
-
-    private String token;
-
-    private Long id;
-
-    @JsonProperty("source_code")
-    private String sourceCode;
-
-    @JsonProperty("language_id")
-    private Integer languageId;
+public class SubmissionResponse extends BaseExecutionResponse {
 
     /**
      * Input/Output 정보를 담는 DTO 객체
-     * - 전체 입출력 정보를 한 번에 관리
-     * - 코드의 가독성과 유지보수성 향상
+     * - develop 브랜치와 호환성을 위해 input_output 필드명 사용 (스네이크 케이스)
      */
     @JsonProperty("input_output")
-    private InputOutput inputOutput;
-
-    private StatusResponse status;
-
-    private ConstraintsResponse constraints;
-
-    @JsonProperty("created_at")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-    private LocalDateTime createdAt;
-
-    @JsonProperty("finished_at")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-    private LocalDateTime finishedAt;
-
-    private BigDecimal time;
-
-    @JsonProperty("wall_time")
-    private BigDecimal wallTime;
-
-    private Integer memory;
-
-    @JsonProperty("exit_code")
-    private Integer exitCode;
-
-    @JsonProperty("exit_signal")
-    private Integer exitSignal;
-
+    private ExecutionInputOutputDTO inputOutput;
 
     /**
      * Create SubmissionResponse from Submission entity
@@ -82,8 +48,8 @@ public class SubmissionResponse {
         if (submission == null) {
             return null;
         }
-        
-        SubmissionResponseBuilder builder = SubmissionResponse.builder()
+
+        return SubmissionResponse.builder()
                 .id(submission.getId())
                 .token(submission.getToken())
                 .languageId(submission.getLanguageId())
@@ -95,13 +61,9 @@ public class SubmissionResponse {
                 .memory(submission.getMemory())
                 .exitCode(submission.getExitCode())
                 .exitSignal(submission.getExitSignal())
-                .inputOutput(InputOutput.from(submission.getInputOutput()))
-                .constraints(ConstraintsResponse.from(submission.getConstraints()));
-
-        // Set source code
-        builder.sourceCode(submission.getSourceCode());
-
-        return builder.build();
+                .sourceCode(submission.getSourceCode())
+                .inputOutput(ExecutionInputOutputDTO.from(submission.getInputOutput()))
+                .build();
     }
 
     /**

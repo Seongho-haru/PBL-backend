@@ -1,17 +1,17 @@
 package com.PBL.lab.judge0.controller;
 
+import com.PBL.lab.core.config.FeatureFlagsConfig;
+import com.PBL.lab.core.config.SystemConfig;
 import com.PBL.lab.judge0.dto.SubmissionRequest;
 import com.PBL.lab.judge0.dto.SubmissionResponse;
 import com.PBL.lab.judge0.entity.Submission;
+import com.PBL.lab.judge0.service.SubmissionExecutionService;
 import com.PBL.lab.judge0.service.SubmissionService;
-import com.PBL.lab.judge0.service.ExecutionService;
-import com.PBL.lab.core.service.ConfigService;
 import com.PBL.lab.core.service.Base64Service;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -56,8 +56,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SubmissionsController {
     private final SubmissionService submissionService;
-    private final ExecutionService executionService;
-    private final ConfigService configService;
+    private final SubmissionExecutionService submissionExecutionService;
+    private final SystemConfig systemConfig;
+    private final FeatureFlagsConfig featureFlagsConfig;
     private final Base64Service base64Service;
 
     /**
@@ -118,24 +119,24 @@ public class SubmissionsController {
      */
     @PostMapping("/submissions")
     public ResponseEntity<?> create(
-            @Valid @RequestBody SubmissionRequest request,
+            @RequestBody SubmissionRequest request,
             @RequestParam(defaultValue = "false") boolean wait,
             @RequestParam(defaultValue = "false") boolean base64_encoded,
             @RequestParam(required = false) String fields) {
 
         // 유지보수 모드 확인
-        if (configService.isMaintenanceMode()) {
+        if (systemConfig.isMaintenanceMode()) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("error", configService.getMaintenanceMessage()));
+                    .body(Map.of("error", systemConfig.getMaintenanceMessage()));
         }
 
         // wait 파라미터 허용 여부 확인
-        if (wait && !configService.isEnableWaitResult()) {
+        if (wait && !featureFlagsConfig.isEnableWaitResult()) {
             return ResponseEntity.badRequest().body(Map.of("error", "wait not allowed"));
         }
 
         // 대기열 크기 확인
-        if (submissionService.countSubmissionsInQueue() >= configService.getMaxQueueSize()) {
+        if (submissionService.countSubmissionsInQueue() >= systemConfig.getMaxQueueSize()) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(Map.of("error", "queue is full"));
         }
@@ -154,7 +155,7 @@ public class SubmissionsController {
             if (wait) {
                 // 동기 실행
                 try {
-                    executionService.executeSync(submission);
+                    submissionExecutionService.executeSync(submission);
                     submission = submissionService.findByToken(submission.getToken());
                     SubmissionResponse response = SubmissionResponse.from(submission, base64_encoded, parseFields(fields));
                     return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -166,7 +167,7 @@ public class SubmissionsController {
                 }
             } else {
                 // 비동기 실행
-                executionService.executeAsync(submission);
+                submissionExecutionService.schedule(submission.getToken());
                 return ResponseEntity.status(HttpStatus.CREATED)
                         .body(SubmissionResponse.minimal(submission.getToken()));
             }
@@ -189,7 +190,7 @@ public class SubmissionsController {
             @RequestParam(required = false) String fields) {
 
         // 삭제 기능 활성화 여부 확인
-        if (!configService.isSubmissionDeleteEnabled()) {
+        if (!featureFlagsConfig.isEnableSubmissionDelete()) {
             return ResponseEntity.badRequest().body(Map.of("error", "delete not allowed"));
         }
 

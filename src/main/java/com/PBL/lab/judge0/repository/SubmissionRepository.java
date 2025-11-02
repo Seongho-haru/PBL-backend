@@ -164,9 +164,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                    "LEFT JOIN FETCH s.constraints " +
                    "LEFT JOIN FETCH s.inputOutput " +
                    "LEFT JOIN FETCH s.language " +
-                   "WHERE s.isGrading = false " +
                    "ORDER BY s.createdAt DESC",
-           countQuery = "SELECT COUNT(DISTINCT s) FROM Submission s WHERE s.isGrading = false")
+           countQuery = "SELECT COUNT(DISTINCT s) FROM Submission s")
     Page<Submission> findAllOrderedByCreatedAt(Pageable pageable);
 
     /**

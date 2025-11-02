@@ -47,11 +47,11 @@ langchain4j:
   http-client:
     type: spring-rest-client
   chat-model:
-    api-key: ??
+    api-key: ${OPENAI_API_KEY:??}
     model-name: gpt-4o-mini
     embedding-model-name: text-embedding-3-small
   qdrant:
-    host: http://localhost
+    host: localhost
     port: 6333
 org:
   jobrunr:

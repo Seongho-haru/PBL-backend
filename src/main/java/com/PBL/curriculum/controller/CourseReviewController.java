@@ -128,17 +128,22 @@ public class CourseReviewController {
     }
 
     /**
-     * 커리큘럼 문의 목록 조회 (공개만)
+     * 커리큘럼 문의 목록 조회
+     * - 일반 사용자: 공개 문의만 조회
+     * - 관리자(userId=1) 또는 커리큘럼 작성자: 공개 + 비공개 문의 모두 조회
      */
     @GetMapping("/inquiries")
-    @Operation(summary = "커리큘럼 문의 목록 조회", description = "커리큘럼의 공개 문의 목록을 조회합니다.")
+    @Operation(summary = "커리큘럼 문의 목록 조회", 
+               description = "커리큘럼의 문의 목록을 조회합니다. " +
+                           "일반 사용자는 공개 문의만, 관리자(userId=1) 또는 커리큘럼 작성자는 비공개 문의도 조회할 수 있습니다.")
     public ResponseEntity<Page<CourseReviewDTOs.CourseReviewResponse>> getCurriculumInquiries(
             @PathVariable Long curriculumId,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-        log.info("커리큘럼 문의 목록 조회 - 커리큘럼 ID: {}", curriculumId);
+        log.info("커리큘럼 문의 목록 조회 - 커리큘럼 ID: {}, 사용자 ID: {}", curriculumId, userId);
         Page<CourseReviewDTOs.CourseReviewResponse> inquiries = courseReviewService.getCurriculumInquiries(
-                curriculumId, pageable
+                curriculumId, userId, pageable
         );
         return ResponseEntity.ok(inquiries);
     }

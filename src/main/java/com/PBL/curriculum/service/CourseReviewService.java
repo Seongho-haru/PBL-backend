@@ -219,15 +219,35 @@ public class CourseReviewService {
     }
 
     /**
-     * 커리큘럼의 문의 목록 조회 (공개만)
+     * 커리큘럼의 문의 목록 조회
+     * - 일반 사용자 (userId가 null이거나 권한 없음): 공개 문의만 조회
+     * - 관리자 (userId = 1) 또는 커리큘럼 작성자: 공개 + 비공개 문의 모두 조회
      */
     @Transactional(readOnly = true)
-    public Page<CourseReviewDTOs.CourseReviewResponse> getCurriculumInquiries(Long curriculumId, Pageable pageable) {
-        log.info("커리큘럼 문의 목록 조회 - 커리큘럼 ID: {}", curriculumId);
+    public Page<CourseReviewDTOs.CourseReviewResponse> getCurriculumInquiries(
+            Long curriculumId, Long userId, Pageable pageable) {
+        log.info("커리큘럼 문의 목록 조회 - 커리큘럼 ID: {}, 사용자 ID: {}", curriculumId, userId);
 
-        Page<CourseReview> inquiries = courseReviewRepository.findByCurriculumIdAndIsInquiryPublicOrderByCreatedAtDesc(curriculumId, pageable);
+        Page<CourseReview> inquiries;
+        
+        // 사용자 ID가 있고 (관리자이거나 커리큘럼 작성자인 경우) 비공개 문의도 조회 가능
+        if (userId != null && (userId == 1L || isCurriculumAuthor(curriculumId, userId))) {
+            log.info("관리자 또는 커리큘럼 작성자로 인식 - 공개 및 비공개 문의 모두 조회");
+            inquiries = courseReviewRepository.findInquiriesAccessibleByUser(curriculumId, userId, pageable);
+        } else {
+            // 일반 사용자는 공개 문의만 조회
+            inquiries = courseReviewRepository.findByCurriculumIdAndIsInquiryPublicOrderByCreatedAtDesc(curriculumId, pageable);
+        }
 
         return inquiries.map(CourseReviewDTOs.CourseReviewResponse::from);
+    }
+
+    /**
+     * 특정 사용자가 커리큘럼의 작성자인지 확인
+     */
+    private boolean isCurriculumAuthor(Long curriculumId, Long userId) {
+        Curriculum curriculum = curriculumRepository.findById(curriculumId).orElse(null);
+        return curriculum != null && curriculum.isAuthor(userId);
     }
 
     /**

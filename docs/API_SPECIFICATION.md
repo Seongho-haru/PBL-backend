@@ -1583,9 +1583,50 @@ X-User-Id: 1
 }
 ```
 
-### 7. 커리큘럼 문의 목록 조회 (공개만)
+### 7. 커리큘럼 문의 목록 조회
 
 **GET** `/api/curriculums/{curriculumId}/reviews/inquiries?page=0&size=10`
+
+커리큘럼의 문의 목록을 조회합니다.
+
+**Request Headers (선택사항):**
+
+```
+X-User-Id: 1  // 관리자 또는 커리큘럼 작성자인 경우 비공개 문의도 조회 가능
+```
+
+**참고**:
+
+- 일반 사용자: 공개 문의만 조회 가능
+- 관리자(userId=1) 또는 커리큘럼 작성자: 공개 및 비공개 문의 모두 조회 가능
+
+**Response (200 OK):**
+
+```json
+{
+  "content": [
+    {
+      "id": 2,
+      "curriculumId": 100,
+      "curriculumTitle": "Spring Boot 기초 강의",
+      "authorId": 1,
+      "authorUsername": "김개발",
+      "isReview": false,
+      "rating": null,
+      "content": "강의 자료는 언제 제공되나요?",
+      "isPublic": true,
+      "createdAt": "2025-01-01T10:00:00",
+      "updatedAt": "2025-01-01T10:00:00"
+    }
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 10
+  },
+  "totalElements": 1,
+  "totalPages": 1
+}
+```
 
 ### 8. 내 리뷰 조회
 
@@ -1633,7 +1674,333 @@ X-User-Id: 1
 ]
 ```
 
-### 10. 커리큘럼 평균 평점 조회
+### 10. 리뷰 답글 목록 조회
+
+**GET** `/api/curriculums/{curriculumId}/reviews/{reviewId}/replies`
+
+특정 리뷰에 대한 답글 목록을 조회합니다.
+
+**Response (200 OK):**
+
+```json
+[
+  {
+    "id": 1,
+    "inquiryId": 1,
+    "authorId": 3,
+    "authorUsername": "이선생",
+    "content": "좋은 리뷰 감사합니다!",
+    "createdAt": "2025-01-01T11:00:00",
+    "updatedAt": "2025-01-01T11:00:00"
+  }
+]
+```
+
+**에러 응답:**
+
+- **404 Not Found**: 리뷰를 찾을 수 없음
+- **500 Internal Server Error**: 서버 내부 오류
+
+### 10-1. 리뷰 답글 단건 조회
+
+**GET** `/api/curriculums/{curriculumId}/reviews/{reviewId}/replies/{replyId}`
+
+특정 답글을 조회합니다.
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "inquiryId": 1,
+  "authorId": 3,
+  "authorUsername": "이선생",
+  "content": "좋은 리뷰 감사합니다!",
+  "createdAt": "2025-01-01T11:00:00",
+  "updatedAt": "2025-01-01T11:00:00"
+}
+```
+
+### 10-2. 리뷰 답글 작성
+
+**POST** `/api/curriculums/{curriculumId}/reviews/{reviewId}/replies`
+
+리뷰에 답글을 작성합니다.
+
+**Request Headers:**
+
+```
+X-User-Id: 3
+Content-Type: application/json
+```
+
+**Request Body:**
+
+```json
+{
+  "content": "좋은 리뷰 감사합니다!"
+}
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "id": 1,
+  "inquiryId": 1,
+  "authorId": 3,
+  "authorUsername": "이선생",
+  "content": "좋은 리뷰 감사합니다!",
+  "createdAt": "2025-01-01T11:00:00",
+  "updatedAt": "2025-01-01T11:00:00"
+}
+```
+
+**에러 응답:**
+
+- **400 Bad Request**: 잘못된 요청
+- **401 Unauthorized**: X-User-Id 헤더 누락
+- **403 Forbidden**: 권한 없음 (정지된 사용자)
+- **404 Not Found**: 리뷰를 찾을 수 없음
+- **500 Internal Server Error**: 서버 내부 오류
+
+### 10-3. 리뷰 답글 수정
+
+**PUT** `/api/curriculums/{curriculumId}/reviews/{reviewId}/replies/{replyId}`
+
+작성한 답글을 수정합니다.
+
+**Request Headers:**
+
+```
+X-User-Id: 3
+Content-Type: application/json
+```
+
+**Request Body:**
+
+```json
+{
+  "content": "수정된 답글 내용입니다."
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "inquiryId": 1,
+  "authorId": 3,
+  "authorUsername": "이선생",
+  "content": "수정된 답글 내용입니다.",
+  "createdAt": "2025-01-01T11:00:00",
+  "updatedAt": "2025-01-01T13:00:00"
+}
+```
+
+### 10-4. 리뷰 답글 삭제
+
+**DELETE** `/api/curriculums/{curriculumId}/reviews/{reviewId}/replies/{replyId}`
+
+작성한 답글을 삭제합니다.
+
+**Request Headers:**
+
+```
+X-User-Id: 3
+```
+
+**Response (204 No Content)**
+
+### 11. 문의 답글 목록 조회
+
+**GET** `/api/curriculums/{curriculumId}/reviews/inquiries/{inquiryId}/replies`
+
+특정 문의에 대한 답글 목록을 조회합니다.
+
+**Request Headers (선택사항):**
+
+```
+X-User-Id: 3  // 비공개 문의의 답글 조회 시 필요 (관리자 또는 커리큘럼 작성자)
+```
+
+**참고**: 비공개 문의의 답글은 관리자(userId=1) 또는 커리큘럼 작성자만 조회할 수 있습니다.
+
+**Response (200 OK):**
+
+```json
+[
+  {
+    "id": 1,
+    "inquiryId": 2,
+    "authorId": 3,
+    "authorUsername": "이선생",
+    "content": "강의 자료는 다음 주에 제공될 예정입니다.",
+    "createdAt": "2025-01-01T11:00:00",
+    "updatedAt": "2025-01-01T11:00:00"
+  },
+  {
+    "id": 2,
+    "inquiryId": 2,
+    "authorId": 4,
+    "authorUsername": "박강사",
+    "content": "추가로 질문이 있으시면 언제든 말씀해주세요.",
+    "createdAt": "2025-01-01T12:00:00",
+    "updatedAt": "2025-01-01T12:00:00"
+  }
+]
+```
+
+**에러 응답:**
+
+- **403 Forbidden**: 비공개 문의의 답글을 조회할 권한이 없음
+- **404 Not Found**: 문의를 찾을 수 없음
+- **500 Internal Server Error**: 서버 내부 오류
+
+### 11-1. 문의 답글 단건 조회
+
+**GET** `/api/curriculums/{curriculumId}/reviews/inquiries/{inquiryId}/replies/{replyId}`
+
+특정 답글을 조회합니다.
+
+**Request Headers (선택사항):**
+
+```
+X-User-Id: 3  // 비공개 문의의 답글 조회 시 필요 (관리자 또는 커리큘럼 작성자)
+```
+
+**참고**: 비공개 문의의 답글은 관리자(userId=1) 또는 커리큘럼 작성자만 조회할 수 있습니다.
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "inquiryId": 2,
+  "authorId": 3,
+  "authorUsername": "이선생",
+  "content": "강의 자료는 다음 주에 제공될 예정입니다.",
+  "createdAt": "2025-01-01T11:00:00",
+  "updatedAt": "2025-01-01T11:00:00"
+}
+```
+
+**에러 응답:**
+
+- **403 Forbidden**: 비공개 문의의 답글을 조회할 권한이 없음
+- **404 Not Found**: 답글을 찾을 수 없음
+- **500 Internal Server Error**: 서버 내부 오류
+
+### 12. 문의 답글 작성
+
+**POST** `/api/curriculums/{curriculumId}/reviews/inquiries/{inquiryId}/replies`
+
+문의에 답글을 작성합니다.
+
+**Request Headers:**
+
+```
+X-User-Id: 3
+Content-Type: application/json
+```
+
+**Request Body:**
+
+```json
+{
+  "content": "강의 자료는 다음 주에 제공될 예정입니다."
+}
+```
+
+**Response (201 Created):**
+
+```json
+{
+  "id": 1,
+  "inquiryId": 2,
+  "authorId": 3,
+  "authorUsername": "이선생",
+  "content": "강의 자료는 다음 주에 제공될 예정입니다.",
+  "createdAt": "2025-01-01T11:00:00",
+  "updatedAt": "2025-01-01T11:00:00"
+}
+```
+
+**에러 응답:**
+
+- **400 Bad Request**: 잘못된 요청
+- **401 Unauthorized**: X-User-Id 헤더 누락
+- **403 Forbidden**: 권한 없음 (정지된 사용자 또는 비공개 문의에 답글 작성 권한 없음)
+- **404 Not Found**: 문의를 찾을 수 없음
+- **500 Internal Server Error**: 서버 내부 오류
+
+**참고**: 비공개 문의에 답글을 작성하려면 관리자(userId=1) 또는 커리큘럼 작성자여야 합니다.
+
+### 13. 문의 답글 수정
+
+**PUT** `/api/curriculums/{curriculumId}/reviews/inquiries/{inquiryId}/replies/{replyId}`
+
+작성한 답글을 수정합니다.
+
+**Request Headers:**
+
+```
+X-User-Id: 3
+Content-Type: application/json
+```
+
+**Request Body:**
+
+```json
+{
+  "content": "수정된 답글 내용입니다."
+}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "id": 1,
+  "inquiryId": 2,
+  "authorId": 3,
+  "authorUsername": "이선생",
+  "content": "수정된 답글 내용입니다.",
+  "createdAt": "2025-01-01T11:00:00",
+  "updatedAt": "2025-01-01T13:00:00"
+}
+```
+
+**에러 응답:**
+
+- **401 Unauthorized**: X-User-Id 헤더 누락
+- **403 Forbidden**: 권한 없음 (본인이 작성한 답글이 아님)
+- **404 Not Found**: 답글을 찾을 수 없음
+- **500 Internal Server Error**: 서버 내부 오류
+
+### 14. 문의 답글 삭제
+
+**DELETE** `/api/curriculums/{curriculumId}/reviews/inquiries/{inquiryId}/replies/{replyId}`
+
+작성한 답글을 삭제합니다.
+
+**Request Headers:**
+
+```
+X-User-Id: 3
+```
+
+**Response (204 No Content)**
+
+**에러 응답:**
+
+- **401 Unauthorized**: X-User-Id 헤더 누락
+- **403 Forbidden**: 권한 없음 (본인이 작성한 답글이 아님)
+- **404 Not Found**: 답글을 찾을 수 없음
+- **500 Internal Server Error**: 서버 내부 오류
+
+### 15. 커리큘럼 평균 평점 조회
 
 **GET** `/api/curriculums/{curriculumId}/reviews/average-rating`
 

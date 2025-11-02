@@ -34,6 +34,17 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Long
     );
 
     /**
+     * 특정 커리큘럼의 모든 문의 조회 (공개 + 관리자/작성자는 비공개 포함)
+     */
+    @Query("SELECT r FROM CourseReview r WHERE r.curriculum.id = :curriculumId AND r.isReview = false " +
+           "AND (r.isPublic = true OR :userId = 1L OR r.curriculum.author.id = :userId) ORDER BY r.createdAt DESC")
+    Page<CourseReview> findInquiriesAccessibleByUser(
+            @Param("curriculumId") Long curriculumId,
+            @Param("userId") Long userId,
+            Pageable pageable
+    );
+
+    /**
      * 사용자가 작성한 리뷰 조회 (공개 여부 무관)
      */
     @Query("SELECT r FROM CourseReview r WHERE r.curriculum.id = :curriculumId AND r.author.id = :userId AND r.isReview = true")

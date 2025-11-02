@@ -85,5 +85,53 @@ public class CourseReviewDTOs {
             return response;
         }
     }
+
+    /**
+     * 문의 답글 작성 요청
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CreateInquiryReplyRequest {
+        private String content;
+    }
+
+    /**
+     * 문의 답글 수정 요청
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateInquiryReplyRequest {
+        private String content;
+    }
+
+    /**
+     * 문의 답글 응답
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class InquiryReplyResponse {
+        private Long id;
+        private Long inquiryId;
+        private Long authorId;
+        private String authorUsername;
+        private String content;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+
+        public static InquiryReplyResponse from(com.PBL.curriculum.entity.InquiryReply reply) {
+            InquiryReplyResponse response = new InquiryReplyResponse();
+            response.setId(reply.getId());
+            response.setInquiryId(reply.getReview().getId());
+            response.setAuthorId(reply.getAuthor().getId());
+            response.setAuthorUsername(reply.getAuthor().getUsername());
+            response.setContent(reply.getContent());
+            response.setCreatedAt(reply.getCreatedAt());
+            response.setUpdatedAt(reply.getUpdatedAt());
+            return response;
+        }
+    }
 }
 

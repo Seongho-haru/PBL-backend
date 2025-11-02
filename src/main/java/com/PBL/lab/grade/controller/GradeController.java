@@ -223,7 +223,6 @@ public class GradeController {
      */
     @GetMapping(value = {"/grade/{token}/progress", "/grading/{token}/progress"}, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter getGradeProgressSSE(
-            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PathVariable String token,
             boolean base64_encoded,
             String fields) {
@@ -232,9 +231,6 @@ public class GradeController {
         try {
             // 채점이 존재하는지 확인
             Grade grade = gradeService.findByToken(token);
-
-            // 접근 권한 검증
-            gradeService.validateAccess(grade, userId);
 
             // 실제 진행상황 업데이트를 위한 이벤트 리스너 등록
             gradeProgressService.registerProgressListener(token, emitter);

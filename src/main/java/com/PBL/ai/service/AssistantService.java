@@ -1,6 +1,7 @@
 package com.PBL.ai.service;
 
-import com.PBL.ai.config.Assisdent;
+import com.PBL.ai.agent.ExplanationAgent;
+import com.PBL.ai.config.ChatMemoryStoreConfig;
 import com.PBL.ai.config.RAGconfig;
 import com.PBL.ai.dto.GradingRequest;
 import com.PBL.ai.tools.*;
@@ -8,10 +9,8 @@ import com.PBL.lab.grade.entity.Grade;
 import com.PBL.lab.grade.service.GradeService;
 import com.PBL.lecture.LectureService;
 import com.PBL.lecture.entity.Lecture;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.service.AiServices;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,17 +31,7 @@ public class AssistantService {
     private final RAGconfig ragconfig;
     private final GradeService gradeService;
     private final LectureService lectureService;
-    private Assisdent assisdent;
-
-    @PostConstruct
-    public void init(){
-        this.assisdent = AiServices.builder(Assisdent.class)
-                .streamingChatModel(streamingChatModel)
-                .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
-                .contentRetriever(ragconfig.lectureContentRetriever())
-                .tools(bookTools, submissionTools, lectureTools, curriculumTools, communityTools)
-                .build();
-    }
+    private final ChatMemoryStoreConfig chatMemoryStoreConfig;
 
     /**
      * 스트리밍 방식으로 분석 및 해설 제공
@@ -58,6 +47,12 @@ public class AssistantService {
         // 2. 문제 정보 가져오기
         Lecture lecture = lectureService.getLecture(request.getProblemId())
                 .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + request.getProblemId()));
+
+        ExplanationAgent assisdent = AiServices.builder(ExplanationAgent.class)
+                .streamingChatModel(streamingChatModel)
+                .contentRetriever(ragconfig.lectureContentRetriever())
+                .tools(submissionTools, lectureTools, curriculumTools)
+                .build();
 
         return assisdent.gradingStream(grade.toString(), lecture.toString());
     }

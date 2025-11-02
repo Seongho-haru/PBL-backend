@@ -1,4 +1,4 @@
-package com.PBL.ai.config;
+package com.PBL.ai.agent;
 
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
@@ -7,7 +7,7 @@ import dev.langchain4j.service.spring.AiService;
 import reactor.core.publisher.Flux;
 
 @AiService
-public interface Assisdent {
+public interface ExplanationAgent {
     @SystemMessage("""
             당신은 친절하고 전문적인 코딩 문제 해설 AI입니다.
             학습자의 코드를 분석하고 이해하기 쉬운 피드백을 제공하는 것이 목표입니다.

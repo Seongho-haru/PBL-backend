@@ -15,6 +15,7 @@ import com.PBL.user.User;
 import com.PBL.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +43,9 @@ public class EnrollmentService {
 
     /**
      * 커리큘럼 수강 신청
+     * 캐시 무효화: 사용자별 추천 결과 캐시 삭제
      */
+    @CacheEvict(value = {"personalizedCurriculums", "unifiedRecommendations"}, allEntries = true)
     @Transactional
     public Enrollment enrollInCurriculum(Long userId, Long curriculumId) {
         log.info("수강 신청 시작 - 사용자 ID: {}, 커리큘럼 ID: {}", userId, curriculumId);
@@ -78,7 +81,9 @@ public class EnrollmentService {
 
     /**
      * 수강 취소
+     * 캐시 무효화: 사용자별 추천 결과 캐시 삭제
      */
+    @CacheEvict(value = {"personalizedCurriculums", "unifiedRecommendations"}, allEntries = true)
     @Transactional
     public void cancelEnrollment(Long userId, Long enrollmentId) {
         log.info("수강 취소 시작 - 사용자 ID: {}, 수강 ID: {}", userId, enrollmentId);

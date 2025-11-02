@@ -16,6 +16,7 @@ import com.PBL.user.User;
 import com.PBL.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +43,10 @@ public class RecommendationService {
     /**
      * 개인화된 커리큘럼 추천
      * Priority 2
+     * 캐싱: 사용자별 추천 결과를 캐싱하여 성능 향상
      */
+    @Cacheable(value = "personalizedCurriculums", key = "#userId + ':' + #page + ':' + #size")
+    @Transactional(readOnly = true)
     public Map<String, Object> getPersonalizedCurriculums(Long userId, int page, int size) {
         log.info("개인화 추천 요청 - 사용자 ID: {}, 페이지: {}, 크기: {}", userId, page, size);
 
@@ -62,8 +66,8 @@ public class RecommendationService {
                 .map(e -> e.getCurriculum().getId())
                 .collect(Collectors.toSet());
 
-        // 4. 점수 계산 및 정렬
-        List<CurriculumScore> scoredCurriculums = allCurriculums.stream()
+        // 4. 점수 계산 및 정렬 (병렬 처리 적용)
+        List<CurriculumScore> scoredCurriculums = allCurriculums.parallelStream()
                 .filter(c -> !enrolledCurriculumIds.contains(c.getId()))
                 .map(c -> {
                     BigDecimal score = calculateCurriculumScore(c, userCategories, userTags, preferredDifficulty);
@@ -106,7 +110,10 @@ public class RecommendationService {
     /**
      * 통합 추천 (커리큘럼 + 강의 혼합)
      * 공개된 커리큘럼과 강의를 점수 기준으로 혼합하여 추천
+     * 캐싱: 사용자별 추천 결과를 캐싱하여 성능 향상
      */
+    @Cacheable(value = "unifiedRecommendations", key = "#userId + ':' + #page + ':' + #size")
+    @Transactional(readOnly = true)
     public Map<String, Object> getUnifiedRecommendations(Long userId, int page, int size) {
         log.info("통합 추천 요청 - 사용자 ID: {}, 페이지: {}, 크기: {}", userId, page, size);
 
@@ -123,7 +130,8 @@ public class RecommendationService {
         Set<Long> enrolledCurriculumIds = enrollments.stream()
                 .map(e -> e.getCurriculum().getId())
                 .collect(Collectors.toSet());
-        List<UnifiedScore> curriculumScores = allCurriculums.stream()
+        // 병렬 처리로 성능 향상
+        List<UnifiedScore> curriculumScores = allCurriculums.parallelStream()
                 .filter(c -> !enrolledCurriculumIds.contains(c.getId()))
                 .map(c -> {
                     BigDecimal score = calculateCurriculumScore(c, userCategories, userTags, preferredDifficulty);
@@ -133,10 +141,10 @@ public class RecommendationService {
                 .filter(us -> us.score.compareTo(BigDecimal.ZERO) > 0)
                 .collect(Collectors.toList());
 
-        // 3. 공개 강의 추천 (개인화)
+        // 3. 공개 강의 추천 (개인화) - 병렬 처리 적용
         List<Lecture> allPublicLectures = lectureRepository.findByIsPublicTrueOrderByCreatedAtDesc();
         Set<Long> excludedLectureIds = getExcludedLectureIds(userId, null);
-        List<UnifiedScore> lectureScores = allPublicLectures.stream()
+        List<UnifiedScore> lectureScores = allPublicLectures.parallelStream()
                 .filter(l -> !excludedLectureIds.contains(l.getId()))
                 .map(l -> {
                     BigDecimal score = calculateLecturePersonalizedScore(l, userCategories, userTags, preferredDifficulty);
@@ -306,8 +314,8 @@ public class RecommendationService {
         // 4. 기준 강의 및 사용자가 이미 학습한 강의 제외
         Set<Long> excludedLectureIds = getExcludedLectureIds(userId, lectureId);
 
-        // 5. 점수 계산 및 정렬 (카테고리/난이도가 다르더라도 점수로 순위 결정)
-        List<LectureScore> scoredLectures = allPublicProblemLectures.stream()
+        // 5. 점수 계산 및 정렬 (카테고리/난이도가 다르더라도 점수로 순위 결정) - 병렬 처리 적용
+        List<LectureScore> scoredLectures = allPublicProblemLectures.parallelStream()
                 .filter(l -> !excludedLectureIds.contains(l.getId()))
                 .map(l -> {
                     BigDecimal score = calculateLectureSimilarityScore(l, baseLecture, tags);

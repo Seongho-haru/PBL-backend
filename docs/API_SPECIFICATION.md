@@ -1582,6 +1582,12 @@ Content-Type: application/json
 
 **POST** `/api/qna/answers/{answerId}/accept`
 
+답변을 채택합니다. 질문 작성자만 채택 가능합니다.
+
+**동작 방식:**
+- 답변이 채택되면 해당 질문의 상태가 자동으로 `RESOLVED`(해결됨)로 변경됩니다.
+- 같은 질문에 이미 채택된 답변이 있는 경우, 기존 채택이 취소되고 새 답변이 채택됩니다.
+
 **Request Headers:**
 
 ```
@@ -1596,9 +1602,48 @@ X-User-Id: 1
 }
 ```
 
+**Error Response:**
+
+- `401 Unauthorized`: X-User-Id 헤더 누락
+- `403 Forbidden`: 권한 없음 (질문 작성자가 아님)
+- `404 Not Found`: 답변을 찾을 수 없음
+- `500 Internal Server Error`: 서버 내부 오류
+
 ---
 
-### 6. 질문 좋아요
+### 6. 답변 채택 취소
+
+**DELETE** `/api/qna/answers/{answerId}/accept`
+
+답변의 채택을 취소합니다. 질문 작성자만 취소 가능합니다.
+
+**동작 방식:**
+- 답변 채택이 취소되면 해당 질문의 상태가 자동으로 `UNRESOLVED`(미해결)로 변경됩니다.
+
+**Request Headers:**
+
+```
+X-User-Id: 1
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "message": "답변 채택이 취소되었습니다."
+}
+```
+
+**Error Response:**
+
+- `401 Unauthorized`: X-User-Id 헤더 누락
+- `403 Forbidden`: 권한 없음 (질문 작성자가 아님)
+- `404 Not Found`: 답변을 찾을 수 없음
+- `500 Internal Server Error`: 서버 내부 오류
+
+---
+
+### 7. 질문 좋아요
 
 **POST** `/api/qna/questions/{questionId}/like`
 
@@ -1612,7 +1657,7 @@ X-User-Id: 1
 
 ---
 
-### 7. 답변 좋아요
+### 8. 답변 좋아요
 
 **POST** `/api/qna/answers/{answerId}/like`
 
@@ -1626,7 +1671,7 @@ X-User-Id: 1
 
 ---
 
-### 8. 질문 통계 조회
+### 9. 질문 통계 조회
 
 **GET** `/api/qna/questions/stats`
 

@@ -4,6 +4,7 @@ import com.PBL.qna.dto.QnADTOs;
 import com.PBL.qna.entity.Question;
 import com.PBL.qna.enums.QuestionCategory;
 import com.PBL.qna.enums.QuestionStatus;
+import com.PBL.qna.repository.AnswerRepository;
 import com.PBL.qna.repository.QuestionRepository;
 import com.PBL.user.User;
 import com.PBL.user.UserRepository;
@@ -25,6 +26,7 @@ import java.util.Map;
 public class QuestionService {
 
     private final QuestionRepository questionRepository;
+    private final AnswerRepository answerRepository;
     private final UserRepository userRepository;
     private final UserValidationService userValidationService;
 
@@ -200,6 +202,12 @@ public class QuestionService {
         // 현재 상태 확인 후 토글
         boolean isResolved = question.getStatus() == QuestionStatus.RESOLVED;
         if (isResolved) {
+            // RESOLVED → UNRESOLVED로 변경하려는 경우
+            // 채택된 답변이 있으면 변경 불가
+            boolean hasAcceptedAnswer = answerRepository.findAcceptedAnswerByQuestionId(questionId).isPresent();
+            if (hasAcceptedAnswer) {
+                throw new RuntimeException("채택된 답변이 있어 질문을 미해결 상태로 변경할 수 없습니다. 먼저 답변 채택을 취소해주세요.");
+            }
             question.markAsUnresolved();
         } else {
             question.markAsResolved();
@@ -234,6 +242,12 @@ public class QuestionService {
         // 작성자 확인
         if (!question.getAuthor().getId().equals(userId)) {
             throw new RuntimeException("질문 상태를 변경할 권한이 없습니다.");
+        }
+
+        // 채택된 답변이 있으면 변경 불가
+        boolean hasAcceptedAnswer = answerRepository.findAcceptedAnswerByQuestionId(questionId).isPresent();
+        if (hasAcceptedAnswer) {
+            throw new RuntimeException("채택된 답변이 있어 질문을 미해결 상태로 변경할 수 없습니다. 먼저 답변 채택을 취소해주세요.");
         }
 
         question.markAsUnresolved();

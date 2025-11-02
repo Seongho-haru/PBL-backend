@@ -1,5 +1,5 @@
--- Create grading table for storing grading submissions
-CREATE TABLE IF NOT EXISTS grading (
+-- Create grade table for storing grade submissions
+CREATE TABLE IF NOT EXISTS grade (
     id BIGSERIAL PRIMARY KEY,
     token VARCHAR(36) UNIQUE NOT NULL,
     source_code TEXT,
@@ -34,15 +34,15 @@ CREATE TABLE IF NOT EXISTS grading (
     constraints_id BIGINT NOT NULL,
     
     FOREIGN KEY (language_id) REFERENCES languages(id),
-    FOREIGN KEY (input_output_id) REFERENCES submission_input_output(id),
+    FOREIGN KEY (input_output_id) REFERENCES input_output(id),
     FOREIGN KEY (constraints_id) REFERENCES submission_constraints(id)
 );
 
--- Create indexes for grading table
-CREATE INDEX IF NOT EXISTS idx_grading_token ON grading(token);
-CREATE INDEX IF NOT EXISTS idx_grading_status ON grading(status_id);
-CREATE INDEX IF NOT EXISTS idx_grading_created_at ON grading(created_at);
-CREATE INDEX IF NOT EXISTS idx_grading_problem_id ON grading(problem_id);
+-- Create indexes for grade table
+CREATE INDEX IF NOT EXISTS idx_grade_token ON grade(token);
+CREATE INDEX IF NOT EXISTS idx_grade_status ON grade(status_id);
+CREATE INDEX IF NOT EXISTS idx_grade_created_at ON grade(created_at);
+CREATE INDEX IF NOT EXISTS idx_grade_problem_id ON grade(problem_id);
 
 
 

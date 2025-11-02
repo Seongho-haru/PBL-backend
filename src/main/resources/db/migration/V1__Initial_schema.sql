@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS languages (
     docker_run_command TEXT
 );
 
--- Create submission_input_output table matching SubmissionInputOutput entity
-CREATE TABLE IF NOT EXISTS submission_input_output (
+-- Create input_output table matching ExecutionInputOutput entity
+CREATE TABLE IF NOT EXISTS input_output (
     id BIGSERIAL PRIMARY KEY,
     stdin TEXT,
     expected_output TEXT,
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     constraints_id BIGINT NOT NULL,
     
     FOREIGN KEY (language_id) REFERENCES languages(id),
-    FOREIGN KEY (input_output_id) REFERENCES submission_input_output(id),
+    FOREIGN KEY (input_output_id) REFERENCES input_output(id),
     FOREIGN KEY (constraints_id) REFERENCES submission_constraints(id)
 );
 

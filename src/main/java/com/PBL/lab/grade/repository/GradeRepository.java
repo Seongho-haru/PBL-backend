@@ -83,4 +83,56 @@ public interface GradeRepository extends JpaRepository<Grade, Long> {
      * 토큰 존재 여부 확인
      */
     boolean existsByToken(String token);
+
+    /**
+     * 특정 사용자의 채점 목록을 페이지네이션하여 조회
+     * - Fetch Join으로 language, constraints, inputOutput을 미리 로딩하여 Lazy Loading 문제 방지
+     */
+    @Query(value = "SELECT DISTINCT g FROM Grade g " +
+                   "LEFT JOIN FETCH g.language " +
+                   "LEFT JOIN FETCH g.constraints " +
+                   "LEFT JOIN FETCH g.inputOutput " +
+                   "WHERE g.user.id = :userId " +
+                   "ORDER BY g.createdAt DESC",
+           countQuery = "SELECT COUNT(DISTINCT g) FROM Grade g WHERE g.user.id = :userId")
+    Page<Grade> findByUser_Id(@Param("userId") Long userId, Pageable pageable);
+
+    /**
+     * 익명 채점 목록을 페이지네이션하여 조회 (user가 null인 채점만)
+     * - Fetch Join으로 language, constraints, inputOutput을 미리 로딩하여 Lazy Loading 문제 방지
+     */
+    @Query(value = "SELECT DISTINCT g FROM Grade g " +
+                   "LEFT JOIN FETCH g.language " +
+                   "LEFT JOIN FETCH g.constraints " +
+                   "LEFT JOIN FETCH g.inputOutput " +
+                   "WHERE g.user IS NULL " +
+                   "ORDER BY g.createdAt DESC",
+           countQuery = "SELECT COUNT(DISTINCT g) FROM Grade g WHERE g.user IS NULL")
+    Page<Grade> findByUserIsNull(Pageable pageable);
+
+    /**
+     * 특정 문제의 익명 채점 목록을 페이지네이션하여 조회 (user가 null인 채점만)
+     * - Fetch Join으로 language, constraints, inputOutput을 미리 로딩하여 Lazy Loading 문제 방지
+     */
+    @Query(value = "SELECT DISTINCT g FROM Grade g " +
+                   "LEFT JOIN FETCH g.language " +
+                   "LEFT JOIN FETCH g.constraints " +
+                   "LEFT JOIN FETCH g.inputOutput " +
+                   "WHERE g.user IS NULL AND g.problemId = :problemId " +
+                   "ORDER BY g.createdAt DESC",
+           countQuery = "SELECT COUNT(DISTINCT g) FROM Grade g WHERE g.user IS NULL AND g.problemId = :problemId")
+    Page<Grade> findByUserIsNullAndProblemId(@Param("problemId") Long problemId, Pageable pageable);
+
+    /**
+     * 특정 사용자의 특정 문제 채점 목록을 페이지네이션하여 조회
+     * - Fetch Join으로 language, constraints, inputOutput을 미리 로딩하여 Lazy Loading 문제 방지
+     */
+    @Query(value = "SELECT DISTINCT g FROM Grade g " +
+                   "LEFT JOIN FETCH g.language " +
+                   "LEFT JOIN FETCH g.constraints " +
+                   "LEFT JOIN FETCH g.inputOutput " +
+                   "WHERE g.user.id = :userId AND g.problemId = :problemId " +
+                   "ORDER BY g.createdAt DESC",
+           countQuery = "SELECT COUNT(DISTINCT g) FROM Grade g WHERE g.user.id = :userId AND g.problemId = :problemId")
+    Page<Grade> findByUser_IdAndProblemId(@Param("userId") Long userId, @Param("problemId") Long problemId, Pageable pageable);
 }

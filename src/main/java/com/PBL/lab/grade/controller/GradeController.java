@@ -43,6 +43,12 @@ public class GradeController {
     /**
      * GET /grade, /grading
      * 코드 채점 목록을 페이지네이션하여 조회
+     *
+     * 필터링 규칙:
+     * - X-User-Id 없음: user가 null인 채점만 (익명 채점만)
+     * - X-User-Id: 1: User 1의 채점만
+     * - X-User-Id 없음 + problem_id=5: 문제 5의 익명 채점만
+     * - X-User-Id: 1 + problem_id=5: User 1의 문제 5 채점만
      */
     @GetMapping({"/grade", "/grading"})
     public ResponseEntity<?> index(
@@ -53,13 +59,25 @@ public class GradeController {
             @RequestParam(required = false) String fields) {
 
         try {
-            Page<Grade> gradePage = null;
-            if (problemId != null){
-                gradePage = gradeService.findByProblemId(problemId,pageable);
+            Page<Grade> gradePage;
+
+            // 1. X-User-Id 있음 + problem_id 있음: 특정 사용자의 특정 문제 채점만
+            if (userId != null && problemId != null) {
+                gradePage = gradeService.findByUserIdAndProblemId(userId, problemId, pageable);
             }
-            else{
-                gradePage = gradeService.findAll(pageable);
+            // 2. X-User-Id 있음 + problem_id 없음: 특정 사용자의 전체 채점
+            else if (userId != null) {
+                gradePage = gradeService.findByUserId(userId, pageable);
             }
+            // 3. X-User-Id 없음 + problem_id 있음: 특정 문제의 익명 채점만
+            else if (problemId != null) {
+                gradePage = gradeService.findAnonymousGradesByProblemId(problemId, pageable);
+            }
+            // 4. X-User-Id 없음 + problem_id 없음: 익명 채점만
+            else {
+                gradePage = gradeService.findAnonymousGrades(pageable);
+            }
+
             List<GradeResponse> grades = gradePage.getContent().stream()
                     .map(grade -> GradeResponse.from(grade, base64_encoded, parseFields(fields)))
                     .collect(Collectors.toList());

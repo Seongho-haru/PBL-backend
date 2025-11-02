@@ -64,6 +64,10 @@ public class SubmissionsController {
     /**
      * GET /submissions
      * 제출 목록을 페이지네이션하여 조회
+     *
+     * 필터링 규칙:
+     * - X-User-Id 없음: user가 null인 제출만 (익명 제출만)
+     * - X-User-Id: 1: User 1의 제출만
      */
     @GetMapping("/submissions")
     public ResponseEntity<?> index(
@@ -73,7 +77,16 @@ public class SubmissionsController {
             @RequestParam(required = false) String fields) {
 
         try {
-            Page<Submission> submissionPage = submissionService.findAll(pageable);
+            Page<Submission> submissionPage;
+
+            // userId 헤더가 있으면 해당 사용자의 제출만 조회
+            if (userId != null) {
+                submissionPage = submissionService.findByUserId(userId, pageable);
+            }
+            // userId 헤더가 없으면 익명 제출만 조회 (user가 null인 제출만)
+            else {
+                submissionPage = submissionService.findAnonymousSubmissions(pageable);
+            }
 
             List<SubmissionResponse> submissions = submissionPage.getContent().stream()
                     .map(submission -> SubmissionResponse.from(submission, base64_encoded, parseFields(fields)))

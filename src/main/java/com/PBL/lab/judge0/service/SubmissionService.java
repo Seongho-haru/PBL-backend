@@ -466,6 +466,29 @@ public class SubmissionService {
     }
 
     /**
+     * 특정 사용자의 제출 목록을 조회합니다.
+     *
+     * @param userId 사용자 ID
+     * @param pageable 페이지네이션 정보
+     * @return 사용자의 제출 목록
+     */
+    @Transactional(readOnly = true)
+    public Page<Submission> findByUserId(Long userId, Pageable pageable) {
+        return submissionRepository.findByUser_Id(userId, pageable);
+    }
+
+    /**
+     * 익명 제출 목록을 조회합니다 (user가 null인 제출만).
+     *
+     * @param pageable 페이지네이션 정보
+     * @return 익명 제출 목록
+     */
+    @Transactional(readOnly = true)
+    public Page<Submission> findAnonymousSubmissions(Pageable pageable) {
+        return submissionRepository.findByUserIsNull(pageable);
+    }
+
+    /**
      * 제출에 대한 사용자 접근 권한을 검증합니다.
      *
      * 접근 제어 규칙:

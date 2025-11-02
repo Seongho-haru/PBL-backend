@@ -208,6 +208,54 @@ public class GradeService {
     }
 
     /**
+     * 특정 사용자의 채점 목록을 조회합니다.
+     *
+     * @param userId 사용자 ID
+     * @param pageable 페이지네이션 정보
+     * @return 사용자의 채점 목록
+     */
+    @Transactional(readOnly = true)
+    public Page<Grade> findByUserId(Long userId, Pageable pageable) {
+        return gradeRepository.findByUser_Id(userId, pageable);
+    }
+
+    /**
+     * 익명 채점 목록을 조회합니다 (user가 null인 채점만).
+     *
+     * @param pageable 페이지네이션 정보
+     * @return 익명 채점 목록
+     */
+    @Transactional(readOnly = true)
+    public Page<Grade> findAnonymousGrades(Pageable pageable) {
+        return gradeRepository.findByUserIsNull(pageable);
+    }
+
+    /**
+     * 특정 문제의 익명 채점 목록을 조회합니다 (user가 null인 채점만).
+     *
+     * @param problemId 문제 ID
+     * @param pageable 페이지네이션 정보
+     * @return 특정 문제의 익명 채점 목록
+     */
+    @Transactional(readOnly = true)
+    public Page<Grade> findAnonymousGradesByProblemId(Long problemId, Pageable pageable) {
+        return gradeRepository.findByUserIsNullAndProblemId(problemId, pageable);
+    }
+
+    /**
+     * 특정 사용자의 특정 문제 채점 목록을 조회합니다.
+     *
+     * @param userId 사용자 ID
+     * @param problemId 문제 ID
+     * @param pageable 페이지네이션 정보
+     * @return 특정 사용자의 특정 문제 채점 목록
+     */
+    @Transactional(readOnly = true)
+    public Page<Grade> findByUserIdAndProblemId(Long userId, Long problemId, Pageable pageable) {
+        return gradeRepository.findByUser_IdAndProblemId(userId, problemId, pageable);
+    }
+
+    /**
      * 채점에 대한 사용자 접근 권한을 검증합니다.
      *
      * 접근 제어 규칙:

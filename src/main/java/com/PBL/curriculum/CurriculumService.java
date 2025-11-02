@@ -52,13 +52,40 @@ public class CurriculumService {
 
     /**
      * 모든 커리큘럼 조회 (강의 포함) - DTO 반환
+     * @deprecated 페이지네이션 버전 사용 권장
      */
+    @Deprecated
     @Transactional(readOnly = true)
     public List<CurriculumResponse> getAllCurriculums() {
         List<Curriculum> curriculums = curriculumRepository.findAllWithLectures();
         return curriculums.stream()
                 .map(CurriculumResponse::new)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 모든 커리큘럼 조회 (페이징, 공개 여부 필터, 강의 포함) - DTO 반환
+     * 2단계 쿼리: 1) ID만 페이징 조회 2) ID로 fetch join 조회
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getAllCurriculums(Boolean isPublic, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("created_at")));
+        Page<Long> idsPage = curriculumRepository.findAllCurriculumIds(isPublic, pageable);
+
+        // ID 리스트로 강의 포함하여 조회
+        List<Curriculum> curriculums = idsPage.getContent().isEmpty()
+                ? new ArrayList<>()
+                : curriculumRepository.findByIdInWithLectures(idsPage.getContent());
+
+        // DTO 변환
+        List<CurriculumResponse> responses = curriculums.stream()
+                .map(CurriculumResponse::new)
+                .collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("curriculums", responses);
+        response.put("meta", createPaginationMeta(idsPage));
+        return response;
     }
 
     /**
@@ -181,6 +208,7 @@ public class CurriculumService {
         curriculum.setThumbnailImageUrl(request.getThumbnailImageUrl());
         curriculum.setDurationMinutes(request.getDurationMinutes());
         curriculum.setCategory(request.getCategory());
+        curriculum.setLearningObjectives(request.getLearningObjectives());
         curriculum = curriculumRepository.save(curriculum);
         return new CurriculumResponse(curriculum);
     }
@@ -237,6 +265,9 @@ public class CurriculumService {
         }
         if (request.getCategory() != null) {
             curriculum.setCategory(request.getCategory());
+        }
+        if (request.getLearningObjectives() != null) {
+            curriculum.setLearningObjectives(request.getLearningObjectives());
         }
 
         return curriculumRepository.save(curriculum);
@@ -452,12 +483,39 @@ public class CurriculumService {
 
     /**
      * 커리큘럼 제목으로 검색 (강의 포함) - DTO 반환
+     * @deprecated 페이지네이션 버전 사용 권장
      */
+    @Deprecated
     @Transactional(readOnly = true)
     public List<CurriculumResponse> searchCurriculums(String title) {
         return curriculumRepository.findByTitleContainingIgnoreCaseWithLectures(title).stream()
                 .map(CurriculumResponse::new)
                 .toList();
+    }
+
+    /**
+     * 커리큘럼 제목으로 검색 (페이징, 공개 여부 필터, 강의 포함) - DTO 반환
+     * 2단계 쿼리: 1) ID만 페이징 조회 2) ID로 fetch join 조회
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> searchCurriculums(String title, Boolean isPublic, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.unsorted());
+        Page<Long> idsPage = curriculumRepository.findCurriculumIdsByTitle(title, isPublic, pageable);
+
+        // ID 리스트로 강의 포함하여 조회
+        List<Curriculum> curriculums = idsPage.getContent().isEmpty()
+                ? new ArrayList<>()
+                : curriculumRepository.findByIdInWithLectures(idsPage.getContent());
+
+        // DTO 변환
+        List<CurriculumResponse> responses = curriculums.stream()
+                .map(CurriculumResponse::new)
+                .collect(Collectors.toList());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("curriculums", responses);
+        response.put("meta", createPaginationMeta(idsPage));
+        return response;
     }
 
     /**

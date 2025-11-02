@@ -89,10 +89,12 @@ public class LectureController {
      */
     @GetMapping
     @Operation(summary = "모든 강의 조회", description = "시스템에 등록된 모든 강의를 최신순으로 조회합니다.")
-    public ResponseEntity<List<LectureResponse>> getAllLectures() {
-        // Service에서 트랜잭션 내 DTO 변환된 결과를 받음 (LazyInitializationException 방지)
-        List<LectureResponse> responses = lectureService.getAllLectures();
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<Map<String, Object>> getAllLectures(
+            @Parameter(description = "공개 여부 필터 (true: 공개만, false: 비공개만, null: 모두)") @RequestParam(required = false) Boolean isPublic,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        Map<String, Object> response = lectureService.getAllLectures(isPublic, page, size);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -210,10 +212,14 @@ public class LectureController {
      * GET /api/lectures/type/{type}
      */
     @GetMapping("/type/{type}")
-    public ResponseEntity<List<LectureResponse>> getLecturesByType(@PathVariable LectureType type) {
-        // Service에서 트랜잭션 내 DTO 변환된 결과를 받음
-        List<LectureResponse> responses = lectureService.getLecturesByType(type);
-        return ResponseEntity.ok(responses);
+    @Operation(summary = "유형별 강의 조회", description = "특정 유형의 강의를 조회합니다.")
+    public ResponseEntity<Map<String, Object>> getLecturesByType(
+            @Parameter(description = "강의 유형") @PathVariable LectureType type,
+            @Parameter(description = "공개 여부 필터 (true: 공개만, false: 비공개만, null: 모두)") @RequestParam(required = false) Boolean isPublic,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        Map<String, Object> response = lectureService.getLecturesByType(type, isPublic, page, size);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -221,10 +227,13 @@ public class LectureController {
      * GET /api/lectures/recent
      */
     @GetMapping("/recent")
-    public ResponseEntity<List<LectureResponse>> getRecentLectures() {
-        // Service에서 트랜잭션 내 DTO 변환된 결과를 받음
-        List<LectureResponse> responses = lectureService.getRecentLectures(10);
-        return ResponseEntity.ok(responses);
+    @Operation(summary = "최근 강의 조회", description = "최근 생성된 강의를 조회합니다.")
+    public ResponseEntity<Map<String, Object>> getRecentLectures(
+            @Parameter(description = "공개 여부 필터 (true: 공개만, false: 비공개만, null: 모두)") @RequestParam(required = false) Boolean isPublic,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        Map<String, Object> response = lectureService.getRecentLectures(isPublic, page, size);
+        return ResponseEntity.ok(response);
     }
 
     // === 테스트케이스 관리 API ===
@@ -372,7 +381,8 @@ public class LectureController {
             @RequestParam(defaultValue = "10") int size) {
 
         // Service에서 트랜잭션 내 DTO 변환된 결과를 받음
-        Map<String, Object> response = lectureService.searchPublicLectures(title, category, difficulty, type, page, size);
+        // isPublic이 null이면 공개만 검색 (기존 동작 유지)
+        Map<String, Object> response = lectureService.searchPublicLectures(title, category, difficulty, type, true, page, size);
         return ResponseEntity.ok(response);
     }
 

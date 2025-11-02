@@ -77,6 +77,13 @@ public class Curriculum {
     private String summary;
 
     /**
+     * 학습 목표
+     * 이 커리큘럼을 통해 달성할 수 있는 학습 목표
+     */
+    @Column(name = "learning_objectives", columnDefinition = "TEXT")
+    private String learningObjectives;
+
+    /**
      * 평균 별점
      * 0.0 ~ 5.0
      */

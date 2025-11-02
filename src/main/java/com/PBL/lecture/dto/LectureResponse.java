@@ -46,6 +46,7 @@ public class LectureResponse {
     private String output_content;
 
     private Long languageId;
+    private String learningObjectives;
 
 
     public static  LectureResponse from(Lecture lecture) {
@@ -68,6 +69,7 @@ public class LectureResponse {
                     .thumbnailImageUrl(lecture.getThumbnailImageUrl())
                     .content(lecture.getContent())
                     .durationMinutes(lecture.getDurationMinutes())
+                    .learningObjectives(lecture.getLearningObjectives())
                     .build();
         } else if(lecture.getType() == LectureType.PROBLEM){
             List<TestCaseResponse> testCaseResponses = lecture.getTestCases() != null ?
@@ -101,6 +103,7 @@ public class LectureResponse {
                     .input_content(lecture.getInputContent())
                     .output_content(lecture.getOutputContent())
                     .languageId(lecture.getLanguageId())
+                    .learningObjectives(lecture.getLearningObjectives())
                     .build();
         }else{
             return null;

@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 추천 시스템 REST API 컨트롤러
@@ -39,18 +40,18 @@ public class RecommendationController {
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    public ResponseEntity<List<RecommendationDTOs.CurriculumRecommendationResponse>> getPersonalizedCurriculums(
+    public ResponseEntity<Map<String, Object>> getPersonalizedCurriculums(
             @Parameter(description = "사용자 ID", required = true) @RequestHeader("X-User-Id") Long userId,
-            @Parameter(description = "추천 개수", required = false) @RequestParam(defaultValue = "10") int limit) {
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
         
-        log.info("개인화 추천 요청 - 사용자 ID: {}, 추천 개수: {}", userId, limit);
+        log.info("개인화 추천 요청 - 사용자 ID: {}, 페이지: {}, 크기: {}", userId, page, size);
         
         try {
-            List<RecommendationDTOs.CurriculumRecommendationResponse> recommendations = 
-                    recommendationService.getPersonalizedCurriculums(userId, limit);
+            Map<String, Object> result = recommendationService.getPersonalizedCurriculums(userId, page, size);
             
-            log.info("개인화 추천 완료 - 추천 개수: {}", recommendations.size());
-            return ResponseEntity.ok(recommendations);
+            log.info("개인화 추천 완료 - 추천 개수: {}", ((List<?>) result.get("curriculums")).size());
+            return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
             log.error("개인화 추천 실패 - 사용자 ID: {}, 오류: {}", userId, e.getMessage());
             throw e;
@@ -71,19 +72,19 @@ public class RecommendationController {
             @ApiResponse(responseCode = "404", description = "강의를 찾을 수 없음"),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    public ResponseEntity<List<RecommendationDTOs.LectureRecommendationResponse>> getSimilarProblemLectures(
+    public ResponseEntity<Map<String, Object>> getSimilarProblemLectures(
             @Parameter(description = "사용자 ID", required = true) @RequestHeader("X-User-Id") Long userId,
             @Parameter(description = "기준 강의 ID", required = true) @RequestParam Long lectureId,
-            @Parameter(description = "추천 개수", required = false) @RequestParam(defaultValue = "5") int limit) {
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "5") int size) {
         
-        log.info("유사 문제 추천 요청 - 사용자 ID: {}, 기준 강의 ID: {}, 추천 개수: {}", userId, lectureId, limit);
+        log.info("유사 문제 추천 요청 - 사용자 ID: {}, 기준 강의 ID: {}, 페이지: {}, 크기: {}", userId, lectureId, page, size);
         
         try {
-            List<RecommendationDTOs.LectureRecommendationResponse> recommendations = 
-                    recommendationService.getSimilarProblemLectures(userId, lectureId, limit);
+            Map<String, Object> result = recommendationService.getSimilarProblemLectures(userId, lectureId, page, size);
             
-            log.info("유사 문제 추천 완료 - 추천 개수: {}", recommendations.size());
-            return ResponseEntity.ok(recommendations);
+            log.info("유사 문제 추천 완료 - 추천 개수: {}", ((List<?>) result.get("lectures")).size());
+            return ResponseEntity.ok(result);
         } catch (IllegalArgumentException e) {
             log.warn("유사 문제 추천 실패 - 기준 강의 ID: {}, 오류: {}", lectureId, e.getMessage());
             throw e;
@@ -105,18 +106,18 @@ public class RecommendationController {
             @ApiResponse(responseCode = "401", description = "X-User-Id 헤더 누락"),
             @ApiResponse(responseCode = "500", description = "서버 내부 오류")
     })
-    public ResponseEntity<List<RecommendationDTOs.UnifiedRecommendationResponse>> getUnifiedRecommendations(
+    public ResponseEntity<Map<String, Object>> getUnifiedRecommendations(
             @Parameter(description = "사용자 ID", required = true) @RequestHeader("X-User-Id") Long userId,
-            @Parameter(description = "추천 개수", required = false) @RequestParam(defaultValue = "10") int limit) {
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
         
-        log.info("통합 추천 요청 - 사용자 ID: {}, 추천 개수: {}", userId, limit);
+        log.info("통합 추천 요청 - 사용자 ID: {}, 페이지: {}, 크기: {}", userId, page, size);
         
         try {
-            List<RecommendationDTOs.UnifiedRecommendationResponse> recommendations = 
-                    recommendationService.getUnifiedRecommendations(userId, limit);
+            Map<String, Object> result = recommendationService.getUnifiedRecommendations(userId, page, size);
             
-            log.info("통합 추천 완료 - 추천 개수: {}", recommendations.size());
-            return ResponseEntity.ok(recommendations);
+            log.info("통합 추천 완료 - 추천 개수: {}", ((List<?>) result.get("recommendations")).size());
+            return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
             log.error("통합 추천 실패 - 사용자 ID: {}, 오류: {}", userId, e.getMessage());
             throw e;

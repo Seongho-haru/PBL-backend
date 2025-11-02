@@ -298,6 +298,29 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     List<Lecture> findAllByOrderByCreatedAtDesc();
 
     /**
+     * 모든 강의 조회 (페이징, 공개 여부 필터 포함)
+     */
+    @Query(value = "SELECT * FROM lectures l " +
+           "WHERE (:isPublic IS NULL OR l.is_public = :isPublic) " +
+           "ORDER BY l.created_at DESC",
+           countQuery = "SELECT COUNT(*) FROM lectures l WHERE (:isPublic IS NULL OR l.is_public = :isPublic)",
+           nativeQuery = true)
+    Page<Lecture> findAllWithPagination(@Param("isPublic") Boolean isPublic, Pageable pageable);
+
+    /**
+     * 타입별 강의 조회 (페이징, 공개 여부 필터 포함)
+     */
+    @Query(value = "SELECT * FROM lectures l " +
+           "WHERE l.type = :typeStr " +
+           "AND (:isPublic IS NULL OR l.is_public = :isPublic) " +
+           "ORDER BY l.created_at DESC",
+           countQuery = "SELECT COUNT(*) FROM lectures l " +
+           "WHERE l.type = :typeStr AND (:isPublic IS NULL OR l.is_public = :isPublic)",
+           nativeQuery = true)
+    Page<Lecture> findByTypeWithPagination(@Param("type") LectureType type, @Param("typeStr") String typeStr, 
+                                          @Param("isPublic") Boolean isPublic, Pageable pageable);
+
+    /**
      * 복합 검색: 제목, 카테고리, 난이도
      */
     @Query(value = "SELECT * FROM lectures l WHERE " +
@@ -391,27 +414,46 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     );
 
     /**
-     * 공개 강의 복합 검색 (페이징)
+     * 공개 강의 복합 검색 (페이징, 공개 여부 필터 포함)
+     * PostgreSQL 타입 추론 문제 해결을 위해 LIMIT/OFFSET을 명시적으로 사용
+     * Pageable을 제거하여 Spring Data JPA의 자동 페이징 추가를 방지
+     * enum 타입 추론 문제를 피하기 위해 type 파라미터 제거하고 typeStr만 사용
      */
-    @Query(value = "SELECT * FROM lectures l WHERE l.is_public = true AND " +
+    @Query(value = "SELECT * FROM lectures l WHERE " +
+            "(:isPublic IS NULL OR l.is_public = :isPublic) AND " +
             "(:title IS NULL OR l.title ILIKE CONCAT('%', :title, '%')) AND " +
             "(:category IS NULL OR l.category = :category) AND " +
             "(:difficulty IS NULL OR l.difficulty = :difficulty) AND " +
-            "(:type IS NULL OR l.type = :typeStr) " +
-            "ORDER BY l.created_at DESC",
-            countQuery = "SELECT COUNT(*) FROM lectures l WHERE l.is_public = true AND " +
-            "(:title IS NULL OR l.title ILIKE CONCAT('%', :title, '%')) AND " +
-            "(:category IS NULL OR l.category = :category) AND " +
-            "(:difficulty IS NULL OR l.difficulty = :difficulty) AND " +
-            "(:type IS NULL OR l.type = :typeStr)",
+            "(:typeStr IS NULL OR l.type = :typeStr) " +
+            "ORDER BY l.created_at DESC " +
+            "LIMIT :limit OFFSET :offset",
             nativeQuery = true)
-    Page<Lecture> findPublicLecturesBySearchCriteria(
+    List<Lecture> findPublicLecturesBySearchCriteria(
             @Param("title") String title,
             @Param("category") String category,
             @Param("difficulty") String difficulty,
-            @Param("type") LectureType type,
             @Param("typeStr") String typeStr,
-            Pageable pageable
+            @Param("isPublic") Boolean isPublic,
+            @Param("limit") int limit,
+            @Param("offset") int offset
+    );
+
+    /**
+     * 공개 강의 복합 검색 총 개수 조회
+     */
+    @Query(value = "SELECT COUNT(*) FROM lectures l WHERE " +
+            "(:isPublic IS NULL OR l.is_public = :isPublic) AND " +
+            "(:title IS NULL OR l.title ILIKE CONCAT('%', :title, '%')) AND " +
+            "(:category IS NULL OR l.category = :category) AND " +
+            "(:difficulty IS NULL OR l.difficulty = :difficulty) AND " +
+            "(:typeStr IS NULL OR l.type = :typeStr)",
+            nativeQuery = true)
+    long countPublicLecturesBySearchCriteria(
+            @Param("title") String title,
+            @Param("category") String category,
+            @Param("difficulty") String difficulty,
+            @Param("typeStr") String typeStr,
+            @Param("isPublic") Boolean isPublic
     );
 
     // ============================================================

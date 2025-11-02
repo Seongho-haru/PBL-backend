@@ -75,6 +75,9 @@ public class CurriculumDTOs {
         private String thumbnailImageUrl;
         private Integer durationMinutes;
 
+        @Schema(description = "학습 목표")
+        private String learningObjectives;
+
         // 생성자
         public CurriculumResponse() {}
 
@@ -94,6 +97,7 @@ public class CurriculumDTOs {
             this.thumbnailImageUrl = curriculum.getThumbnailImageUrl();
             this.durationMinutes = curriculum.getDurationMinutes();
             this.category = curriculum.getCategory();
+            this.learningObjectives = curriculum.getLearningObjectives();
             
             // 작성자 정보 설정
             try {
@@ -194,6 +198,9 @@ public class CurriculumDTOs {
         private Integer durationMinutes;
         private String category;
 
+        @Schema(description = "학습 목표")
+        private String learningObjectives;
+
         // 생성자
         public CurriculumDetailResponse() {}
 
@@ -220,6 +227,7 @@ public class CurriculumDTOs {
             this.thumbnailImageUrl = curriculum.getThumbnailImageUrl();
             this.durationMinutes = curriculum.getDurationMinutes();
             this.category = curriculum.getCategory();
+            this.learningObjectives = curriculum.getLearningObjectives();
 
             // 작성자 정보 설정
             try {
@@ -337,6 +345,9 @@ public class CurriculumDTOs {
         private Integer durationMinutes;
         private String category;
 
+        @Schema(description = "학습 목표")
+        private String learningObjectives;
+
     }
 
     /**
@@ -371,6 +382,9 @@ public class CurriculumDTOs {
         private Integer durationMinutes;
 
         private String category;
+
+        @Schema(description = "학습 목표")
+        private String learningObjectives;
 
     }
 

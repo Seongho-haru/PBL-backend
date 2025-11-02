@@ -40,6 +40,7 @@ public class SearchService {
             String category,
             String difficulty,
             LectureType type,
+            Boolean isPublic,
             int page,
             int size) {
 
@@ -57,12 +58,16 @@ public class SearchService {
             return emptyResult;
         }
 
-        // 커리큘럼 검색 (공개만)
-        Map<String, Object> curriculumResult = curriculumService.searchPublicCurriculums(title.trim(), page, size);
+        // 커리큘럼 검색 (공개 여부 필터 적용)
+        // isPublic이 null이면 공개만 검색 (기존 동작 유지)
+        Boolean curriculumIsPublic = isPublic != null ? isPublic : true;
+        Map<String, Object> curriculumResult = curriculumService.searchCurriculums(title.trim(), curriculumIsPublic, page, size);
 
-        // 강의 검색 (공개만)
+        // 강의 검색 (공개 여부 필터 적용)
+        // isPublic이 null이면 공개만 검색 (기존 동작 유지)
+        Boolean lectureIsPublic = isPublic != null ? isPublic : true;
         Map<String, Object> lectureResult = lectureService.searchPublicLectures(
-                title.trim(), category, difficulty, type, page, size);
+                title.trim(), category, difficulty, type, lectureIsPublic, page, size);
 
         // 결과 합치기
         Map<String, Object> result = new HashMap<>();

@@ -39,6 +39,7 @@ public class SearchController {
             @Parameter(description = "카테고리 필터 (강의만 적용)") @RequestParam(required = false) String category,
             @Parameter(description = "난이도 필터 (강의만 적용)") @RequestParam(required = false) String difficulty,
             @Parameter(description = "강의 유형 필터 (강의만 적용)") @RequestParam(required = false) String type,
+            @Parameter(description = "공개 여부 필터 (true: 공개만, false: 비공개만, null: 모두)") @RequestParam(required = false) Boolean isPublic,
             @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
 
@@ -54,7 +55,7 @@ public class SearchController {
         }
 
         Map<String, Object> result = searchService.unifiedSearch(
-                title, category, difficulty, lectureType, page, size);
+                title, category, difficulty, lectureType, isPublic, page, size);
 
         return ResponseEntity.ok(result);
     }

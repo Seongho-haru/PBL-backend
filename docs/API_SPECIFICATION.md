@@ -169,6 +169,7 @@ Content-Type: application/json
   "type": "MARKDOWN" | "PROBLEM",
   "category": "카테고리",
   "difficulty": "기초" | "중급" | "고급",
+  "learningObjectives": "이 강의를 통해 달성할 수 있는 학습 목표 (선택 사항)",
   "timeLimit": 30,  // 문제 강의인 경우만
   "memoryLimit": 128,  // 문제 강의인 경우만
   "testCases": [  // 문제 강의인 경우만
@@ -190,6 +191,7 @@ Content-Type: application/json
   "type": "MARKDOWN",
   "category": "카테고리",
   "difficulty": "기초",
+  "learningObjectives": "이 강의를 통해 달성할 수 있는 학습 목표",
   "timeLimit": null,
   "memoryLimit": null,
   "isPublic": false,
@@ -225,6 +227,7 @@ X-User-Id: {사용자ID}
   "type": "MARKDOWN",
   "category": "카테고리",
   "difficulty": "기초",
+  "learningObjectives": "이 강의를 통해 달성할 수 있는 학습 목표",
   "timeLimit": null,
   "memoryLimit": null,
   "isPublic": false,
@@ -272,6 +275,7 @@ Content-Type: application/json
   "type": "MARKDOWN",
   "category": "수정된 카테고리",
   "difficulty": "중급",
+  "learningObjectives": "수정된 학습 목표 (선택 사항)",
   "timeLimit": 60,
   "memoryLimit": 256
 }
@@ -339,7 +343,161 @@ X-User-Id: {사용자ID}
 }
 ```
 
-### 6. 사용자별 강의 목록 조회
+### 6. 모든 강의 조회
+
+**GET** `/api/lectures`
+
+시스템에 등록된 모든 강의를 최신순으로 조회합니다.
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Query Parameters:**
+
+- `isPublic` (optional): 공개 여부 필터 (`true`: 공개만, `false`: 비공개만, `null`: 모두) - 기본값: `null`
+- `page` (optional): 페이지 번호 (기본값: 0)
+- `size` (optional): 페이지 크기 (기본값: 10)
+
+**Response (200 OK):**
+
+```json
+{
+  "lectures": [
+    {
+      "id": 1,
+      "title": "강의 제목",
+      "description": "강의 설명",
+      "type": "MARKDOWN",
+      "category": "카테고리",
+      "difficulty": "기초",
+      "learningObjectives": "이 강의를 통해 달성할 수 있는 학습 목표",
+      "isPublic": true,
+      "author": {
+        "id": 1,
+        "username": "작성자명",
+        "loginId": "작성자로그인ID"
+      },
+      "createdAt": "2025-01-01T00:00:00"
+    }
+  ],
+  "meta": {
+    "currentPage": 0,
+    "totalElements": 100,
+    "totalPages": 10,
+    "hasNext": true,
+    "hasPrevious": false
+  }
+}
+```
+
+### 7. 유형별 강의 조회
+
+**GET** `/api/lectures/type/{type}`
+
+특정 유형의 강의를 조회합니다.
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Path Parameters:**
+
+- `type`: 강의 유형 (`MARKDOWN` 또는 `PROBLEM`)
+
+**Query Parameters:**
+
+- `isPublic` (optional): 공개 여부 필터 (`true`: 공개만, `false`: 비공개만, `null`: 모두) - 기본값: `null`
+- `page` (optional): 페이지 번호 (기본값: 0)
+- `size` (optional): 페이지 크기 (기본값: 10)
+
+**Response (200 OK):**
+
+```json
+{
+  "lectures": [
+    {
+      "id": 1,
+      "title": "강의 제목",
+      "description": "강의 설명",
+      "type": "MARKDOWN",
+      "category": "카테고리",
+      "difficulty": "기초",
+      "learningObjectives": "이 강의를 통해 달성할 수 있는 학습 목표",
+      "isPublic": true,
+      "author": {
+        "id": 1,
+        "username": "작성자명",
+        "loginId": "작성자로그인ID"
+      },
+      "createdAt": "2025-01-01T00:00:00"
+    }
+  ],
+  "meta": {
+    "currentPage": 0,
+    "totalElements": 50,
+    "totalPages": 5,
+    "hasNext": true,
+    "hasPrevious": false
+  }
+}
+```
+
+### 8. 최근 강의 조회
+
+**GET** `/api/lectures/recent`
+
+최근 생성된 강의를 조회합니다.
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Query Parameters:**
+
+- `isPublic` (optional): 공개 여부 필터 (`true`: 공개만, `false`: 비공개만, `null`: 모두) - 기본값: `null`
+- `page` (optional): 페이지 번호 (기본값: 0)
+- `size` (optional): 페이지 크기 (기본값: 10)
+
+**Response (200 OK):**
+
+```json
+{
+  "lectures": [
+    {
+      "id": 1,
+      "title": "강의 제목",
+      "description": "강의 설명",
+      "type": "MARKDOWN",
+      "category": "카테고리",
+      "difficulty": "기초",
+      "learningObjectives": "이 강의를 통해 달성할 수 있는 학습 목표",
+      "isPublic": true,
+      "author": {
+        "id": 1,
+        "username": "작성자명",
+        "loginId": "작성자로그인ID"
+      },
+      "createdAt": "2025-01-01T00:00:00"
+    }
+  ],
+  "meta": {
+    "currentPage": 0,
+    "totalElements": 30,
+    "totalPages": 3,
+    "hasNext": true,
+    "hasPrevious": false
+  }
+}
+```
+
+### 9. 사용자별 강의 목록 조회
 
 **GET** `/api/lectures/user/{userId}`
 
@@ -371,7 +529,7 @@ X-User-Id: {사용자ID}
 ]
 ```
 
-### 7. 공개 강의 검색
+### 10. 공개 강의 검색
 
 **GET** `/api/lectures/public/search?title={제목}&category={카테고리}&difficulty={난이도}&type={유형}`
 
@@ -432,7 +590,8 @@ Content-Type: application/json
   "description": "커리큘럼 설명",
   "isPublic": true,
   "difficulty": "기초",
-  "summary": "커리큘럼 간단 소개"
+  "summary": "커리큘럼 간단 소개",
+  "learningObjectives": "이 커리큘럼을 통해 달성할 수 있는 학습 목표 (선택 사항)"
 }
 ```
 
@@ -446,6 +605,7 @@ Content-Type: application/json
   "isPublic": true,
   "difficulty": "기초",
   "summary": "커리큘럼 간단 소개",
+  "learningObjectives": "이 커리큘럼을 통해 달성할 수 있는 학습 목표",
   "averageRating": 0.0,
   "studentCount": 0,
   "totalLectureCount": 0,
@@ -481,6 +641,7 @@ X-User-Id: {사용자ID}
   "isPublic": true,
   "difficulty": "기초",
   "summary": "커리큘럼 간단 소개",
+  "learningObjectives": "이 커리큘럼을 통해 달성할 수 있는 학습 목표",
   "averageRating": 4.5,
   "studentCount": 15,
   "totalLectureCount": 2,
@@ -501,6 +662,7 @@ X-User-Id: {사용자ID}
         "type": "MARKDOWN",
         "category": "카테고리",
         "difficulty": "기초",
+        "learningObjectives": "이 강의를 통해 달성할 수 있는 학습 목표",
         "isPublic": true,
         "author": {
           "id": 1,
@@ -540,7 +702,8 @@ Content-Type: application/json
 {
   "title": "수정된 제목",
   "description": "수정된 설명",
-  "isPublic": false
+  "isPublic": false,
+  "learningObjectives": "수정된 학습 목표 (선택 사항)"
 }
 ```
 
@@ -586,7 +749,112 @@ X-User-Id: {사용자ID}
 - `403 Forbidden`: 삭제 권한 없음
 - `404 Not Found`: 커리큘럼 없음
 
-### 5. 사용자별 커리큘럼 목록 조회
+### 5. 모든 커리큘럼 조회
+
+**GET** `/api/curriculums`
+
+시스템에 등록된 모든 커리큘럼을 최신순으로 조회합니다.
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Query Parameters:**
+
+- `isPublic` (optional): 공개 여부 필터 (`true`: 공개만, `false`: 비공개만, `null`: 모두) - 기본값: `null`
+- `page` (optional): 페이지 번호 (기본값: 0)
+- `size` (optional): 페이지 크기 (기본값: 10)
+
+**Response (200 OK):**
+
+```json
+{
+  "curriculums": [
+    {
+      "id": 1,
+      "title": "커리큘럼 제목",
+      "description": "커리큘럼 설명",
+      "isPublic": true,
+      "difficulty": "기초",
+      "summary": "커리큘럼 간단 소개",
+      "averageRating": 4.5,
+      "studentCount": 15,
+      "totalLectureCount": 2,
+      "requiredLectureCount": 1,
+      "optionalLectureCount": 1,
+      "author": {
+        "id": 1,
+        "username": "작성자명",
+        "loginId": "작성자로그인ID"
+      },
+      "createdAt": "2025-01-01T00:00:00"
+    }
+  ],
+  "meta": {
+    "currentPage": 0,
+    "totalElements": 50,
+    "totalPages": 5,
+    "hasNext": true,
+    "hasPrevious": false
+  }
+}
+```
+
+### 6. 커리큘럼 검색
+
+**GET** `/api/curriculums/search?title={제목}`
+
+제목으로 커리큘럼을 검색합니다.
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Query Parameters:**
+
+- `title` (required): 검색할 제목 (부분 일치)
+- `isPublic` (optional): 공개 여부 필터 (`true`: 공개만, `false`: 비공개만, `null`: 모두) - 기본값: `null`
+- `page` (optional): 페이지 번호 (기본값: 0)
+- `size` (optional): 페이지 크기 (기본값: 10)
+
+**Response (200 OK):**
+
+```json
+{
+  "curriculums": [
+    {
+      "id": 1,
+      "title": "검색된 커리큘럼",
+      "description": "커리큘럼 설명",
+      "isPublic": true,
+      "difficulty": "기초",
+      "summary": "커리큘럼 간단 소개",
+      "averageRating": 4.5,
+      "studentCount": 15,
+      "totalLectureCount": 2,
+      "author": {
+        "id": 1,
+        "username": "작성자명",
+        "loginId": "작성자로그인ID"
+      },
+      "createdAt": "2025-01-01T00:00:00"
+    }
+  ],
+  "meta": {
+    "currentPage": 0,
+    "totalElements": 5,
+    "totalPages": 1,
+    "hasNext": false,
+    "hasPrevious": false
+  }
+}
+```
+
+### 7. 사용자별 커리큘럼 목록 조회
 
 **GET** `/api/curriculums/user/{userId}`
 
@@ -622,7 +890,7 @@ X-User-Id: {사용자ID}
 ]
 ```
 
-### 6. 공개 커리큘럼 목록 조회
+### 8. 공개 커리큘럼 목록 조회
 
 **GET** `/api/curriculums/public`
 
@@ -1590,6 +1858,7 @@ X-User-Id: {사용자ID}
 - `category` (optional): 카테고리 필터 (강의만 적용)
 - `difficulty` (optional): 난이도 필터 (강의만 적용) - `기초`, `중급`, `고급`
 - `type` (optional): 강의 유형 필터 (강의만 적용) - `MARKDOWN`, `PROBLEM`
+- `isPublic` (optional): 공개 여부 필터 (`true`: 공개만, `false`: 비공개만, `null`: 모두) - 기본값: `true` (공개만 검색)
 - `page` (optional): 페이지 번호 (기본값: 0)
 - `size` (optional): 페이지 크기 (기본값: 10)
 
@@ -1606,6 +1875,7 @@ X-User-Id: {사용자ID}
         "isPublic": true,
         "difficulty": "기초",
         "summary": "커리큘럼 간단 소개",
+        "learningObjectives": "이 커리큘럼을 통해 달성할 수 있는 학습 목표",
         "averageRating": 4.5,
         "studentCount": 15,
         "totalLectureCount": 2,
@@ -1634,6 +1904,7 @@ X-User-Id: {사용자ID}
         "type": "MARKDOWN",
         "category": "Frontend",
         "difficulty": "기초",
+        "learningObjectives": "이 강의를 통해 달성할 수 있는 학습 목표",
         "isPublic": true,
         "author": {
           "id": 1,
@@ -1663,6 +1934,7 @@ X-User-Id: {사용자ID}
 
 - `title` 파라미터가 없거나 비어있으면 빈 결과를 반환합니다.
 - `category`, `difficulty`, `type` 파라미터는 강의 검색에만 적용됩니다.
+- `isPublic` 파라미터가 `null`이면 기본적으로 공개 콘텐츠만 검색합니다 (기존 동작 유지).
 - 커리큘럼과 강의는 각각 독립적으로 페이징됩니다.
 
 ---
@@ -1683,54 +1955,64 @@ X-User-Id: {사용자ID}
 
 **Query Parameters:**
 
-- `limit` (optional): 추천 개수 (기본값: 10)
+- `page` (optional): 페이지 번호 (기본값: 0)
+- `size` (optional): 페이지 크기 (기본값: 10)
 
 **Response (200 OK):**
 
 ```json
-[
-  {
-    "type": "CURRICULUM",
-    "id": 1,
-    "title": "커리큘럼 제목",
-    "description": "커리큘럼 간단 소개",
-    "category": "프로그래밍",
-    "difficulty": "기초",
-    "recommendationScore": 85.5,
-    "recommendationReason": "당신이 좋아하는 카테고리, 관심 있는 주제",
-    "tags": ["Python", "기초"],
-    "averageRating": 4.5,
-    "studentCount": 15,
-    "authorName": "작성자명",
-    "thumbnailImageUrl": "https://example.com/image.jpg"
-  },
-  {
-    "type": "LECTURE",
-    "id": 5,
-    "title": "강의 제목",
-    "description": "강의 설명",
-    "category": "프로그래밍",
-    "difficulty": "기초",
-    "recommendationScore": 80.0,
-    "recommendationReason": "당신이 좋아하는 카테고리, 적합한 난이도",
-    "lectureType": "PROBLEM"
-  },
-  {
-    "type": "CURRICULUM",
-    "id": 3,
-    "title": "또 다른 커리큘럼",
-    "description": "커리큘럼 설명",
-    "category": "알고리즘",
-    "difficulty": "중급",
-    "recommendationScore": 75.0,
-    "recommendationReason": "관심 있는 주제",
-    "tags": ["알고리즘", "자료구조"],
-    "averageRating": 4.0,
-    "studentCount": 10,
-    "authorName": "작성자명2",
-    "thumbnailImageUrl": null
+{
+  "recommendations": [
+    {
+      "type": "CURRICULUM",
+      "id": 1,
+      "title": "커리큘럼 제목",
+      "description": "커리큘럼 간단 소개",
+      "category": "프로그래밍",
+      "difficulty": "기초",
+      "recommendationScore": 85.5,
+      "recommendationReason": "당신이 좋아하는 카테고리, 관심 있는 주제",
+      "tags": ["Python", "기초"],
+      "averageRating": 4.5,
+      "studentCount": 15,
+      "authorName": "작성자명",
+      "thumbnailImageUrl": "https://example.com/image.jpg"
+    },
+    {
+      "type": "LECTURE",
+      "id": 5,
+      "title": "강의 제목",
+      "description": "강의 설명",
+      "category": "프로그래밍",
+      "difficulty": "기초",
+      "recommendationScore": 80.0,
+      "recommendationReason": "당신이 좋아하는 카테고리, 적합한 난이도",
+      "lectureType": "PROBLEM"
+    },
+    {
+      "type": "CURRICULUM",
+      "id": 3,
+      "title": "또 다른 커리큘럼",
+      "description": "커리큘럼 설명",
+      "category": "알고리즘",
+      "difficulty": "중급",
+      "recommendationScore": 75.0,
+      "recommendationReason": "관심 있는 주제",
+      "tags": ["알고리즘", "자료구조"],
+      "averageRating": 4.0,
+      "studentCount": 10,
+      "authorName": "작성자명2",
+      "thumbnailImageUrl": null
+    }
+  ],
+  "meta": {
+    "currentPage": 0,
+    "totalElements": 50,
+    "totalPages": 5,
+    "hasNext": true,
+    "hasPrevious": false
   }
-]
+}
 ```
 
 **Response 필드 설명:**
@@ -1769,6 +2051,113 @@ X-User-Id: {사용자ID}
 - 이미 수강 중인 커리큘럼과 학습한 강의는 제외됩니다.
 - 커리큘럼과 강의가 점수 기준으로 혼합되어 정렬됩니다.
 - 추천 점수는 사용자의 수강 이력, 카테고리, 태그, 난이도, 평점 등을 기반으로 계산됩니다.
+- 응답에 페이지네이션 메타데이터(`meta`)가 포함되어 있습니다.
+
+### 2. 개인화된 커리큘럼 추천
+
+**GET** `/api/recommendations/curriculums`
+
+사용자의 수강 이력과 선호도를 기반으로 커리큘럼을 추천합니다.
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Query Parameters:**
+
+- `page` (optional): 페이지 번호 (기본값: 0)
+- `size` (optional): 페이지 크기 (기본값: 10)
+
+**Response (200 OK):**
+
+```json
+{
+  "curriculums": [
+    {
+      "id": 1,
+      "title": "커리큘럼 제목",
+      "description": "커리큘럼 설명",
+      "category": "프로그래밍",
+      "difficulty": "기초",
+      "recommendationScore": 85.5,
+      "recommendationReason": "당신이 좋아하는 카테고리, 관심 있는 주제",
+      "averageRating": 4.5,
+      "studentCount": 15,
+      "tags": ["Python", "기초"],
+      "author": {
+        "id": 1,
+        "username": "작성자명",
+        "loginId": "작성자로그인ID"
+      }
+    }
+  ],
+  "meta": {
+    "currentPage": 0,
+    "totalElements": 20,
+    "totalPages": 2,
+    "hasNext": true,
+    "hasPrevious": false
+  }
+}
+```
+
+### 3. 유사 문제 강의 추천
+
+**GET** `/api/recommendations/similar-lectures?lectureId={강의ID}`
+
+현재 풀고 있는 문제와 유사한 강의를 추천합니다.
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Query Parameters:**
+
+- `lectureId` (required): 기준 강의 ID
+- `page` (optional): 페이지 번호 (기본값: 0)
+- `size` (optional): 페이지 크기 (기본값: 5)
+
+**Response (200 OK):**
+
+```json
+{
+  "lectures": [
+    {
+      "id": 5,
+      "title": "유사한 문제 강의",
+      "description": "강의 설명",
+      "type": "PROBLEM",
+      "category": "알고리즘",
+      "difficulty": "중급",
+      "recommendationScore": 90.0,
+      "recommendationReason": "같은 카테고리, 같은 난이도",
+      "author": {
+        "id": 2,
+        "username": "작성자명2",
+        "loginId": "작성자로그인ID2"
+      }
+    }
+  ],
+  "meta": {
+    "currentPage": 0,
+    "totalElements": 8,
+    "totalPages": 2,
+    "hasNext": true,
+    "hasPrevious": false
+  }
+}
+```
+
+**Error Response:**
+
+- `400 Bad Request`: 기준 강의가 문제 강의가 아님
+- `401 Unauthorized`: X-User-Id 헤더 누락
+- `404 Not Found`: 강의를 찾을 수 없음
+- `500 Internal Server Error`: 서버 오류
 
 ---
 

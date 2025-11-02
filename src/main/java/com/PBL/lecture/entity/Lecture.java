@@ -281,6 +281,13 @@ public class Lecture {
     private Long languageId;
 
     /**
+     * 학습 목표
+     * 이 강의를 통해 달성할 수 있는 학습 목표
+     */
+    @Column(name = "learning_objectives", columnDefinition = "TEXT")
+    private String learningObjectives;
+
+    /**
      * 실행 제약조건 (1:1 관계)
      * - 시간/메모리 제한, 컴파일러 옵션, 추가 파일 등
      * - 지연 로딩으로 성능 최적화
@@ -328,6 +335,7 @@ public class Lecture {
                 .inputContent(request.getInput_content())
                 .outputContent(request.getInput_content())
                 .durationMinutes(request.getDurationMinutes())
+                .learningObjectives(request.getLearningObjectives())
                 .build();
 
         // TestCase 처리

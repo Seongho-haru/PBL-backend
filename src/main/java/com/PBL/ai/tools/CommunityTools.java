@@ -127,7 +127,8 @@ public class CommunityTools {
             }
         }
 
-        Map<String, Object> result = searchService.unifiedSearch(title, category, difficulty, lectureType, page, size);
+        // isPublic이 null이면 공개만 검색 (기존 동작 유지)
+        Map<String, Object> result = searchService.unifiedSearch(title, category, difficulty, lectureType, true, page, size);
         log.debug("✅ [도구 결과] unifiedSearch - 검색 완료");
         return result;
     }

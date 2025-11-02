@@ -35,4 +35,5 @@ public class CreateLectureRequest {
     private String output_content;
 
     private Long languageId;
+    private String learningObjectives;
 }

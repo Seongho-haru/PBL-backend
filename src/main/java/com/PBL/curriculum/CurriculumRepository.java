@@ -191,4 +191,27 @@ public interface CurriculumRepository extends JpaRepository<Curriculum, Long> {
            "WHERE c.isPublic = true " +
            "ORDER BY c.createdAt DESC")
     List<Curriculum> findPublicCurriculumsWithAuthor();
+
+    /**
+     * 모든 커리큘럼 ID 조회 (페이징, 공개 여부 필터 포함)
+     */
+    @Query(value = "SELECT c.id FROM curriculums c " +
+           "WHERE (:isPublic IS NULL OR c.is_public = :isPublic) " +
+           "ORDER BY c.created_at DESC",
+           countQuery = "SELECT COUNT(c.id) FROM curriculums c WHERE (:isPublic IS NULL OR c.is_public = :isPublic)",
+           nativeQuery = true)
+    Page<Long> findAllCurriculumIds(@Param("isPublic") Boolean isPublic, Pageable pageable);
+
+    /**
+     * 제목으로 검색한 커리큘럼 ID 조회 (페이징, 공개 여부 필터 포함)
+     */
+    @Query(value = "SELECT c.id FROM curriculums c " +
+           "WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :title, '%')) " +
+           "AND (:isPublic IS NULL OR c.is_public = :isPublic) " +
+           "ORDER BY c.created_at DESC",
+           countQuery = "SELECT COUNT(c.id) FROM curriculums c " +
+           "WHERE LOWER(c.title) LIKE LOWER(CONCAT('%', :title, '%')) " +
+           "AND (:isPublic IS NULL OR c.is_public = :isPublic)",
+           nativeQuery = true)
+    Page<Long> findCurriculumIdsByTitle(@Param("title") String title, @Param("isPublic") Boolean isPublic, Pageable pageable);
 }

@@ -43,8 +43,8 @@ public class RecommendationService {
      * 개인화된 커리큘럼 추천
      * Priority 2
      */
-    public List<RecommendationDTOs.CurriculumRecommendationResponse> getPersonalizedCurriculums(Long userId, int limit) {
-        log.info("개인화 추천 요청 - 사용자 ID: {}, 추천 개수: {}", userId, limit);
+    public Map<String, Object> getPersonalizedCurriculums(Long userId, int page, int size) {
+        log.info("개인화 추천 요청 - 사용자 ID: {}, 페이지: {}, 크기: {}", userId, page, size);
 
         // 1. 사용자 수강 이력 분석
         List<Enrollment> enrollments = enrollmentRepository.findByUserIdOrderByEnrolledAtDesc(userId);
@@ -71,25 +71,44 @@ public class RecommendationService {
                     return new CurriculumScore(c, score, reason);
                 })
                 .sorted((a, b) -> b.score.compareTo(a.score))
-                .limit(limit)
                 .collect(Collectors.toList());
 
-        // 5. 로그 저장
-        logRecommendation(userId, scoredCurriculums, "PERSONALIZED");
+        // 5. 페이지네이션 적용
+        int totalElements = scoredCurriculums.size();
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+        int start = page * size;
+        int end = Math.min(start + size, totalElements);
+        
+        List<CurriculumScore> pagedCurriculums = scoredCurriculums.subList(Math.min(start, totalElements), end);
 
-        // 6. 응답 생성
-        return scoredCurriculums.stream()
+        // 6. 로그 저장
+        logRecommendation(userId, pagedCurriculums, "PERSONALIZED");
+
+        // 7. 응답 생성
+        List<RecommendationDTOs.CurriculumRecommendationResponse> responses = pagedCurriculums.stream()
                 .map(sc -> RecommendationDTOs.CurriculumRecommendationResponse.from(
                         sc.curriculum, sc.score, sc.reason))
                 .collect(Collectors.toList());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("curriculums", responses);
+        Map<String, Object> meta = new HashMap<>();
+        meta.put("currentPage", page);
+        meta.put("totalElements", totalElements);
+        meta.put("totalPages", totalPages);
+        meta.put("hasNext", page < totalPages - 1);
+        meta.put("hasPrevious", page > 0);
+        result.put("meta", meta);
+
+        return result;
     }
 
     /**
      * 통합 추천 (커리큘럼 + 강의 혼합)
      * 공개된 커리큘럼과 강의를 점수 기준으로 혼합하여 추천
      */
-    public List<RecommendationDTOs.UnifiedRecommendationResponse> getUnifiedRecommendations(Long userId, int limit) {
-        log.info("통합 추천 요청 - 사용자 ID: {}, 추천 개수: {}", userId, limit);
+    public Map<String, Object> getUnifiedRecommendations(Long userId, int page, int size) {
+        log.info("통합 추천 요청 - 사용자 ID: {}, 페이지: {}, 크기: {}", userId, page, size);
 
         // 1. 사용자 수강 이력 분석
         List<Enrollment> enrollments = enrollmentRepository.findByUserIdOrderByEnrolledAtDesc(userId);
@@ -133,17 +152,20 @@ public class RecommendationService {
         allScores.addAll(lectureScores);
         allScores.sort((a, b) -> b.score.compareTo(a.score));
         
-        // 5. 상위 N개 추천
-        List<UnifiedScore> topScores = allScores.stream()
-                .limit(limit)
-                .collect(Collectors.toList());
+        // 5. 페이지네이션 적용
+        int totalElements = allScores.size();
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+        int start = page * size;
+        int end = Math.min(start + size, totalElements);
+        
+        List<UnifiedScore> topScores = allScores.subList(Math.min(start, totalElements), end);
 
         log.debug("통합 추천 결과 - 커리큘럼: {}개, 강의: {}개", 
                 topScores.stream().filter(s -> s.type.equals("CURRICULUM")).count(),
                 topScores.stream().filter(s -> s.type.equals("LECTURE")).count());
 
         // 6. DTO 변환
-        return topScores.stream()
+        List<RecommendationDTOs.UnifiedRecommendationResponse> responses = topScores.stream()
                 .map(us -> {
                     if ("CURRICULUM".equals(us.type)) {
                         Curriculum c = us.curriculum;
@@ -178,6 +200,18 @@ public class RecommendationService {
                     }
                 })
                 .collect(Collectors.toList());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("recommendations", responses);
+        Map<String, Object> meta = new HashMap<>();
+        meta.put("currentPage", page);
+        meta.put("totalElements", totalElements);
+        meta.put("totalPages", totalPages);
+        meta.put("hasNext", page < totalPages - 1);
+        meta.put("hasPrevious", page > 0);
+        result.put("meta", meta);
+
+        return result;
     }
 
     /**
@@ -247,9 +281,9 @@ public class RecommendationService {
      * 유사 문제 강의 추천
      * Priority 1 - 가장 중요한 기능
      */
-    public List<RecommendationDTOs.LectureRecommendationResponse> getSimilarProblemLectures(
-            Long userId, Long lectureId, int limit) {
-        log.info("유사 문제 추천 요청 - 사용자 ID: {}, 기준 강의 ID: {}, 추천 개수: {}", userId, lectureId, limit);
+    public Map<String, Object> getSimilarProblemLectures(
+            Long userId, Long lectureId, int page, int size) {
+        log.info("유사 문제 추천 요청 - 사용자 ID: {}, 기준 강의 ID: {}, 페이지: {}, 크기: {}", userId, lectureId, page, size);
 
         // 1. 기준 강의 조회
         Lecture baseLecture = lectureRepository.findById(lectureId)
@@ -282,19 +316,38 @@ public class RecommendationService {
                 })
                 .filter(scored -> scored.score.compareTo(BigDecimal.ZERO) > 0) // 점수가 0보다 큰 것만
                 .sorted((a, b) -> b.score.compareTo(a.score))
-                .limit(limit)
                 .collect(Collectors.toList());
 
         log.debug("유사 강의 발견: {}개", scoredLectures.size());
 
-        // 6. 로그 저장
-        logLectureRecommendation(userId, scoredLectures, "SIMILAR_PROBLEM");
+        // 6. 페이지네이션 적용
+        int totalElements = scoredLectures.size();
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+        int start = page * size;
+        int end = Math.min(start + size, totalElements);
+        
+        List<LectureScore> pagedLectures = scoredLectures.subList(Math.min(start, totalElements), end);
 
-        // 7. 응답 생성
-        return scoredLectures.stream()
+        // 7. 로그 저장
+        logLectureRecommendation(userId, pagedLectures, "SIMILAR_PROBLEM");
+
+        // 8. 응답 생성
+        List<RecommendationDTOs.LectureRecommendationResponse> responses = pagedLectures.stream()
                 .map(sl -> RecommendationDTOs.LectureRecommendationResponse.from(
                         sl.lecture, sl.score, sl.reason))
                 .collect(Collectors.toList());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("lectures", responses);
+        Map<String, Object> meta = new HashMap<>();
+        meta.put("currentPage", page);
+        meta.put("totalElements", totalElements);
+        meta.put("totalPages", totalPages);
+        meta.put("hasNext", page < totalPages - 1);
+        meta.put("hasPrevious", page > 0);
+        result.put("meta", meta);
+
+        return result;
     }
 
     // ========== 헬퍼 메서드 ==========

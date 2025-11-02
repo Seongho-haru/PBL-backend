@@ -37,9 +37,12 @@ public class CurriculumController {
 
     @GetMapping
     @Operation(summary = "모든 커리큘럼 조회", description = "시스템에 등록된 모든 커리큘럼을 최신순으로 조회합니다.")
-    public ResponseEntity<List<CurriculumResponse>> getAllCurriculums() {
-        List<CurriculumResponse> responses = curriculumService.getAllCurriculums();
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<Map<String, Object>> getAllCurriculums(
+            @Parameter(description = "공개 여부 필터 (true: 공개만, false: 비공개만, null: 모두)") @RequestParam(required = false) Boolean isPublic,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        Map<String, Object> result = curriculumService.getAllCurriculums(isPublic, page, size);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/public")
@@ -227,10 +230,13 @@ public class CurriculumController {
 
     @GetMapping("/search")
     @Operation(summary = "커리큘럼 검색", description = "제목으로 커리큘럼을 검색합니다.")
-    public ResponseEntity<List<CurriculumResponse>> searchCurriculums(
-            @Parameter(description = "검색할 제목 (부분 일치)") @RequestParam String title) {
-        List<CurriculumResponse> responses = curriculumService.searchCurriculums(title);
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<Map<String, Object>> searchCurriculums(
+            @Parameter(description = "검색할 제목 (부분 일치)") @RequestParam String title,
+            @Parameter(description = "공개 여부 필터 (true: 공개만, false: 비공개만, null: 모두)") @RequestParam(required = false) Boolean isPublic,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        Map<String, Object> result = curriculumService.searchCurriculums(title, isPublic, page, size);
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/public/search")

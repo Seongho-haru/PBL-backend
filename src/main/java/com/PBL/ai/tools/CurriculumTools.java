@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -79,10 +80,11 @@ public class CurriculumTools {
             @P("추천 개수 (기본 5개)") int limit) {
 
         log.debug("🔧 [도구 호출] getPersonalizedCurriculums - userId:{}, limit:{}", userId, limit);
-        List<RecommendationDTOs.CurriculumRecommendationResponse> result =
-                recommendationService.getPersonalizedCurriculums(userId, limit > 0 ? limit : 5);
-        log.debug("✅ [도구 결과] getPersonalizedCurriculums - 추천 개수: {}", result.size());
-        return result;
+        Map<String, Object> resultMap = recommendationService.getPersonalizedCurriculums(userId, 0, limit > 0 ? limit : 5);
+        @SuppressWarnings("unchecked")
+        List<RecommendationDTOs.CurriculumRecommendationResponse> result = (List<RecommendationDTOs.CurriculumRecommendationResponse>) resultMap.get("curriculums");
+        log.debug("✅ [도구 결과] getPersonalizedCurriculums - 추천 개수: {}", result != null ? result.size() : 0);
+        return result != null ? result : new ArrayList<>();
     }
 
     @Tool("특정 문제와 유사한 다른 문제들을 추천합니다. 같은 주제나 알고리즘 유형의 문제를 찾을 때 유용합니다.")
@@ -92,10 +94,11 @@ public class CurriculumTools {
             @P("추천 개수 (기본 5개)") int limit) {
 
         log.debug("🔧 [도구 호출] getSimilarProblems - userId:{}, lectureId:{}, limit:{}", userId, lectureId, limit);
-        List<RecommendationDTOs.LectureRecommendationResponse> result =
-                recommendationService.getSimilarProblemLectures(userId, lectureId, limit > 0 ? limit : 5);
-        log.debug("✅ [도구 결과] getSimilarProblems - 추천 개수: {}", result.size());
-        return result;
+        Map<String, Object> resultMap = recommendationService.getSimilarProblemLectures(userId, lectureId, 0, limit > 0 ? limit : 5);
+        @SuppressWarnings("unchecked")
+        List<RecommendationDTOs.LectureRecommendationResponse> result = (List<RecommendationDTOs.LectureRecommendationResponse>) resultMap.get("lectures");
+        log.debug("✅ [도구 결과] getSimilarProblems - 추천 개수: {}", result != null ? result.size() : 0);
+        return result != null ? result : new ArrayList<>();
     }
 
     @Tool("커리큘럼과 강의를 모두 포함한 통합 추천을 제공합니다.")
@@ -104,10 +107,11 @@ public class CurriculumTools {
             @P("추천 개수 (기본 10개)") int limit) {
 
         log.debug("🔧 [도구 호출] getUnifiedRecommendations - userId:{}, limit:{}", userId, limit);
-        List<RecommendationDTOs.UnifiedRecommendationResponse> result =
-                recommendationService.getUnifiedRecommendations(userId, limit > 0 ? limit : 10);
-        log.debug("✅ [도구 결과] getUnifiedRecommendations - 추천 개수: {}", result.size());
-        return result;
+        Map<String, Object> resultMap = recommendationService.getUnifiedRecommendations(userId, 0, limit > 0 ? limit : 10);
+        @SuppressWarnings("unchecked")
+        List<RecommendationDTOs.UnifiedRecommendationResponse> result = (List<RecommendationDTOs.UnifiedRecommendationResponse>) resultMap.get("recommendations");
+        log.debug("✅ [도구 결과] getUnifiedRecommendations - 추천 개수: {}", result != null ? result.size() : 0);
+        return result != null ? result : new ArrayList<>();
     }
 
     // ========================================

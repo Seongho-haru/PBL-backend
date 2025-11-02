@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.checkerframework.checker.units.qual.t;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -128,6 +129,9 @@ public class LectureService {
         if (request.getContent() != null) {
             existingLecture.setContent(request.getContent());
         }
+        if (request.getLearningObjectives() != null) {
+            existingLecture.setLearningObjectives(request.getLearningObjectives());
+        }
 
         // Constraints 업데이트
         if (request.getConstraints() != null) {
@@ -221,7 +225,9 @@ public class LectureService {
     /**
      * 타입별 강의 조회 (DTO 반환)
      * 트랜잭션 내부에서 조회 및 변환 수행
+     * @deprecated 페이지네이션 버전 사용 권장
      */
+    @Deprecated
     @Transactional(readOnly = true)
     public List<LectureResponse> getLecturesByType(LectureType type) {
         List<Lecture> lectures = lectureRepository.findByType(type);
@@ -229,6 +235,25 @@ public class LectureService {
         return lectures.stream()
                 .map(LectureResponse::from)
                 .toList();
+    }
+
+    /**
+     * 타입별 강의 조회 (페이징, 공개 여부 필터, DTO 반환)
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getLecturesByType(LectureType type, Boolean isPublic, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
+        String typeStr = type.name();
+        Page<Lecture> lecturesPage = lectureRepository.findByTypeWithPagination(type, typeStr, isPublic, pageable);
+
+        List<LectureResponse> responses = lecturesPage.getContent().stream()
+                .map(LectureResponse::from)
+                .toList();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("lectures", responses);
+        response.put("meta", createPaginationMeta(lecturesPage));
+        return response;
     }
 
     /**
@@ -242,7 +267,9 @@ public class LectureService {
     /**
      * 최근 강의 조회 (DTO 반환)
      * 트랜잭션 내부에서 조회 및 변환 수행
+     * @deprecated 페이지네이션 버전 사용 권장
      */
+    @Deprecated
     @Transactional(readOnly = true)
     public List<LectureResponse> getRecentLectures(int limit) {
         Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -251,6 +278,14 @@ public class LectureService {
         return lectures.stream()
                 .map(LectureResponse::from)
                 .toList();
+    }
+
+    /**
+     * 최근 강의 조회 (페이징, 공개 여부 필터, DTO 반환)
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getRecentLectures(Boolean isPublic, int page, int size) {
+        return getAllLectures(isPublic, page, size); // 최근 강의는 모든 강의 조회와 동일 (최신순 정렬)
     }
 
     // === 테스트케이스 관리 ===
@@ -389,10 +424,19 @@ public class LectureService {
      * 트랜잭션 내부에서 검색 및 변환 수행
      */
     @Transactional(readOnly = true)
-    public Map<String, Object> searchPublicLectures(String title, String category, String difficulty, LectureType type, int page, int size) {
+    public Map<String, Object> searchPublicLectures(String title, String category, String difficulty, LectureType type, Boolean isPublic, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         String typeStr = type != null ? type.name() : null;
-        Page<Lecture> lecturesPage = lectureRepository.findPublicLecturesBySearchCriteria(title, category, difficulty, type, typeStr, pageable);
+        // isPublic이 null이면 공개만 검색 (기존 동작 유지)
+        Boolean actualIsPublic = isPublic != null ? isPublic : true;
+        // PostgreSQL 타입 추론 문제 해결을 위해 limit과 offset을 명시적으로 계산
+        int limit = size;
+        int offset = page * size;
+        // Repository에서 List와 Count를 따로 조회하여 Page 객체 수동 생성
+        // enum 타입 추론 문제를 피하기 위해 type 파라미터 제거하고 typeStr만 전달
+        List<Lecture> lectures = lectureRepository.findPublicLecturesBySearchCriteria(title, category, difficulty, typeStr, actualIsPublic, limit, offset);
+        long totalCount = lectureRepository.countPublicLecturesBySearchCriteria(title, category, difficulty, typeStr, actualIsPublic);
+        Page<Lecture> lecturesPage = new PageImpl<>(lectures, pageable, totalCount);
 
         // 트랜잭션 내부에서 DTO 변환
         List<LectureResponse> responses = lecturesPage.getContent().stream()
@@ -551,7 +595,9 @@ public class LectureService {
     /**
      * 모든 강의 조회 후 DTO로 변환
      * 트랜잭션 내부에서 Lazy Loading된 컬렉션을 안전하게 변환
+     * @deprecated 페이지네이션 버전 사용 권장
      */
+    @Deprecated
     @Transactional(readOnly = true)
     public List<LectureResponse> getAllLectures() {
         List<Lecture> lectures = lectureRepository.findAllWithTestCases();
@@ -559,6 +605,24 @@ public class LectureService {
         return lectures.stream()
                 .map(LectureResponse::from)
                 .toList();
+    }
+
+    /**
+     * 모든 강의 조회 (페이징, 공개 여부 필터, DTO 반환)
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getAllLectures(Boolean isPublic, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
+        Page<Lecture> lecturesPage = lectureRepository.findAllWithPagination(isPublic, pageable);
+
+        List<LectureResponse> responses = lecturesPage.getContent().stream()
+                .map(LectureResponse::from)
+                .toList();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("lectures", responses);
+        response.put("meta", createPaginationMeta(lecturesPage));
+        return response;
     }
 
     /**

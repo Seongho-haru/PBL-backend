@@ -49,7 +49,7 @@ public class RecommendationWarmupJob {
      * - 동시에 최대 3개의 워밍업 작업만 실행 (시스템 부하 방지)
      * - 5분 내 중복 워밍업 방지 (불필요한 리소스 사용 방지)
      * - 우선순위가 높은 첫 페이지만 계산 (page=0, size=12)
-     * - 리소스가 부족하면 강의 추천 워밍업은 건너뜀
+     * - 통합, 커리큘럼, 강의 추천 모두 미리 준비하여 로그인 시 빠른 조회 가능
      * 
      * @param userId 사용자 ID
      */
@@ -107,16 +107,12 @@ public class RecommendationWarmupJob {
                 log.warn("커리큘럼 추천 워밍업 실패 - 사용자 ID: {}, 오류: {}", userId, e.getMessage());
             }
             
-            // 3. 강의 추천 워밍업 (우선순위 3, 리소스 여유 있을 때만)
-            if (jobCount.get() < MAX_CONCURRENT_JOBS) {
-                try {
-                    recommendationService.getPersonalizedLectures(userId, page, size);
-                    log.debug("강의 추천 워밍업 완료 - 사용자 ID: {}", userId);
-                } catch (Exception e) {
-                    log.warn("강의 추천 워밍업 실패 - 사용자 ID: {}, 오류: {}", userId, e.getMessage());
-                }
-            } else {
-                log.debug("리소스 부족으로 강의 추천 워밍업 건너뜀 - 사용자 ID: {}", userId);
+            // 3. 강의 추천 워밍업 (우선순위 3, 항상 실행하여 로그인 시 빠른 조회 가능)
+            try {
+                recommendationService.getPersonalizedLectures(userId, page, size);
+                log.debug("강의 추천 워밍업 완료 - 사용자 ID: {}", userId);
+            } catch (Exception e) {
+                log.warn("강의 추천 워밍업 실패 - 사용자 ID: {}, 오류: {}", userId, e.getMessage());
             }
             
             long duration = System.currentTimeMillis() - startTime;

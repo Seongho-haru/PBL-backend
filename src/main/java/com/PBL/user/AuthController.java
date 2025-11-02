@@ -215,4 +215,55 @@ public class AuthController {
             ));
         }
     }
+
+    // === 프로필 관리 ===
+
+    @PutMapping("/user/profile/username")
+    @Operation(summary = "닉네임 변경", description = "사용자의 닉네임을 변경합니다.")
+    public ResponseEntity<Map<String, Object>> updateUsername(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestBody UserDTOs.UpdateUsernameRequest request) {
+        try {
+            UserDTOs.UserResponse user = userService.updateUsername(userId, request);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "닉네임이 변경되었습니다.",
+                    "user", user
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "닉네임 변경 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    @PutMapping("/user/profile/password")
+    @Operation(summary = "비밀번호 변경", description = "사용자의 비밀번호를 변경합니다.")
+    public ResponseEntity<Map<String, Object>> updatePassword(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestBody UserDTOs.UpdatePasswordRequest request) {
+        try {
+            userService.updatePassword(userId, request);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "비밀번호가 변경되었습니다."
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "비밀번호 변경 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
 }

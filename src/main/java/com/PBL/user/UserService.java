@@ -236,4 +236,96 @@ public class UserService {
         user.unmute();
         userRepository.save(user);
     }
+
+    // === 프로필 관리 ===
+
+    /**
+     * 닉네임 변경
+     */
+    @Transactional
+    public UserDTOs.UserResponse updateUsername(Long userId, UserDTOs.UpdateUsernameRequest request) {
+        log.info("닉네임 변경 요청 - 사용자 ID: {}", userId);
+
+        // 입력값 검증
+        validateUpdateUsernameRequest(request);
+
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 현재 닉네임과 동일한지 확인
+        if (user.getUsername().equals(request.getUsername())) {
+            throw new IllegalArgumentException("현재 사용 중인 닉네임입니다.");
+        }
+
+        // 중복 검사
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+        }
+
+        // 닉네임 변경
+        user.setUsername(request.getUsername());
+        User updatedUser = userRepository.save(user);
+
+        log.info("닉네임 변경 완료 - 사용자 ID: {}, 새 닉네임: {}", userId, request.getUsername());
+        return new UserDTOs.UserResponse(updatedUser);
+    }
+
+    /**
+     * 닉네임 변경 요청 검증
+     */
+    private void validateUpdateUsernameRequest(UserDTOs.UpdateUsernameRequest request) {
+        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+            throw new IllegalArgumentException("닉네임을 입력해주세요.");
+        }
+        if (request.getUsername().length() < 2 || request.getUsername().length() > 50) {
+            throw new IllegalArgumentException("닉네임은 2자 이상 50자 이하여야 합니다.");
+        }
+    }
+
+    /**
+     * 비밀번호 변경
+     */
+    @Transactional
+    public void updatePassword(Long userId, UserDTOs.UpdatePasswordRequest request) {
+        log.info("비밀번호 변경 요청 - 사용자 ID: {}", userId);
+
+        // 입력값 검증
+        validateUpdatePasswordRequest(request);
+
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 현재 비밀번호 확인
+        if (!user.checkPassword(request.getCurrentPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 올바르지 않습니다.");
+        }
+
+        // 새 비밀번호와 현재 비밀번호가 동일한지 확인
+        if (request.getCurrentPassword().equals(request.getNewPassword())) {
+            throw new IllegalArgumentException("새 비밀번호는 현재 비밀번호와 달라야 합니다.");
+        }
+
+        // 비밀번호 변경
+        user.setPassword(request.getNewPassword());
+        userRepository.save(user);
+
+        log.info("비밀번호 변경 완료 - 사용자 ID: {}", userId);
+    }
+
+    /**
+     * 비밀번호 변경 요청 검증
+     */
+    private void validateUpdatePasswordRequest(UserDTOs.UpdatePasswordRequest request) {
+        if (request.getCurrentPassword() == null || request.getCurrentPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("현재 비밀번호를 입력해주세요.");
+        }
+        if (request.getNewPassword() == null || request.getNewPassword().trim().isEmpty()) {
+            throw new IllegalArgumentException("새 비밀번호를 입력해주세요.");
+        }
+        if (request.getNewPassword().length() < 6 || request.getNewPassword().length() > 50) {
+            throw new IllegalArgumentException("비밀번호는 6자 이상 50자 이하여야 합니다.");
+        }
+    }
 }

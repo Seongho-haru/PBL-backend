@@ -1,11 +1,14 @@
 package com.PBL.user;
 
 import com.PBL.recommendation.job.RecommendationWarmupJob;
+import com.PBL.s3.dto.S3DTOs;
+import com.PBL.s3.service.S3Service;
 import lombok.extern.slf4j.Slf4j;
 import org.jobrunr.scheduling.JobScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +31,9 @@ public class UserService {
     
     @Autowired(required = false)
     private RecommendationWarmupJob recommendationWarmupJob;
+    
+    @Autowired(required = false)
+    private S3Service s3Service;
 
     // === 회원가입 ===
 
@@ -327,5 +333,60 @@ public class UserService {
         if (request.getNewPassword().length() < 6 || request.getNewPassword().length() > 50) {
             throw new IllegalArgumentException("비밀번호는 6자 이상 50자 이하여야 합니다.");
         }
+    }
+
+    /**
+     * 프로필 이미지 업로드 및 설정
+     */
+    @Transactional
+    public UserDTOs.UserResponse uploadProfileImage(Long userId, MultipartFile file) {
+        log.info("프로필 이미지 업로드 요청 - 사용자 ID: {}", userId);
+
+        if (s3Service == null) {
+            throw new IllegalStateException("S3Service가 설정되지 않았습니다.");
+        }
+
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 기존 프로필 이미지가 있으면 삭제 (나중에 ImageMetadata를 통해 삭제 가능)
+        String oldImageUrl = user.getProfileImageUrl();
+        // TODO: 기존 이미지가 S3에 있다면 삭제하는 로직 추가 가능
+
+        // S3에 이미지 업로드 (프로필 폴더에 저장)
+        S3DTOs.ImageUploadResponse uploadResponse = s3Service.uploadImage(file, userId, "profiles");
+        
+        // 프로필 이미지 URL 업데이트 (objectKey 저장)
+        user.setProfileImageUrl(uploadResponse.getImageUrl());
+        User updatedUser = userRepository.save(user);
+
+        log.info("프로필 이미지 업로드 완료 - 사용자 ID: {}, 이미지 URL: {}", userId, uploadResponse.getImageUrl());
+        return new UserDTOs.UserResponse(updatedUser);
+    }
+
+    /**
+     * 프로필 이미지 삭제
+     */
+    @Transactional
+    public UserDTOs.UserResponse deleteProfileImage(Long userId) {
+        log.info("프로필 이미지 삭제 요청 - 사용자 ID: {}", userId);
+
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        if (user.getProfileImageUrl() == null || user.getProfileImageUrl().trim().isEmpty()) {
+            throw new IllegalArgumentException("프로필 이미지가 없습니다.");
+        }
+
+        // TODO: S3에서 이미지 삭제하는 로직 추가 가능 (ImageMetadata를 통해 imageId 찾아서 삭제)
+
+        // 프로필 이미지 URL 제거
+        user.setProfileImageUrl(null);
+        User updatedUser = userRepository.save(user);
+
+        log.info("프로필 이미지 삭제 완료 - 사용자 ID: {}", userId);
+        return new UserDTOs.UserResponse(updatedUser);
     }
 }

@@ -92,6 +92,7 @@ public class UserDTOs {
         private Long id;
         private String username;
         private String loginId;
+        private String profileImageUrl;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
 
@@ -103,6 +104,7 @@ public class UserDTOs {
             this.id = user.getId();
             this.username = user.getUsername();
             this.loginId = user.getLoginId();
+            this.profileImageUrl = user.getProfileImageUrl();
             this.createdAt = user.getCreatedAt();
             this.updatedAt = user.getUpdatedAt();
         }
@@ -130,6 +132,14 @@ public class UserDTOs {
 
         public void setLoginId(String loginId) {
             this.loginId = loginId;
+        }
+
+        public String getProfileImageUrl() {
+            return profileImageUrl;
+        }
+
+        public void setProfileImageUrl(String profileImageUrl) {
+            this.profileImageUrl = profileImageUrl;
         }
 
         public LocalDateTime getCreatedAt() {

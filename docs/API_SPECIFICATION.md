@@ -234,6 +234,123 @@ Content-Type: application/json
 - `401 Unauthorized`: X-User-Id 헤더 누락
 - `500 Internal Server Error`: 서버 오류
 
+### 7. 프로필 이미지 업로드/수정
+
+**PUT** `/api/auth/user/profile/image`
+
+프로필 이미지를 업로드하거나 수정합니다. 새 이미지를 업로드하면 기존 이미지가 대체됩니다.
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+Content-Type: multipart/form-data
+```
+
+**Request Body (multipart/form-data):**
+
+```
+file: [이미지 파일]
+```
+
+**제한사항:**
+
+- 이미지 형식: JPEG, PNG, GIF, WEBP, BMP
+- 파일 크기: 최대 10MB
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "message": "프로필 이미지가 업로드되었습니다.",
+  "user": {
+    "id": 1,
+    "username": "사용자명",
+    "loginId": "user123",
+    "profileImageUrl": "profiles/uuid-filename.jpg",
+    "createdAt": "2025-01-01T00:00:00",
+    "updatedAt": "2025-01-01T12:00:00"
+  }
+}
+```
+
+**Error Response:**
+
+- `400 Bad Request`: 잘못된 파일 형식 또는 크기 초과
+- `401 Unauthorized`: X-User-Id 헤더 누락
+- `404 Not Found`: 사용자를 찾을 수 없음
+- `503 Service Unavailable`: S3Service가 설정되지 않음
+- `500 Internal Server Error`: 서버 오류
+
+### 8. 프로필 이미지 조회
+
+**GET** `/api/auth/user/{userId}/profile/image`
+
+사용자의 프로필 이미지 URL을 조회합니다. 타인도 조회 가능합니다.
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "userId": 1,
+  "profileImageUrl": "profiles/uuid-filename.jpg"
+}
+```
+
+프로필 이미지가 없는 경우:
+
+```json
+{
+  "success": true,
+  "userId": 1,
+  "profileImageUrl": ""
+}
+```
+
+**Error Response:**
+
+- `404 Not Found`: 사용자를 찾을 수 없음
+- `500 Internal Server Error`: 서버 오류
+
+**참고**: `profileImageUrl`은 MinIO의 objectKey이거나 전체 URL입니다. 실제 이미지를 보려면 MinIO의 base URL과 조합하여 사용해야 합니다.
+
+### 9. 프로필 이미지 삭제
+
+**DELETE** `/api/auth/user/profile/image`
+
+본인의 프로필 이미지를 삭제합니다.
+
+**Headers:**
+
+```
+X-User-Id: {사용자ID}
+```
+
+**Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "message": "프로필 이미지가 삭제되었습니다.",
+  "user": {
+    "id": 1,
+    "username": "사용자명",
+    "loginId": "user123",
+    "profileImageUrl": null,
+    "createdAt": "2025-01-01T00:00:00",
+    "updatedAt": "2025-01-01T12:00:00"
+  }
+}
+```
+
+**Error Response:**
+
+- `400 Bad Request`: 프로필 이미지가 없음
+- `401 Unauthorized`: X-User-Id 헤더 누락
+- `500 Internal Server Error`: 서버 오류
+
 ---
 
 ## 📚 강의 관리 API

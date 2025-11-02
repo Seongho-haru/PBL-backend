@@ -68,6 +68,12 @@ public class User {
     @Column(name = "warning_count")
     private Integer warningCount = 0;
 
+    /**
+     * 프로필 이미지 URL
+     */
+    @Column(name = "profile_image_url", length = 500)
+    private String profileImageUrl;
+
     // 기본 생성자
     public User() {}
 
@@ -219,6 +225,14 @@ public class User {
 
     public void setWarningCount(Integer warningCount) {
         this.warningCount = warningCount;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 
     @Override

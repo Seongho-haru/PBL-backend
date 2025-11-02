@@ -2,10 +2,14 @@ package com.PBL.user;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -263,6 +267,101 @@ public class AuthController {
             return ResponseEntity.internalServerError().body(Map.of(
                     "success", false,
                     "message", "비밀번호 변경 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    @PutMapping("/user/profile/image")
+    @Operation(summary = "프로필 이미지 업로드/수정", description = "프로필 이미지를 업로드하거나 수정합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "프로필 이미지 업로드/수정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 (파일 형식, 크기 등)"),
+            @ApiResponse(responseCode = "401", description = "X-User-Id 헤더 누락"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<Map<String, Object>> uploadProfileImage(
+            @RequestHeader("X-User-Id") Long userId,
+            @Parameter(description = "이미지 파일", required = true) @RequestParam("file") MultipartFile file) {
+        try {
+            UserDTOs.UserResponse user = userService.uploadProfileImage(userId, file);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "프로필 이미지가 업로드되었습니다.",
+                    "user", user
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "프로필 이미지 업로드 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    @GetMapping("/user/{userId}/profile/image")
+    @Operation(summary = "프로필 이미지 조회", description = "사용자의 프로필 이미지 URL을 조회합니다. 타인도 조회 가능합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "프로필 이미지 조회 성공"),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<Map<String, Object>> getProfileImage(
+            @Parameter(description = "사용자 ID", required = true) @PathVariable Long userId) {
+        try {
+            UserDTOs.UserResponse user = userService.getUserById(userId);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "userId", userId,
+                    "profileImageUrl", user.getProfileImageUrl() != null ? user.getProfileImageUrl() : ""
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "프로필 이미지 조회 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    @DeleteMapping("/user/profile/image")
+    @Operation(summary = "프로필 이미지 삭제", description = "본인의 프로필 이미지를 삭제합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "프로필 이미지 삭제 성공"),
+            @ApiResponse(responseCode = "400", description = "프로필 이미지가 없음"),
+            @ApiResponse(responseCode = "401", description = "X-User-Id 헤더 누락"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<Map<String, Object>> deleteProfileImage(
+            @RequestHeader("X-User-Id") Long userId) {
+        try {
+            UserDTOs.UserResponse user = userService.deleteProfileImage(userId);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "프로필 이미지가 삭제되었습니다.",
+                    "user", user
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "프로필 이미지 삭제 중 오류가 발생했습니다: " + e.getMessage()
             ));
         }
     }

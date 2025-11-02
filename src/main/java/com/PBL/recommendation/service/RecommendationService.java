@@ -55,8 +55,12 @@ public class RecommendationService {
         Set<String> userCategories = extractCategoriesFromEnrollments(enrollments);
         Set<String> userTags = extractTagsFromEnrollments(enrollments);
         String preferredDifficulty = extractPreferredDifficulty(enrollments);
-
-        log.debug("사용자 카테고리: {}, 태그: {}, 선호 난이도: {}", userCategories, userTags, preferredDifficulty);
+        
+        // 신규 사용자 여부 확인
+        boolean isNewUser = enrollments.isEmpty();
+        
+        log.debug("사용자 카테고리: {}, 태그: {}, 선호 난이도: {}, 신규 사용자: {}", 
+                userCategories, userTags, preferredDifficulty, isNewUser);
 
         // 2. 모든 공개 커리큘럼 조회 (작성자 포함)
         List<Curriculum> allCurriculums = curriculumRepository.findPublicCurriculumsWithAuthor();
@@ -70,25 +74,39 @@ public class RecommendationService {
         List<CurriculumScore> scoredCurriculums = allCurriculums.parallelStream()
                 .filter(c -> !enrolledCurriculumIds.contains(c.getId()))
                 .map(c -> {
-                    BigDecimal score = calculateCurriculumScore(c, userCategories, userTags, preferredDifficulty);
-                    String reason = getRecommendationReason(c, userCategories, userTags, preferredDifficulty);
+                    BigDecimal score;
+                    String reason;
+                    if (isNewUser) {
+                        score = calculateDefaultCurriculumScore(c);
+                        reason = getDefaultRecommendationReason(c);
+                    } else {
+                        score = calculateCurriculumScore(c, userCategories, userTags, preferredDifficulty);
+                        reason = getRecommendationReason(c, userCategories, userTags, preferredDifficulty);
+                    }
                     return new CurriculumScore(c, score, reason);
                 })
+                .filter(sc -> sc.score.compareTo(BigDecimal.ZERO) > 0)
                 .sorted((a, b) -> b.score.compareTo(a.score))
                 .collect(Collectors.toList());
 
-        // 5. 페이지네이션 적용
+        // 5. 성능 최적화: 필요한 만큼만 상위 항목 선택 후 페이지네이션
+        int maxItemsNeeded = (page + 1) * size * 2; // 필요한 만큼만 확보
+        List<CurriculumScore> topCurriculums = scoredCurriculums.stream()
+                .limit(Math.min(maxItemsNeeded, scoredCurriculums.size()))
+                .collect(Collectors.toList());
+        
+        // 6. 페이지네이션 적용
         int totalElements = scoredCurriculums.size();
         int totalPages = (int) Math.ceil((double) totalElements / size);
         int start = page * size;
-        int end = Math.min(start + size, totalElements);
+        int end = Math.min(start + size, topCurriculums.size());
         
-        List<CurriculumScore> pagedCurriculums = scoredCurriculums.subList(Math.min(start, totalElements), end);
+        List<CurriculumScore> pagedCurriculums = topCurriculums.subList(Math.min(start, topCurriculums.size()), end);
 
-        // 6. 로그 저장
+        // 7. 로그 저장
         logRecommendation(userId, pagedCurriculums, "PERSONALIZED");
 
-        // 7. 응답 생성
+        // 8. 응답 생성
         List<RecommendationDTOs.CurriculumRecommendationResponse> responses = pagedCurriculums.stream()
                 .map(sc -> RecommendationDTOs.CurriculumRecommendationResponse.from(
                         sc.curriculum, sc.score, sc.reason))
@@ -122,20 +140,33 @@ public class RecommendationService {
         Set<String> userCategories = extractCategoriesFromEnrollments(enrollments);
         Set<String> userTags = extractTagsFromEnrollments(enrollments);
         String preferredDifficulty = extractPreferredDifficulty(enrollments);
+        
+        // 신규 사용자 여부 확인 (수강 이력이 없는 경우)
+        boolean isNewUser = enrollments.isEmpty();
+        
+        log.debug("사용자 카테고리: {}, 태그: {}, 선호 난이도: {}, 신규 사용자: {}", 
+                userCategories, userTags, preferredDifficulty, isNewUser);
 
-        log.debug("사용자 카테고리: {}, 태그: {}, 선호 난이도: {}", userCategories, userTags, preferredDifficulty);
-
-        // 2. 공개 커리큘럼 추천
+        // 2. 공개 커리큘럼 추천 (이미 수강한 커리큘럼 제외)
         List<Curriculum> allCurriculums = curriculumRepository.findPublicCurriculumsWithAuthor();
         Set<Long> enrolledCurriculumIds = enrollments.stream()
                 .map(e -> e.getCurriculum().getId())
                 .collect(Collectors.toSet());
-        // 병렬 처리로 성능 향상
+        
+        // 병렬 처리로 성능 향상 + 조기 필터링
         List<UnifiedScore> curriculumScores = allCurriculums.parallelStream()
-                .filter(c -> !enrolledCurriculumIds.contains(c.getId()))
+                .filter(c -> !enrolledCurriculumIds.contains(c.getId())) // 이미 수강한 커리큘럼 제외
                 .map(c -> {
-                    BigDecimal score = calculateCurriculumScore(c, userCategories, userTags, preferredDifficulty);
-                    String reason = getRecommendationReason(c, userCategories, userTags, preferredDifficulty);
+                    BigDecimal score;
+                    String reason;
+                    if (isNewUser) {
+                        // 신규 사용자는 기본 추천 점수 계산 (파이썬, C, 알고리즘 기초 등)
+                        score = calculateDefaultCurriculumScore(c);
+                        reason = getDefaultRecommendationReason(c);
+                    } else {
+                        score = calculateCurriculumScore(c, userCategories, userTags, preferredDifficulty);
+                        reason = getRecommendationReason(c, userCategories, userTags, preferredDifficulty);
+                    }
                     return new UnifiedScore("CURRICULUM", c.getId(), c, null, score, reason);
                 })
                 .filter(us -> us.score.compareTo(BigDecimal.ZERO) > 0)
@@ -147,30 +178,50 @@ public class RecommendationService {
         List<UnifiedScore> lectureScores = allPublicLectures.parallelStream()
                 .filter(l -> !excludedLectureIds.contains(l.getId()))
                 .map(l -> {
-                    BigDecimal score = calculateLecturePersonalizedScore(l, userCategories, userTags, preferredDifficulty);
-                    String reason = getLecturePersonalizedReason(l, userCategories, userTags, preferredDifficulty);
+                    BigDecimal score;
+                    String reason;
+                    if (isNewUser) {
+                        // 신규 사용자는 기본 추천 점수 계산
+                        score = calculateDefaultLectureScore(l);
+                        reason = getDefaultLectureReason(l);
+                    } else {
+                        score = calculateLecturePersonalizedScore(l, userCategories, userTags, preferredDifficulty);
+                        reason = getLecturePersonalizedReason(l, userCategories, userTags, preferredDifficulty);
+                    }
                     return new UnifiedScore("LECTURE", l.getId(), null, l, score, reason);
                 })
                 .filter(us -> us.score.compareTo(BigDecimal.ZERO) > 0)
                 .collect(Collectors.toList());
 
-        // 4. 커리큘럼과 강의를 점수 기준으로 혼합 정렬
-        List<UnifiedScore> allScores = new ArrayList<>();
-        allScores.addAll(curriculumScores);
-        allScores.addAll(lectureScores);
-        allScores.sort((a, b) -> b.score.compareTo(a.score));
+        // 4. 커리큘럼과 강의를 각각 정렬 (성능 최적화: 전체 정렬 대신 상위만 정렬)
+        curriculumScores.sort((a, b) -> b.score.compareTo(a.score));
+        lectureScores.sort((a, b) -> b.score.compareTo(a.score));
         
-        // 5. 페이지네이션 적용
-        int totalElements = allScores.size();
+        // 5. 성능 최적화: 필요한 만큼만 상위 항목 선택 (페이지 크기의 3배 정도만 계산)
+        int maxItemsNeeded = (page + 1) * size * 3; // 충분한 양 확보
+        List<UnifiedScore> topCurriculums = curriculumScores.stream()
+                .limit(Math.min(maxItemsNeeded, curriculumScores.size()))
+                .collect(Collectors.toList());
+        List<UnifiedScore> topLectures = lectureScores.stream()
+                .limit(Math.min(maxItemsNeeded, lectureScores.size()))
+                .collect(Collectors.toList());
+        
+        // 6. 커리큘럼과 강의를 교차로 배치 (4개씩 셔플하여 균형잡힌 추천 제공)
+        List<UnifiedScore> interleavedScores = interleaveRecommendationsInChunks(topCurriculums, topLectures, 4);
+        
+        // 7. 페이지네이션 적용
+        int totalElements = curriculumScores.size() + lectureScores.size();
         int totalPages = (int) Math.ceil((double) totalElements / size);
         int start = page * size;
-        int end = Math.min(start + size, totalElements);
+        int end = Math.min(start + size, interleavedScores.size());
         
-        List<UnifiedScore> topScores = allScores.subList(Math.min(start, totalElements), end);
+        List<UnifiedScore> topScores = interleavedScores.subList(Math.min(start, interleavedScores.size()), end);
 
-        log.debug("통합 추천 결과 - 커리큘럼: {}개, 강의: {}개", 
+        log.debug("통합 추천 결과 - 커리큘럼: {}개, 강의: {}개 (전체: 커리큘럼 {}개, 강의 {}개)", 
                 topScores.stream().filter(s -> s.type.equals("CURRICULUM")).count(),
-                topScores.stream().filter(s -> s.type.equals("LECTURE")).count());
+                topScores.stream().filter(s -> s.type.equals("LECTURE")).count(),
+                curriculumScores.size(),
+                lectureScores.size());
 
         // 6. DTO 변환
         List<RecommendationDTOs.UnifiedRecommendationResponse> responses = topScores.stream()
@@ -211,6 +262,85 @@ public class RecommendationService {
 
         Map<String, Object> result = new HashMap<>();
         result.put("recommendations", responses);
+        Map<String, Object> meta = new HashMap<>();
+        meta.put("currentPage", page);
+        meta.put("totalElements", totalElements);
+        meta.put("totalPages", totalPages);
+        meta.put("hasNext", page < totalPages - 1);
+        meta.put("hasPrevious", page > 0);
+        result.put("meta", meta);
+
+        return result;
+    }
+
+    /**
+     * 개인화된 강의 추천 (커리큘럼 추천과 별도)
+     * 사용자의 수강 이력과 선호도를 기반으로 강의를 추천합니다.
+     */
+    @Cacheable(value = "personalizedLectures", key = "#userId + ':' + #page + ':' + #size")
+    @Transactional(readOnly = true)
+    public Map<String, Object> getPersonalizedLectures(Long userId, int page, int size) {
+        log.info("개인화 강의 추천 요청 - 사용자 ID: {}, 페이지: {}, 크기: {}", userId, page, size);
+
+        // 1. 사용자 수강 이력 분석
+        List<Enrollment> enrollments = enrollmentRepository.findByUserIdOrderByEnrolledAtDesc(userId);
+        Set<String> userCategories = extractCategoriesFromEnrollments(enrollments);
+        Set<String> userTags = extractTagsFromEnrollments(enrollments);
+        String preferredDifficulty = extractPreferredDifficulty(enrollments);
+        
+        // 신규 사용자 여부 확인
+        boolean isNewUser = enrollments.isEmpty();
+        
+        log.debug("사용자 카테고리: {}, 태그: {}, 선호 난이도: {}, 신규 사용자: {}", 
+                userCategories, userTags, preferredDifficulty, isNewUser);
+
+        // 2. 공개 강의 추천 (개인화) - 병렬 처리 적용
+        List<Lecture> allPublicLectures = lectureRepository.findByIsPublicTrueOrderByCreatedAtDesc();
+        Set<Long> excludedLectureIds = getExcludedLectureIds(userId, null);
+        
+        List<LectureScore> scoredLectures = allPublicLectures.parallelStream()
+                .filter(l -> !excludedLectureIds.contains(l.getId()))
+                .map(l -> {
+                    BigDecimal score;
+                    String reason;
+                    if (isNewUser) {
+                        score = calculateDefaultLectureScore(l);
+                        reason = getDefaultLectureReason(l);
+                    } else {
+                        score = calculateLecturePersonalizedScore(l, userCategories, userTags, preferredDifficulty);
+                        reason = getLecturePersonalizedReason(l, userCategories, userTags, preferredDifficulty);
+                    }
+                    return new LectureScore(l, score, reason);
+                })
+                .filter(sc -> sc.score.compareTo(BigDecimal.ZERO) > 0)
+                .sorted((a, b) -> b.score.compareTo(a.score))
+                .collect(Collectors.toList());
+
+        // 3. 성능 최적화: 필요한 만큼만 상위 항목 선택 후 페이지네이션
+        int maxItemsNeeded = (page + 1) * size * 2; // 필요한 만큼만 확보
+        List<LectureScore> topLectures = scoredLectures.stream()
+                .limit(Math.min(maxItemsNeeded, scoredLectures.size()))
+                .collect(Collectors.toList());
+
+        // 4. 페이지네이션 적용
+        int totalElements = scoredLectures.size();
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+        int start = page * size;
+        int end = Math.min(start + size, topLectures.size());
+        
+        List<LectureScore> pagedLectures = topLectures.subList(Math.min(start, topLectures.size()), end);
+
+        // 5. 로그 저장
+        logLectureRecommendation(userId, pagedLectures, "PERSONALIZED");
+
+        // 6. 응답 생성
+        List<RecommendationDTOs.LectureRecommendationResponse> responses = pagedLectures.stream()
+                .map(sl -> RecommendationDTOs.LectureRecommendationResponse.from(
+                        sl.lecture, sl.score, sl.reason))
+                .collect(Collectors.toList());
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("lectures", responses);
         Map<String, Object> meta = new HashMap<>();
         meta.put("currentPage", page);
         meta.put("totalElements", totalElements);
@@ -328,18 +458,24 @@ public class RecommendationService {
 
         log.debug("유사 강의 발견: {}개", scoredLectures.size());
 
-        // 6. 페이지네이션 적용
+        // 6. 성능 최적화: 필요한 만큼만 상위 항목 선택 후 페이지네이션
+        int maxItemsNeeded = (page + 1) * size * 2; // 필요한 만큼만 확보
+        List<LectureScore> topLectures = scoredLectures.stream()
+                .limit(Math.min(maxItemsNeeded, scoredLectures.size()))
+                .collect(Collectors.toList());
+
+        // 7. 페이지네이션 적용
         int totalElements = scoredLectures.size();
         int totalPages = (int) Math.ceil((double) totalElements / size);
         int start = page * size;
-        int end = Math.min(start + size, totalElements);
+        int end = Math.min(start + size, topLectures.size());
         
-        List<LectureScore> pagedLectures = scoredLectures.subList(Math.min(start, totalElements), end);
+        List<LectureScore> pagedLectures = topLectures.subList(Math.min(start, topLectures.size()), end);
 
-        // 7. 로그 저장
+        // 8. 로그 저장
         logLectureRecommendation(userId, pagedLectures, "SIMILAR_PROBLEM");
 
-        // 8. 응답 생성
+        // 9. 응답 생성
         List<RecommendationDTOs.LectureRecommendationResponse> responses = pagedLectures.stream()
                 .map(sl -> RecommendationDTOs.LectureRecommendationResponse.from(
                         sl.lecture, sl.score, sl.reason))
@@ -619,6 +755,177 @@ public class RecommendationService {
             this.score = score;
             this.reason = reason;
         }
+    }
+
+    /**
+     * 커리큘럼과 강의를 교차로 배치하는 메서드 (4개씩 셔플)
+     * 커리큘럼 우선, 4개씩 묶어서 번갈아가며 배치하여 균형잡힌 추천 제공
+     */
+    private List<UnifiedScore> interleaveRecommendationsInChunks(List<UnifiedScore> curriculums, List<UnifiedScore> lectures, int chunkSize) {
+        List<UnifiedScore> result = new ArrayList<>();
+        int curriculumIndex = 0;
+        int lectureIndex = 0;
+        boolean curriculumNext = true; // 다음에 배치할 타입 (true: 커리큘럼, false: 강의)
+        
+        // 커리큘럼과 강의가 모두 남아있는 동안 교차 배치
+        while (curriculumIndex < curriculums.size() || lectureIndex < lectures.size()) {
+            if (curriculumNext && curriculumIndex < curriculums.size()) {
+                // 커리큘럼을 chunkSize개씩 추가
+                for (int i = 0; i < chunkSize && curriculumIndex < curriculums.size(); i++) {
+                    result.add(curriculums.get(curriculumIndex++));
+                }
+                curriculumNext = false; // 다음은 강의
+            } else if (!curriculumNext && lectureIndex < lectures.size()) {
+                // 강의를 chunkSize개씩 추가
+                for (int i = 0; i < chunkSize && lectureIndex < lectures.size(); i++) {
+                    result.add(lectures.get(lectureIndex++));
+                }
+                curriculumNext = true; // 다음은 커리큘럼
+            } else {
+                // 한쪽이 끝났으면 나머지 추가
+                if (curriculumIndex < curriculums.size()) {
+                    result.add(curriculums.get(curriculumIndex++));
+                } else if (lectureIndex < lectures.size()) {
+                    result.add(lectures.get(lectureIndex++));
+                } else {
+                    break;
+                }
+            }
+        }
+        
+        return result;
+    }
+
+    /**
+     * 신규 사용자를 위한 기본 커리큘럼 점수 계산
+     * 파이썬, C, 알고리즘 기초 등을 우선 추천
+     */
+    private BigDecimal calculateDefaultCurriculumScore(Curriculum curriculum) {
+        BigDecimal score = BigDecimal.ZERO;
+        
+        // 기본 점수: 평점 기반 (20점)
+        if (curriculum.getAverageRating() != null) {
+            score = score.add(curriculum.getAverageRating().multiply(BigDecimal.valueOf(4))); // 5.0 -> 20점
+        }
+        
+        // 기본 점수: 수강생 수 기반 (10점)
+        if (curriculum.getStudentCount() != null && curriculum.getStudentCount() > 0) {
+            score = score.add(BigDecimal.valueOf(Math.min(10, curriculum.getStudentCount() / 10))); // 100명 -> 10점
+        }
+        
+        // 추천 카테고리/태그 매칭 (70점)
+        Set<String> recommendedKeywords = Set.of("파이썬", "python", "C", "알고리즘", "algorithm", "기초", "프로그래밍", "programming");
+        
+        // 카테고리 매칭 (30점)
+        if (curriculum.getCategory() != null) {
+            String categoryLower = curriculum.getCategory().toLowerCase();
+            if (recommendedKeywords.stream().anyMatch(keyword -> categoryLower.contains(keyword.toLowerCase()))) {
+                score = score.add(BigDecimal.valueOf(30));
+            }
+        }
+        
+        // 태그 매칭 (40점)
+        if (curriculum.getTags() != null && !curriculum.getTags().isEmpty()) {
+            long matchingTags = curriculum.getTags().stream()
+                    .map(String::toLowerCase)
+                    .filter(tag -> recommendedKeywords.stream().anyMatch(keyword -> tag.contains(keyword.toLowerCase())))
+                    .count();
+            if (matchingTags > 0) {
+                score = score.add(BigDecimal.valueOf(Math.min(40, matchingTags * 10)));
+            }
+        }
+        
+        // 난이도가 "기초"인 경우 보너스 (20점)
+        if ("기초".equals(curriculum.getDifficulty())) {
+            score = score.add(BigDecimal.valueOf(20));
+        }
+        
+        return score;
+    }
+
+    /**
+     * 신규 사용자를 위한 기본 강의 점수 계산
+     */
+    private BigDecimal calculateDefaultLectureScore(Lecture lecture) {
+        BigDecimal score = BigDecimal.valueOf(30); // 기본 인기도 점수
+        
+        // 추천 카테고리/태그 매칭
+        Set<String> recommendedKeywords = Set.of("파이썬", "python", "C", "알고리즘", "algorithm", "기초", "프로그래밍", "programming");
+        
+        // 카테고리 매칭 (30점)
+        if (lecture.getCategory() != null) {
+            String categoryLower = lecture.getCategory().toLowerCase();
+            if (recommendedKeywords.stream().anyMatch(keyword -> categoryLower.contains(keyword.toLowerCase()))) {
+                score = score.add(BigDecimal.valueOf(30));
+            }
+        }
+        
+        // 난이도가 "기초"인 경우 보너스 (20점)
+        if ("기초".equals(lecture.getDifficulty())) {
+            score = score.add(BigDecimal.valueOf(20));
+        }
+        
+        return score;
+    }
+
+    /**
+     * 신규 사용자를 위한 기본 추천 이유 생성
+     */
+    private String getDefaultRecommendationReason(Curriculum curriculum) {
+        List<String> reasons = new ArrayList<>();
+        
+        Set<String> recommendedKeywords = Set.of("파이썬", "python", "C", "알고리즘", "algorithm", "기초", "프로그래밍", "programming");
+        
+        if (curriculum.getCategory() != null) {
+            String categoryLower = curriculum.getCategory().toLowerCase();
+            if (recommendedKeywords.stream().anyMatch(keyword -> categoryLower.contains(keyword.toLowerCase()))) {
+                reasons.add("초보자에게 추천하는 카테고리");
+            }
+        }
+        
+        if ("기초".equals(curriculum.getDifficulty())) {
+            reasons.add("기초 학습에 적합");
+        }
+        
+        if (curriculum.getAverageRating() != null && curriculum.getAverageRating().compareTo(BigDecimal.valueOf(4.0)) >= 0) {
+            reasons.add("높은 평점");
+        }
+        
+        if (curriculum.getStudentCount() != null && curriculum.getStudentCount() >= 50) {
+            reasons.add("많은 수강생이 선택한 커리큘럼");
+        }
+        
+        if (reasons.isEmpty()) {
+            reasons.add("추천 커리큘럼");
+        }
+        
+        return String.join(", ", reasons);
+    }
+
+    /**
+     * 신규 사용자를 위한 기본 강의 추천 이유 생성
+     */
+    private String getDefaultLectureReason(Lecture lecture) {
+        List<String> reasons = new ArrayList<>();
+        
+        Set<String> recommendedKeywords = Set.of("파이썬", "python", "C", "알고리즘", "algorithm", "기초", "프로그래밍", "programming");
+        
+        if (lecture.getCategory() != null) {
+            String categoryLower = lecture.getCategory().toLowerCase();
+            if (recommendedKeywords.stream().anyMatch(keyword -> categoryLower.contains(keyword.toLowerCase()))) {
+                reasons.add("초보자에게 추천하는 강의");
+            }
+        }
+        
+        if ("기초".equals(lecture.getDifficulty())) {
+            reasons.add("기초 학습에 적합");
+        }
+        
+        if (reasons.isEmpty()) {
+            reasons.add("추천 강의");
+        }
+        
+        return String.join(", ", reasons);
     }
 
     /**

@@ -59,6 +59,37 @@ public class RecommendationController {
     }
 
     /**
+     * 개인화된 강의 추천
+     */
+    @GetMapping("/lectures")
+    @Operation(summary = "개인화된 강의 추천", 
+               description = "사용자의 수강 이력과 선호도를 기반으로 강의를 추천합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "추천 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "401", description = "X-User-Id 헤더 누락"),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 내부 오류")
+    })
+    public ResponseEntity<Map<String, Object>> getPersonalizedLectures(
+            @Parameter(description = "사용자 ID", required = true) @RequestHeader("X-User-Id") Long userId,
+            @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기") @RequestParam(defaultValue = "10") int size) {
+        
+        log.info("개인화 강의 추천 요청 - 사용자 ID: {}, 페이지: {}, 크기: {}", userId, page, size);
+        
+        try {
+            Map<String, Object> result = recommendationService.getPersonalizedLectures(userId, page, size);
+            
+            log.info("개인화 강의 추천 완료 - 추천 개수: {}", ((List<?>) result.get("lectures")).size());
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            log.error("개인화 강의 추천 실패 - 사용자 ID: {}, 오류: {}", userId, e.getMessage());
+            throw e;
+        }
+    }
+
+    /**
      * 유사 문제 강의 추천
      * Priority 1 - 가장 중요한 기능
      */

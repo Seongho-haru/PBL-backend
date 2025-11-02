@@ -16,12 +16,19 @@ import com.PBL.user.User;
 import com.PBL.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -39,16 +46,49 @@ public class RecommendationService {
     private final LectureProgressRepository lectureProgressRepository;
     private final RecommendationLogRepository recommendationLogRepository;
     private final UserRepository userRepository;
+    private final CacheManager cacheManager;
+    
+    // 자기 자신을 주입받아 프록시를 통해 호출 (트랜잭션 전파를 위해)
+    @Autowired
+    private ApplicationContext applicationContext;
+    
+    /**
+     * 자기 자신의 프록시를 반환 (트랜잭션 전파를 위해)
+     */
+    private RecommendationService getSelf() {
+        return applicationContext.getBean(RecommendationService.class);
+    }
 
     /**
      * 개인화된 커리큘럼 추천
      * Priority 2
      * 캐싱: 사용자별 추천 결과를 캐싱하여 성능 향상
+     * 백그라운드 워밍업: 캐시 미스 시 백그라운드 작업이 진행 중인지 확인
      */
-    @Cacheable(value = "personalizedCurriculums", key = "#userId + ':' + #page + ':' + #size")
     @Transactional(readOnly = true)
     public Map<String, Object> getPersonalizedCurriculums(Long userId, int page, int size) {
         log.info("개인화 추천 요청 - 사용자 ID: {}, 페이지: {}, 크기: {}", userId, page, size);
+        
+        // 캐시 확인
+        String cacheKey = userId + ":" + page + ":" + size;
+        Cache cache = cacheManager.getCache("personalizedCurriculums");
+        if (cache != null) {
+            Cache.ValueWrapper wrapper = cache.get(cacheKey);
+            if (wrapper != null && wrapper.get() != null) {
+                log.debug("캐시 히트 - 사용자 ID: {}, 페이지: {}", userId, page);
+                return (Map<String, Object>) wrapper.get();
+            }
+        }
+        
+        // 캐시 미스: 즉시 계산
+        return computePersonalizedCurriculums(userId, page, size);
+    }
+    
+    /**
+     * 커리큘럼 추천 결과 계산 (내부 메서드, 캐싱 없이)
+     */
+    private Map<String, Object> computePersonalizedCurriculums(Long userId, int page, int size) {
+        log.debug("커리큘럼 추천 계산 시작 - 사용자 ID: {}, 페이지: {}", userId, page);
 
         // 1. 사용자 수강 이력 분석
         List<Enrollment> enrollments = enrollmentRepository.findByUserIdOrderByEnrolledAtDesc(userId);
@@ -129,11 +169,32 @@ public class RecommendationService {
      * 통합 추천 (커리큘럼 + 강의 혼합)
      * 공개된 커리큘럼과 강의를 점수 기준으로 혼합하여 추천
      * 캐싱: 사용자별 추천 결과를 캐싱하여 성능 향상
+     * 백그라운드 워밍업: 캐시 미스 시 백그라운드 작업이 진행 중인지 확인
      */
-    @Cacheable(value = "unifiedRecommendations", key = "#userId + ':' + #page + ':' + #size")
     @Transactional(readOnly = true)
     public Map<String, Object> getUnifiedRecommendations(Long userId, int page, int size) {
         log.info("통합 추천 요청 - 사용자 ID: {}, 페이지: {}, 크기: {}", userId, page, size);
+        
+        // 캐시 확인
+        String cacheKey = userId + ":" + page + ":" + size;
+        Cache cache = cacheManager.getCache("unifiedRecommendations");
+        if (cache != null) {
+            Cache.ValueWrapper wrapper = cache.get(cacheKey);
+            if (wrapper != null && wrapper.get() != null) {
+                log.debug("캐시 히트 - 사용자 ID: {}, 페이지: {}", userId, page);
+                return (Map<String, Object>) wrapper.get();
+            }
+        }
+        
+        // 캐시 미스: 즉시 계산
+        return computeUnifiedRecommendations(userId, page, size);
+    }
+    
+    /**
+     * 통합 추천 결과 계산 (내부 메서드, 캐싱 없이)
+     */
+    private Map<String, Object> computeUnifiedRecommendations(Long userId, int page, int size) {
+        log.debug("통합 추천 계산 시작 - 사용자 ID: {}, 페이지: {}", userId, page);
 
         // 1. 사용자 수강 이력 분석
         List<Enrollment> enrollments = enrollmentRepository.findByUserIdOrderByEnrolledAtDesc(userId);
@@ -269,6 +330,13 @@ public class RecommendationService {
         meta.put("hasNext", page < totalPages - 1);
         meta.put("hasPrevious", page > 0);
         result.put("meta", meta);
+        
+        // 캐시에 저장
+        String cacheKey = userId + ":" + page + ":" + size;
+        Cache cache = cacheManager.getCache("unifiedRecommendations");
+        if (cache != null) {
+            cache.put(cacheKey, result);
+        }
 
         return result;
     }
@@ -276,11 +344,32 @@ public class RecommendationService {
     /**
      * 개인화된 강의 추천 (커리큘럼 추천과 별도)
      * 사용자의 수강 이력과 선호도를 기반으로 강의를 추천합니다.
+     * 백그라운드 워밍업: 캐시 미스 시 백그라운드 작업이 진행 중인지 확인
      */
-    @Cacheable(value = "personalizedLectures", key = "#userId + ':' + #page + ':' + #size")
     @Transactional(readOnly = true)
     public Map<String, Object> getPersonalizedLectures(Long userId, int page, int size) {
         log.info("개인화 강의 추천 요청 - 사용자 ID: {}, 페이지: {}, 크기: {}", userId, page, size);
+        
+        // 캐시 확인
+        String cacheKey = userId + ":" + page + ":" + size;
+        Cache cache = cacheManager.getCache("personalizedLectures");
+        if (cache != null) {
+            Cache.ValueWrapper wrapper = cache.get(cacheKey);
+            if (wrapper != null && wrapper.get() != null) {
+                log.debug("캐시 히트 - 사용자 ID: {}, 페이지: {}", userId, page);
+                return (Map<String, Object>) wrapper.get();
+            }
+        }
+        
+        // 캐시 미스: 즉시 계산
+        return computePersonalizedLectures(userId, page, size);
+    }
+    
+    /**
+     * 강의 추천 결과 계산 (내부 메서드, 캐싱 없이)
+     */
+    private Map<String, Object> computePersonalizedLectures(Long userId, int page, int size) {
+        log.debug("강의 추천 계산 시작 - 사용자 ID: {}, 페이지: {}", userId, page);
 
         // 1. 사용자 수강 이력 분석
         List<Enrollment> enrollments = enrollmentRepository.findByUserIdOrderByEnrolledAtDesc(userId);
@@ -348,6 +437,13 @@ public class RecommendationService {
         meta.put("hasNext", page < totalPages - 1);
         meta.put("hasPrevious", page > 0);
         result.put("meta", meta);
+        
+        // 캐시에 저장
+        String cacheKeyForLecture = userId + ":" + page + ":" + size;
+        Cache cacheForLecture = cacheManager.getCache("personalizedLectures");
+        if (cacheForLecture != null) {
+            cacheForLecture.put(cacheKeyForLecture, result);
+        }
 
         return result;
     }
@@ -687,9 +783,23 @@ public class RecommendationService {
 
     /**
      * 추천 로그 저장
+     * 별도 서비스를 통해 비동기로 처리되거나, 실패 시에도 추천 결과는 정상 반환
      */
-    @Transactional
     private void logRecommendation(Long userId, List<CurriculumScore> scoredCurriculums, String type) {
+        try {
+            // 프록시를 통해 호출하여 새로운 트랜잭션에서 실행
+            getSelf().logRecommendationInNewTransaction(userId, scoredCurriculums, type);
+        } catch (Exception e) {
+            // 로그 저장 실패는 추천 기능에 영향 주지 않음
+            log.warn("추천 로그 저장 실패 - 사용자 ID: {}, 타입: {}, 오류: {}", userId, type, e.getMessage());
+        }
+    }
+    
+    /**
+     * 별도 트랜잭션에서 추천 로그 저장 (프록시를 통해 호출되어야 함)
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logRecommendationInNewTransaction(Long userId, List<CurriculumScore> scoredCurriculums, String type) {
         User user = userRepository.findById(userId).orElseThrow();
         
         for (int i = 0; i < scoredCurriculums.size(); i++) {
@@ -707,9 +817,23 @@ public class RecommendationService {
 
     /**
      * 강의 추천 로그 저장
+     * 별도 서비스를 통해 비동기로 처리되거나, 실패 시에도 추천 결과는 정상 반환
      */
-    @Transactional
     private void logLectureRecommendation(Long userId, List<LectureScore> scoredLectures, String type) {
+        try {
+            // 프록시를 통해 호출하여 새로운 트랜잭션에서 실행
+            getSelf().logLectureRecommendationInNewTransaction(userId, scoredLectures, type);
+        } catch (Exception e) {
+            // 로그 저장 실패는 추천 기능에 영향 주지 않음
+            log.warn("강의 추천 로그 저장 실패 - 사용자 ID: {}, 타입: {}, 오류: {}", userId, type, e.getMessage());
+        }
+    }
+    
+    /**
+     * 별도 트랜잭션에서 강의 추천 로그 저장 (프록시를 통해 호출되어야 함)
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logLectureRecommendationInNewTransaction(Long userId, List<LectureScore> scoredLectures, String type) {
         User user = userRepository.findById(userId).orElseThrow();
         
         for (int i = 0; i < scoredLectures.size(); i++) {

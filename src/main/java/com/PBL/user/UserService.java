@@ -1,5 +1,8 @@
 package com.PBL.user;
 
+import com.PBL.recommendation.job.RecommendationWarmupJob;
+import lombok.extern.slf4j.Slf4j;
+import org.jobrunr.scheduling.JobScheduler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,10 +17,17 @@ import java.util.stream.Collectors;
  */
 @Service
 @Transactional
+@Slf4j
 public class UserService {
 
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired(required = false)
+    private JobScheduler jobScheduler;
+    
+    @Autowired(required = false)
+    private RecommendationWarmupJob recommendationWarmupJob;
 
     // === 회원가입 ===
 
@@ -102,6 +112,10 @@ public class UserService {
 
         // 로그인 성공
         UserDTOs.UserResponse userResponse = new UserDTOs.UserResponse(user);
+        
+        // 추천 결과 백그라운드 워밍업 스케줄링 (로그인 직후 즉시 처리)
+        scheduleRecommendationWarmup(user.getId());
+        
         return UserDTOs.LoginResponse.success(userResponse);
     }
 
@@ -180,6 +194,31 @@ public class UserService {
                 .filter(user -> user.getMutedUntil() == null || LocalDateTime.now().isBefore(user.getMutedUntil()))
                 .map(UserDTOs.MutedUserResponse::new)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 추천 결과 워밍업 작업 스케줄링
+     * 로그인 시 백그라운드에서 추천 결과를 미리 계산하여 캐시에 저장
+     * 리소스 관리를 위해 즉시 실행하지 않고 약간의 지연을 두어 시스템 부하를 분산시킵니다.
+     */
+    private void scheduleRecommendationWarmup(Long userId) {
+        if (jobScheduler != null && recommendationWarmupJob != null) {
+            try {
+                // 백그라운드에서 약간의 지연 후 실행 (시스템 부하 분산)
+                // 2-5초 사이의 랜덤 지연으로 동시 로그인 시 부하 분산
+                long delayMs = 2000 + (long)(Math.random() * 3000); // 2-5초
+                jobScheduler.schedule(
+                        java.time.Instant.now().plusMillis(delayMs),
+                        () -> recommendationWarmupJob.warmupRecommendations(userId));
+                
+                log.debug("추천 워밍업 작업 스케줄링 완료 - 사용자 ID: {}, {}ms 후 실행 예정", userId, delayMs);
+            } catch (Exception e) {
+                // 워밍업 실패는 로그인을 막지 않음
+                log.warn("추천 워밍업 작업 스케줄링 실패 - 사용자 ID: {}, 오류: {}", userId, e.getMessage());
+            }
+        } else {
+            log.debug("JobScheduler 또는 RecommendationWarmupJob이 없어 워밍업을 스케줄링하지 않음 - 사용자 ID: {}", userId);
+        }
     }
 
     /**

@@ -1,8 +1,8 @@
 package com.PBL.ai.tools;
 
-import com.PBL.lab.grading.dto.GradingResponse;
-import com.PBL.lab.grading.entity.Grading;
-import com.PBL.lab.grading.service.GradingService;
+import com.PBL.lab.grade.dto.GradeResponse;
+import com.PBL.lab.grade.entity.Grade;
+import com.PBL.lab.grade.service.GradeService;
 import com.PBL.lab.judge0.dto.SubmissionResponse;
 import com.PBL.lab.judge0.entity.Submission;
 import com.PBL.lab.judge0.service.SubmissionService;
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 public class SubmissionTools {
 
     private final SubmissionService submissionService;
-    private final GradingService gradingService;
+    private final GradeService gradeService;
 
     // ========================================
     // 코드 실행 관련 도구
@@ -77,15 +77,15 @@ public class SubmissionTools {
     // ========================================
 
     @Tool("채점 토큰으로 코드 채점 결과를 조회합니다. 테스트 케이스 통과 여부, 점수, 실패한 케이스 정보, 피드백 등을 확인할 수 있습니다.")
-    public Grading getGradingByToken(@P("조회할 채점의 토큰") String gradingToken) {
-        log.debug("🔧 [도구 호출] getGrading - 파라미터: gradingToken={}", gradingToken);
-        Grading result = gradingService.findByToken(gradingToken);
-        log.debug("✅ [도구 결과] getGrading - 상태: {}", result != null ? result.getStatus() : "null");
+    public Grade getGradeByToken(@P("조회할 채점의 토큰") String gradeToken) {
+        log.debug("🔧 [도구 호출] getGrade - 파라미터: gradeToken={}", gradeToken);
+        Grade result = gradeService.findByToken(gradeToken);
+        log.debug("✅ [도구 결과] getGrade - 상태: {}", result != null ? result.getStatus() : "null");
         return result;
     }
 
     @Tool("코드 채점 목록을 페이징으로 조회합니다. 문제 ID로 필터링할 수 있으며, 테스트 케이스 통과 여부와 점수를 확인할 수 있습니다.")
-    public Page<Grading> getGrading(
+    public Page<Grade> getGrade(
             @P("페이지 번호 (1부터 시작)") int page,
             @P("페이지 크기 (기본값: 20)") int size,
             @P("특정 문제의 채점만 조회 (선택 사항, 없으면 0 또는 음수)") Long problemId,
@@ -98,22 +98,22 @@ public class SubmissionTools {
                     Sort.by(Sort.Direction.DESC, "createdAt")
             );
 
-            Page<Grading> gradingPage;
+            Page<Grade> gradePage;
             if (problemId != null && problemId > 0) {
-                gradingPage = gradingService.findByProblemId(problemId, pageable);
+                gradePage = gradeService.findByProblemId(problemId, pageable);
             } else {
-                gradingPage = gradingService.findAll(pageable);
+                gradePage = gradeService.findAll(pageable);
             }
 
-            List<GradingResponse> gradings = gradingPage.getContent().stream()
-                    .map(grading -> GradingResponse.from(grading, base64_encoded, parseFields(fields)))
+            List<GradeResponse> grades = gradePage.getContent().stream()
+                    .map(grade -> GradeResponse.from(grade, base64_encoded, parseFields(fields)))
                     .collect(Collectors.toList());
 
             Map<String, Object> response = new HashMap<>();
-            response.put("grading", gradings);
-            response.put("meta", createPaginationMeta(gradingPage));
+            response.put("grades", grades);
+            response.put("meta", createPaginationMeta(gradePage));
 
-            return gradingPage;
+            return gradePage;
         } catch (Exception e) {
             log.error(e.getMessage());
             return null;

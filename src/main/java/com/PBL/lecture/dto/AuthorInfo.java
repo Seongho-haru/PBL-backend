@@ -1,6 +1,5 @@
 package com.PBL.lecture.dto;
 
-import com.PBL.lab.grading.entity.Grading;
 import com.PBL.user.User;
 import lombok.Builder;
 import lombok.Data;

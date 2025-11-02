@@ -4,8 +4,8 @@ import com.PBL.ai.config.Assisdent;
 import com.PBL.ai.config.RAGconfig;
 import com.PBL.ai.dto.GradingRequest;
 import com.PBL.ai.tools.*;
-import com.PBL.lab.grading.entity.Grading;
-import com.PBL.lab.grading.service.GradingService;
+import com.PBL.lab.grade.entity.Grade;
+import com.PBL.lab.grade.service.GradeService;
 import com.PBL.lecture.LectureService;
 import com.PBL.lecture.entity.Lecture;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -30,7 +30,7 @@ public class AssistantService {
     private final CurriculumTools curriculumTools;
     private final CommunityTools communityTools;
     private final RAGconfig ragconfig;
-    private final GradingService gradingService;
+    private final GradeService gradeService;
     private final LectureService lectureService;
     private Assisdent assisdent;
 
@@ -53,13 +53,13 @@ public class AssistantService {
     @Transactional(readOnly = true)
     public Flux<String> analyAndExplainStream(GradingRequest request) {
         // 1. 제출한 토큰을 활용해서 채점 정보 가져오기
-        Grading grading = gradingService.findByToken(request.getGradingToken());
+        Grade grade = gradeService.findByToken(request.getGradingToken());
 
         // 2. 문제 정보 가져오기
         Lecture lecture = lectureService.getLecture(request.getProblemId())
                 .orElseThrow(() -> new IllegalArgumentException("강의를 찾을 수 없습니다: " + request.getProblemId()));
 
-        return assisdent.gradingStream(grading.toString(), lecture.toString());
+        return assisdent.gradingStream(grade.toString(), lecture.toString());
     }
 
 

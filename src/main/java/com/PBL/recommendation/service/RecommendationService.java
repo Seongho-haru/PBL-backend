@@ -26,8 +26,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -450,6 +452,7 @@ public class RecommendationService {
 
     /**
      * 개인화 강의 점수 계산
+     * 다양성 확보를 위해 0~10점의 랜덤 점수를 추가합니다.
      */
     private BigDecimal calculateLecturePersonalizedScore(Lecture lecture, Set<String> userCategories,
                                                         Set<String> userTags, String preferredDifficulty) {
@@ -477,6 +480,11 @@ public class RecommendationService {
         // 4. 인기도 (최근 생성된 강의 우선) (30점)
         // 최근 생성된 강의일수록 높은 점수 (단순화: 공개 강의는 모두 인기 있다고 가정)
         score = score.add(BigDecimal.valueOf(30));
+
+        // 5. 다양성 확보를 위한 랜덤 점수 (0~10점)
+        // 조회할 때마다 새로운 랜덤 점수가 생성되어 순서가 바뀝니다.
+        double randomScore = ThreadLocalRandom.current().nextDouble(0.0, 10.0);
+        score = score.add(BigDecimal.valueOf(randomScore).setScale(2, RoundingMode.HALF_UP));
 
         return score;
     }
@@ -638,6 +646,7 @@ public class RecommendationService {
 
     /**
      * 커리큘럼 추천 점수 계산
+     * 다양성 확보를 위해 0~10점의 랜덤 점수를 추가합니다.
      */
     private BigDecimal calculateCurriculumScore(Curriculum curriculum, Set<String> userCategories,
                                                  Set<String> userTags, String preferredDifficulty) {
@@ -668,11 +677,17 @@ public class RecommendationService {
             score = score.add(curriculum.getAverageRating().multiply(BigDecimal.valueOf(4))); // 5.0 -> 20점
         }
 
+        // 5. 다양성 확보를 위한 랜덤 점수 (0~10점)
+        // 조회할 때마다 새로운 랜덤 점수가 생성되어 순서가 바뀝니다.
+        double randomScore = ThreadLocalRandom.current().nextDouble(0.0, 10.0);
+        score = score.add(BigDecimal.valueOf(randomScore).setScale(2, RoundingMode.HALF_UP));
+
         return score;
     }
 
     /**
      * 강의 유사도 점수 계산
+     * 다양성 확보를 위해 0~10점의 랜덤 점수를 추가합니다.
      */
     private BigDecimal calculateLectureSimilarityScore(Lecture lecture, Lecture baseLecture, Set<String> baseTags) {
         BigDecimal score = BigDecimal.ZERO;
@@ -707,6 +722,11 @@ public class RecommendationService {
                 score = score.add(BigDecimal.valueOf(Math.min(10, matchingWords * 2)));
             }
         }
+
+        // 5. 다양성 확보를 위한 랜덤 점수 (0~10점)
+        // 조회할 때마다 새로운 랜덤 점수가 생성되어 순서가 바뀝니다.
+        double randomScore = ThreadLocalRandom.current().nextDouble(0.0, 10.0);
+        score = score.add(BigDecimal.valueOf(randomScore).setScale(2, RoundingMode.HALF_UP));
 
         return score;
     }
@@ -923,6 +943,7 @@ public class RecommendationService {
     /**
      * 신규 사용자를 위한 기본 커리큘럼 점수 계산
      * 파이썬, C, 알고리즘 기초 등을 우선 추천
+     * 다양성 확보를 위해 0~10점의 랜덤 점수를 추가합니다.
      */
     private BigDecimal calculateDefaultCurriculumScore(Curriculum curriculum) {
         BigDecimal score = BigDecimal.ZERO;
@@ -964,11 +985,17 @@ public class RecommendationService {
             score = score.add(BigDecimal.valueOf(20));
         }
         
+        // 다양성 확보를 위한 랜덤 점수 (0~10점)
+        // 조회할 때마다 새로운 랜덤 점수가 생성되어 순서가 바뀝니다.
+        double randomScore = ThreadLocalRandom.current().nextDouble(0.0, 10.0);
+        score = score.add(BigDecimal.valueOf(randomScore).setScale(2, RoundingMode.HALF_UP));
+        
         return score;
     }
 
     /**
      * 신규 사용자를 위한 기본 강의 점수 계산
+     * 다양성 확보를 위해 0~10점의 랜덤 점수를 추가합니다.
      */
     private BigDecimal calculateDefaultLectureScore(Lecture lecture) {
         BigDecimal score = BigDecimal.valueOf(30); // 기본 인기도 점수
@@ -988,6 +1015,11 @@ public class RecommendationService {
         if ("기초".equals(lecture.getDifficulty())) {
             score = score.add(BigDecimal.valueOf(20));
         }
+        
+        // 다양성 확보를 위한 랜덤 점수 (0~10점)
+        // 조회할 때마다 새로운 랜덤 점수가 생성되어 순서가 바뀝니다.
+        double randomScore = ThreadLocalRandom.current().nextDouble(0.0, 10.0);
+        score = score.add(BigDecimal.valueOf(randomScore).setScale(2, RoundingMode.HALF_UP));
         
         return score;
     }

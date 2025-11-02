@@ -238,7 +238,7 @@ public class CourseReviewService {
         log.info("내 리뷰 조회 - 커리큘럼 ID: {}, 사용자 ID: {}", curriculumId, userId);
 
         CourseReview review = courseReviewRepository.findReviewByCurriculumIdAndUserId(curriculumId, userId)
-                .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
 
         return CourseReviewDTOs.CourseReviewResponse.from(review);
     }

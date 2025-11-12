@@ -89,71 +89,90 @@ public class DockerExecutionService {
      */
     public CompilationContext prepareCompilation(CodeExecutionRequest request) throws Exception {
         String containerId = null;
-        Path workDir = null;
         long startTime = System.currentTimeMillis();
 
         try {
             Language language = request.getLanguage();
-            log.debug("코드 컴파일 준비 시작 - 언어: {}, 이미지: {}", language.getName(), language.getEffectiveDockerImage());
+            log.info("[COMPILE] 컴파일 준비 시작 - 언어: {}, 이미지: {}", language.getName(), language.getEffectiveDockerImage());
 
-            // 1. 작업 디렉토리 생성
-            workDir = createWorkDirectory();
-
-            // 2. 컨테이너 생성 및 시작 (언어별 이미지)
-            containerId = containerManager.createExecutionContainer(language, workDir,request);
+            // 1. 컨테이너 생성 및 시작 (tmpfs 자동 생성)
+            log.info("[COMPILE] 컨테이너 생성 시작");
+            containerId = containerManager.createExecutionContainer(language, null, request);
+            log.info("[COMPILE] 컨테이너 시작 시작 - ID: {}", containerId);
             containerManager.startContainer(containerId);
 
             long containerCreateTime = System.currentTimeMillis() - startTime;
-            log.debug("컨테이너 생성 완료: {} ({}ms)", containerId, containerCreateTime);
+            log.info("[COMPILE] 컨테이너 생성 및 시작 완료 - ID: {}, 소요 시간: {}ms", containerId, containerCreateTime);
 
-            // 3. 소스코드 파일만 준비 (stdin은 나중에)
-            prepareSourceCodeOnly(request, workDir);
+            // 2. 컨테이너 내부에 소스코드 파일 생성 (tmpfs에 직접 생성)
+            log.debug("[COMPILE] 소스코드 파일 준비 시작 (컨테이너 내부)");
+            prepareSourceCodeInContainer(request, containerId);
+            log.debug("[COMPILE] 소스코드 파일 준비 완료");
 
-            // 4. 컴파일 (필요시)
+            // 2-1. 실행 스크립트 생성 (한 번만 생성, 모든 테스트케이스에서 재사용)
+            log.debug("[COMPILE] 실행 스크립트 생성 시작 (컨테이너 내부)");
+            createRunScriptInContainer(language, containerId);
+            log.debug("[COMPILE] 실행 스크립트 생성 완료");
+
+            // 3. 컴파일 (필요시)
             String compileOutput = "";
             if (language.supportsCompilation()) {
+                log.info("[COMPILE] 컴파일 실행 시작 - 컨테이너 ID: {}", containerId);
                 ExecResult compileResult =
                         containerManager.executeScript(containerId, "/tmp/judge/compile.sh", 30);
 
                 compileOutput = compileResult.getStdout() + compileResult.getStderr();
+                log.info("[COMPILE] 컴파일 실행 완료 - 종료 코드: {}", compileResult.getExitCode());
 
                 if (compileResult.hasError()) {
-                    // 컴파일 실패 시 컨테이너 정리
+                    log.error("[COMPILE] 컴파일 실패 - 종료 코드: {}, 출력: {}", compileResult.getExitCode(), compileOutput);
+                    // 컴파일 실패 시 컨테이너 정리 (tmpfs는 컨테이너와 함께 자동 삭제)
                     try {
                         containerManager.stopContainer(containerId);
                         containerManager.removeContainer(containerId);
-                        cleanupWorkDirectory(workDir);
                     } catch (Exception cleanupEx) {
-                        log.error("컴파일 실패 후 정리 중 오류", cleanupEx);
+                        log.error("[COMPILE] 컴파일 실패 후 정리 중 오류", cleanupEx);
                     }
                     throw new RuntimeException("Compilation failed: " + compileOutput);
                 }
+                log.info("[COMPILE] 컴파일 성공");
+            } else {
+                log.debug("[COMPILE] 컴파일 불필요 - 인터프리터 언어");
             }
 
             long compileTime = System.currentTimeMillis() - startTime;
-            log.info("코드 컴파일 완료 - {}ms", compileTime);
+            log.info("[COMPILE] 컴파일 준비 완료 - 총 소요 시간: {}ms, 컨테이너 ID: {}", compileTime, containerId);
+
+            // 컨테이너 상태 확인
+            boolean isRunning = containerManager.isContainerRunning(containerId);
+            log.info("[COMPILE] 컴파일 완료 후 컨테이너 상태 확인 - Running: {}, ID: {}", isRunning, containerId);
+
+            if (!isRunning) {
+                log.error("[COMPILE] ⚠️ 경고: 컴파일 완료 후 컨테이너가 실행 중이지 않음!");
+                String containerLogs = containerManager.getContainerLogs(containerId);
+                log.error("[COMPILE] 컨테이너 로그:\n{}", containerLogs);
+                throw new RuntimeException("Container stopped unexpectedly after compilation");
+            }
 
             return CompilationContext.builder()
                     .containerId(containerId)
-                    .workDir(workDir)
+                    .workDir(null)  // tmpfs 사용으로 workDir 불필요
                     .compileOutput(compileOutput)
                     .language(language)
                     .compileTime(compileTime)
                     .build();
 
         } catch (Exception e) {
-            log.error("코드 컴파일 준비 실패", e);
-            // 오류 발생 시 생성된 리소스 정리
+            log.error("[COMPILE] 컴파일 준비 실패", e);
+            // 오류 발생 시 컨테이너 정리 (tmpfs는 컨테이너와 함께 자동 삭제)
             if (containerId != null) {
+                log.info("[COMPILE] 오류 발생으로 컨테이너 정리 시작 - ID: {}", containerId);
                 try {
                     containerManager.stopContainer(containerId);
                     containerManager.removeContainer(containerId);
                 } catch (Exception cleanupEx) {
-                    log.error("컨테이너 정리 실패", cleanupEx);
+                    log.error("[COMPILE] 컨테이너 정리 실패", cleanupEx);
                 }
-            }
-            if (workDir != null) {
-                cleanupWorkDirectory(workDir);
             }
             throw e;
         }
@@ -184,25 +203,56 @@ public class DockerExecutionService {
         long startTime = System.currentTimeMillis();
 
         try {
-            Language language = context.getLanguage();
-            Path workDir = context.getWorkDir();
             String containerId = context.getContainerId();
 
-            // 1. stdin 파일 생성
+            log.info("[RUN] 코드 실행 시작 - 컨테이너 ID: {}", containerId);
+
+            // 0. 컨테이너 상태 확인
+            boolean isRunning = containerManager.isContainerRunning(containerId);
+            log.info("[RUN] 실행 전 컨테이너 상태 확인 - Running: {}, ID: {}", isRunning, containerId);
+
+            if (!isRunning) {
+                log.error("[RUN] ⚠️ 경고: 실행 전 컨테이너가 실행 중이지 않음!");
+                String containerLogs = containerManager.getContainerLogs(containerId);
+                log.error("[RUN] 컨테이너 로그:\n{}", containerLogs);
+                throw new RuntimeException("Container is not running before code execution");
+            }
+
+            // 1. stdin 파일 생성 (컨테이너 내부)
             String stdinContent = stdin != null ? stdin : "";
-            Files.write(workDir.resolve("stdin.txt"), stdinContent.getBytes(StandardCharsets.UTF_8));
+            if (!stdinContent.isEmpty()) {
+                log.debug("[RUN] stdin.txt 파일 생성 시작 - 크기: {} bytes", stdinContent.length());
+                containerManager.createFileInContainer(
+                        containerId,
+                        "/tmp/judge/stdin.txt",
+                        stdinContent,
+                        false
+                );
+                log.debug("[RUN] stdin.txt 파일 생성 완료");
+            }
 
-            // 2. 실행 스크립트 생성 (매번 생성 - stdin 리다이렉션 포함)
-            createRunScriptForCompiled(language, workDir);
-
-            // 3. 코드 실행
+            // 2. 코드 실행 (stdin은 파일에서 읽음, run.sh는 prepareCompilation에서 이미 생성됨)
+            log.info("[RUN] 코드 실행 시작 - stdin 크기: {} bytes", stdinContent.length());
             ExecResult runResult =
-                    containerManager.executeScript(containerId, "/tmp/judge/run.sh", 30);
+                    containerManager.executeWithStdin(
+                            containerId,
+                            new String[]{"sh", "/tmp/judge/run.sh"},
+                            null,  // stdin은 /tmp/judge/stdin.txt 파일에서 읽음
+                            30
+                    );
+            log.info("[RUN] 코드 실행 완료 - 종료 코드: {}, 완료 여부: {}",
+                    runResult.getExitCode(), runResult.isCompleted());
 
-            // 4. 결과 수집
-            String stdoutContent = readFileContent(workDir.resolve("stdout.txt"));
-            String stderrContent = readFileContent(workDir.resolve("stderr.txt"));
-            String exitCodeContent = readFileContent(workDir.resolve("exit_code.txt"));
+            // run.sh 자체의 stderr 확인 (스크립트 실행 오류)
+            if (runResult.getStderr() != null && !runResult.getStderr().isEmpty()) {
+                log.error("[RUN] ⚠️ run.sh 실행 중 stderr: {}", runResult.getStderr());
+            }
+
+            // 3. 결과 수집 (컨테이너 내부 파일에서 읽기)
+            log.debug("[RUN] 실행 결과 수집 시작 (컨테이너 내부)");
+            String stdoutContent = readFileFromContainer(containerId, "/tmp/judge/stdout.txt", 10);
+            String stderrContent = readFileFromContainer(containerId, "/tmp/judge/stderr.txt", 10);
+            String exitCodeContent = readFileFromContainer(containerId, "/tmp/judge/exit_code.txt", 10);
 
             Integer exitCode = runResult.getExitCode();
             if (exitCodeContent != null && !exitCodeContent.trim().isEmpty()) {
@@ -210,13 +260,25 @@ public class DockerExecutionService {
                     exitCode = Integer.parseInt(exitCodeContent.trim());
                 } catch (NumberFormatException ignored) {}
             }
+            log.info("[RUN] 실행 결과 수집 완료 - stdout: {} bytes, stderr: {} bytes, exit code: {}",
+                    stdoutContent != null ? stdoutContent.length() : 0,
+                    stderrContent != null ? stderrContent.length() : 0,
+                    exitCode);
 
-            // 5. 실행 시간 계산
+            // 에러 발생 시 stderr 내용 항상 로그 출력
+            if (exitCode != null && exitCode != 0) {
+                log.error("[RUN] ⚠️ 실행 에러 발생 (exit code: {})", exitCode);
+                log.error("[RUN] stderr 내용 ({}bytes):\n{}",
+                    stderrContent != null ? stderrContent.length() : 0,
+                    stderrContent != null ? stderrContent : "null");
+            }
+
+            // 4. 실행 시간 계산
             long totalTime = System.currentTimeMillis() - startTime;
             BigDecimal wallTime = BigDecimal.valueOf(totalTime / 1000.0);
-            BigDecimal actualTime = calculateActualExecutionTime(workDir, wallTime);
+            BigDecimal actualTime = wallTime;  // tmpfs에서는 time 파일을 따로 읽지 않고 wallTime 사용
 
-            // 6. 상태 판정
+            // 5. 상태 판정
             Status status = determineExecutionStatus(
                     runResult.isCompleted(),
                     exitCode,
@@ -224,10 +286,10 @@ public class DockerExecutionService {
                     stdoutContent
             );
 
-            // 7. 메모리 사용량 (기본값)
+            // 6. 메모리 사용량 (기본값)
             Integer memoryUsage = 2048;
 
-            log.debug("코드 실행 완료 - {}ms, 상태: {}", totalTime, status);
+            log.info("[RUN] 코드 실행 완료 - 총 소요 시간: {}ms, 상태: {}, 종료 코드: {}", totalTime, status, exitCode);
 
             return ExecutionResult.builder()
                     .stdout(stdoutContent)
@@ -242,7 +304,7 @@ public class DockerExecutionService {
                     .build();
 
         } catch (Exception e) {
-            log.error("코드 실행 실패", e);
+            log.error("[RUN] 코드 실행 실패", e);
             return ExecutionResult.error("Execution error: " + e.getMessage());
         }
     }
@@ -250,30 +312,33 @@ public class DockerExecutionService {
     /**
      * 컴파일 컨텍스트 정리 (Grade 전용 - 1회 정리)
      *
-     * prepareCompilation()으로 생성된 컨테이너와 작업 디렉토리를 정리합니다.
+     * prepareCompilation()으로 생성된 컨테이너를 정리합니다.
+     * tmpfs 볼륨은 컨테이너와 함께 자동으로 삭제됩니다.
      *
      * @param context 정리할 컴파일 컨텍스트
      */
     public void cleanupCompilation(CompilationContext context) {
         if (context == null) {
+            log.debug("[CLEANUP] 정리할 컨텍스트가 없음");
             return;
         }
 
-        // 컨테이너 정리
+        log.info("[CLEANUP] 컴파일 컨텍스트 정리 시작 - 컨테이너 ID: {}", context.getContainerId());
+
+        // 컨테이너 정리 (tmpfs는 컨테이너와 함께 자동 삭제)
         if (context.getContainerId() != null) {
             try {
+                log.debug("[CLEANUP] 컨테이너 중지 시작 - ID: {}", context.getContainerId());
                 containerManager.stopContainer(context.getContainerId());
+                log.debug("[CLEANUP] 컨테이너 제거 시작 - ID: {}", context.getContainerId());
                 containerManager.removeContainer(context.getContainerId());
-                log.debug("컨테이너 정리 완료: {}", context.getContainerId());
+                log.info("[CLEANUP] 컨테이너 정리 완료 (tmpfs 자동 삭제) - ID: {}", context.getContainerId());
             } catch (Exception e) {
-                log.error("컨테이너 정리 실패: {}", context.getContainerId(), e);
+                log.error("[CLEANUP] 컨테이너 정리 실패 - ID: {}", context.getContainerId(), e);
             }
         }
 
-        // 작업 디렉토리 정리
-        if (context.getWorkDir() != null) {
-            cleanupWorkDirectory(context.getWorkDir());
-        }
+        log.info("[CLEANUP] 컴파일 컨텍스트 정리 완료");
     }
 
     /**
@@ -338,7 +403,47 @@ public class DockerExecutionService {
         String dirName = "judge0-exec-" + UUID.randomUUID().toString().substring(0, 8);
         Path workDir = Paths.get(tmpDir, "judge0", dirName);
         Files.createDirectories(workDir);
+
+        // OS별 권한 설정
+        setFilePermissions(workDir, true);
+
+        String osName = System.getProperty("os.name").toLowerCase();
+        log.debug("[WORKDIR] 작업 디렉토리 생성 완료 - OS: {}, Path: {}", osName, workDir);
+
         return workDir;
+    }
+
+    /**
+     * 파일/디렉토리 권한 설정 (OS별 처리)
+     *
+     * Linux/Unix: nobody 사용자가 읽기/쓰기/실행 가능하도록 777 권한 설정
+     * Windows: POSIX 권한 미지원이므로 건너뜀
+     *
+     * @param path 권한을 설정할 파일/디렉토리 경로
+     * @param isDirectory 디렉토리 여부
+     */
+    private void setFilePermissions(Path path, boolean isDirectory) {
+        try {
+            // POSIX 권한 설정 시도 (Linux/Unix/Mac)
+            Files.setPosixFilePermissions(path,
+                java.nio.file.attribute.PosixFilePermissions.fromString("rwxrwxrwx"));
+            log.debug("[PERMISSIONS] POSIX 권한 설정 완료: {} (rwxrwxrwx)", path.getFileName());
+        } catch (UnsupportedOperationException e) {
+            // Windows는 POSIX 권한 미지원 - Docker Desktop은 root로 실행되므로 권한 문제 없음
+            log.debug("[PERMISSIONS] POSIX 권한 미지원 (Windows 환경): {}", path.getFileName());
+        } catch (IOException e) {
+            log.warn("[PERMISSIONS] 권한 설정 실패: {} - {}", path.getFileName(), e.getMessage());
+        }
+    }
+
+    /**
+     * 현재 OS가 Windows인지 확인
+     *
+     * @return Windows 환경이면 true, 그 외 false
+     */
+    private boolean isWindows() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        return osName.contains("win");
     }
 
 
@@ -351,6 +456,42 @@ public class DockerExecutionService {
      * @param workDir 작업 디렉토리 경로
      * @throws IOException 파일 생성/쓰기 중 오류 발생 시
      */
+    /**
+     * 컨테이너 내부에 소스코드 파일 생성 (tmpfs 기반 워크플로우)
+     *
+     * tmpfs 볼륨을 사용하는 새로운 방식으로, 컨테이너 내부에 직접 파일을 생성합니다.
+     * 이를 통해 호스트 파일시스템의 권한 문제를 완전히 회피합니다.
+     *
+     * @param request 실행 요청 정보
+     * @param containerId 컨테이너 ID
+     * @throws Exception 파일 생성 실패 시
+     */
+    private void prepareSourceCodeInContainer(CodeExecutionRequest request, String containerId) throws Exception {
+        Language language = request.getLanguage();
+
+        // 1. 소스코드 파일 생성
+        if (request.getSourceCode() != null && !request.getSourceCode().trim().isEmpty()) {
+            String sourceFilePath = "/tmp/judge/" + language.getSourceFile();
+            containerManager.createFileInContainer(
+                    containerId,
+                    sourceFilePath,
+                    request.getSourceCode(),
+                    false
+            );
+            log.debug("[PREPARE] 소스코드 파일 생성 완료: {}", language.getSourceFile());
+        }
+
+        // 2. 추가 파일들 처리 (프로젝트 제출 시)
+        if (request.getAdditionalFiles() != null && request.getAdditionalFiles().length > 0) {
+            log.debug("[PREPARE] 추가 파일들이 존재하지만 아직 처리되지 않음: {} bytes", request.getAdditionalFiles().length);
+        }
+
+        // 3. 컴파일 스크립트 생성 (컴파일이 필요한 언어의 경우)
+        createCompileScriptInContainer(request, containerId);
+
+        log.debug("[PREPARE] 소스코드 파일 준비 완료 (컨테이너 내부)");
+    }
+
     private void prepareSourceCodeOnly(CodeExecutionRequest request, Path workDir) throws IOException {
         Language language = request.getLanguage();
 
@@ -361,6 +502,7 @@ public class DockerExecutionService {
         if (request.getSourceCode() != null && !request.getSourceCode().trim().isEmpty()) {
             Path sourceFile = workDir.resolve(language.getSourceFile());
             Files.write(sourceFile, request.getSourceCode().getBytes(StandardCharsets.UTF_8));
+            setFilePermissions(sourceFile, false);
             log.debug("소스코드 파일 생성 완료: {}", sourceFile.getFileName());
         }
 
@@ -426,17 +568,70 @@ public class DockerExecutionService {
                 "echo \"Compilation completed successfully\""; // 성공 메시지
 
         Files.write(compileScript, scriptContent.getBytes(StandardCharsets.UTF_8));
-        compileScript.toFile().setExecutable(true); // 실행 권한 부여
+        compileScript.toFile().setExecutable(true); // Java 기본 실행 권한 부여
+        setFilePermissions(compileScript, false); // OS별 추가 권한 설정
 
         log.debug("컴파일 스크립트 생성 완료: {}", compileCommand);
     }
 
+    /**
+     * 컨테이너 내부에 컴파일 스크립트 생성 (tmpfs 기반 워크플로우)
+     *
+     * 컴파일이 필요한 언어를 위한 컴파일 스크립트를 컨테이너 내부에 직접 생성합니다.
+     *
+     * @param request 실행 요청 정보
+     * @param containerId 컨테이너 ID
+     * @throws Exception 스크립트 파일 생성 중 오류 발생 시
+     */
+    private void createCompileScriptInContainer(CodeExecutionRequest request, String containerId) throws Exception {
+        Language language = request.getLanguage();
+
+        // 컴파일이 필요하지 않은 언어는 스크립트 생성하지 않음
+        if (!language.supportsCompilation()) {
+            return;
+        }
+
+        // 컴파일러 옵션 보안 검증 및 정리
+        String compilerOptions = sanitizeOptions(request.getCompilerOptions());
+        String compileCommand = language.getEffectiveCompileCommand();
+
+        // %s 플레이스홀더를 실제 컴파일러 옵션으로 교체
+        if (compileCommand.contains("%s")) {
+            compileCommand = compileCommand.replace("%s", compilerOptions);
+        } else {
+            compileCommand = compileCommand + " " + compilerOptions;
+        }
+
+        // 컴파일 스크립트 내용 생성
+        String scriptContent = "#!/bin/bash\n" +
+                "set -e\n" + // 오류 발생 시 스크립트 중단
+                "cd /tmp/judge\n" + // 작업 디렉토리로 이동
+                compileCommand + "\n" + // 실제 컴파일 명령어
+                "echo \"Compilation completed successfully\""; // 성공 메시지
+
+        // 컨테이너 내부에 스크립트 파일 생성 (실행 권한 포함)
+        containerManager.createFileInContainer(
+                containerId,
+                "/tmp/judge/compile.sh",
+                scriptContent,
+                true  // 실행 권한 부여
+        );
+
+        log.debug("[PREPARE] 컴파일 스크립트 생성 완료: {}", compileCommand);
+    }
 
     /**
      * 컴파일된 코드용 실행 스크립트 생성 메서드 (Grade 전용)
      *
      * executeWithCompiledCode()에서 사용되며, 이미 컴파일된 바이너리를
      * 다른 입력으로 실행하기 위한 스크립트를 생성합니다.
+     *
+     * 스크립트 구조:
+     * 1. 작업 디렉토리로 이동 (/tmp/judge)
+     * 2. 필수 파일 존재 확인 (stdin.txt)
+     * 3. timeout으로 실행 시간 제한 (30초)
+     * 4. 프로그램 실행 및 출력 리디렉션 (절대 경로 사용)
+     * 5. 종료 코드 저장
      *
      * @param language 프로그래밍 언어 정보
      * @param workDir 작업 디렉토리 경로
@@ -447,18 +642,70 @@ public class DockerExecutionService {
 
         // 실행 스크립트 파일 생성
         Path runScript = workDir.resolve("run.sh");
+
+        // 견고한 실행 스크립트 (에러 처리 강화)
         String scriptContent = "#!/bin/bash\n" +
-                "cd /tmp/judge\n" +
-                "timeout 30s " + // 기본 30초 제한
-                runCommand + " <stdin.txt >stdout.txt 2>stderr.txt\n" +
-                "echo $? >exit_code.txt";
+                "# 작업 디렉토리 이동\n" +
+                "cd /tmp/judge || { echo \"Failed to change directory\" >&2; exit 1; }\n" +
+                "\n" +
+                "# 입력 파일 존재 확인\n" +
+                "if [ ! -f /tmp/judge/stdin.txt ]; then\n" +
+                "    echo \"stdin.txt not found\" >&2\n" +
+                "    exit 1\n" +
+                "fi\n" +
+                "\n" +
+                "# 프로그램 실행 (절대 경로로 출력 파일 지정)\n" +
+                "timeout 30s " + runCommand +
+                " </tmp/judge/stdin.txt >/tmp/judge/stdout.txt 2>/tmp/judge/stderr.txt\n" +
+                "\n" +
+                "# 종료 코드 저장 (절대 경로)\n" +
+                "echo $? >/tmp/judge/exit_code.txt\n";
 
         Files.write(runScript, scriptContent.getBytes(StandardCharsets.UTF_8));
-        runScript.toFile().setExecutable(true);
+        runScript.toFile().setExecutable(true); // Java 기본 실행 권한 부여
+        setFilePermissions(runScript, false); // OS별 추가 권한 설정
 
         log.debug("실행 스크립트 생성 완료 (컴파일된 코드용): {}", runCommand);
     }
 
+    /**
+     * 컨테이너 내부에 실행 스크립트 생성 (tmpfs 기반 워크플로우)
+     *
+     * stdin은 executeWithStdin을 통해 직접 전달되므로 stdin.txt 파일은 필요 없습니다.
+     * 실행 결과는 stdout.txt, stderr.txt, exit_code.txt에 저장됩니다.
+     *
+     * @param language 프로그래밍 언어 정보
+     * @param containerId 컨테이너 ID
+     * @throws Exception 스크립트 파일 생성 중 오류 발생 시
+     */
+    private void createRunScriptInContainer(Language language, String containerId) throws Exception {
+        String runCommand = language.getEffectiveRunCommand();
+
+        // 실행 스크립트 내용 생성 (stdin은 파일에서 리다이렉션)
+        String scriptContent = "#!/bin/bash\n" +
+                "# 작업 디렉토리 이동\n" +
+                "cd /tmp/judge || { echo \"Failed to change directory\" >&2; exit 1; }\n" +
+                "\n" +
+                "# 프로그램 실행 (stdin.txt가 있으면 리다이렉션, 없으면 stdin 없이 실행)\n" +
+                "if [ -f /tmp/judge/stdin.txt ]; then\n" +
+                "    timeout 30s " + runCommand + " </tmp/judge/stdin.txt >/tmp/judge/stdout.txt 2>/tmp/judge/stderr.txt\n" +
+                "else\n" +
+                "    timeout 30s " + runCommand + " >/tmp/judge/stdout.txt 2>/tmp/judge/stderr.txt\n" +
+                "fi\n" +
+                "\n" +
+                "# 종료 코드 저장\n" +
+                "echo $? >/tmp/judge/exit_code.txt\n";
+
+        // 컨테이너 내부에 스크립트 파일 생성 (실행 권한 포함)
+        containerManager.createFileInContainer(
+                containerId,
+                "/tmp/judge/run.sh",
+                scriptContent,
+                true  // 실행 권한 부여
+        );
+
+        log.debug("[PREPARE] 실행 스크립트 생성 완료: {}", runCommand);
+    }
 
     private BigDecimal calculateActualExecutionTime(Path workDir, BigDecimal wallTime) {
         try {
@@ -534,6 +781,52 @@ public class DockerExecutionService {
             log.warn("Failed to read file: {}", filePath, e);
         }
         return null;
+    }
+
+    /**
+     * 컨테이너 내부 파일을 읽어옵니다.
+     * tmpfs 기반 워크플로우에서 컨테이너 내부에 생성된 파일을 읽을 때 사용합니다.
+     *
+     * @param containerId 컨테이너 ID
+     * @param filePath 컨테이너 내부 파일 경로 (예: /tmp/judge/stdout.txt)
+     * @param timeoutSeconds 읽기 타임아웃 (초)
+     * @return 파일 내용 (파일이 없거나 오류 시 null 또는 빈 문자열)
+     */
+    private String readFileFromContainer(String containerId, String filePath, long timeoutSeconds) {
+        try {
+            log.debug("[READ-FILE] 컨테이너 파일 읽기 시작 - 경로: {}", filePath);
+
+            // cat 명령으로 파일 내용 읽기 (stdin 없이 실행)
+            ExecResult result = containerManager.executeWithStdin(
+                    containerId,
+                    new String[]{"sh", "-c", "cat " + filePath + " 2>/dev/null || true"},
+                    null,  // stdin 없음
+                    timeoutSeconds
+            );
+
+            if (result.hasError()) {
+                log.warn("[READ-FILE] 파일 읽기 중 경고 - 경로: {}, stderr: {}",
+                        filePath, result.getStderr());
+            }
+
+            String content = result.getStdout();
+            if (content != null && !content.isEmpty()) {
+                // 크기 제한 확인 (10MB)
+                if (content.length() > 10 * 1024 * 1024) {
+                    log.warn("[READ-FILE] 출력 파일이 너무 큼: {} bytes", content.length());
+                    return "[Output truncated - file too large]";
+                }
+                log.debug("[READ-FILE] 파일 읽기 완료 - 크기: {} bytes", content.length());
+                return content;
+            }
+
+            log.debug("[READ-FILE] 파일이 비어있거나 존재하지 않음 - 경로: {}", filePath);
+            return "";
+
+        } catch (Exception e) {
+            log.warn("[READ-FILE] 파일 읽기 실패 - 경로: {}", filePath, e);
+            return null;
+        }
     }
 
     /**

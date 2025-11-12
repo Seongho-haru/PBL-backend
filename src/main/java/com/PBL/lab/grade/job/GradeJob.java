@@ -59,25 +59,30 @@ public class GradeJob {
     @Job(name = "Execute Code Grading", retries = 3)
     @Transactional
     public void executeGrade(String gradeToken) {
-        log.info("코드 채점 작업 시작 - grade token: {}", gradeToken);
+        log.info("[GRADE] ========== 코드 채점 작업 시작 - Grade Token: {} ==========", gradeToken);
 
         Grade grade = null;
         try {
+            log.debug("[GRADE] Grade 정보 조회 시작 - Token: {}", gradeToken);
             grade = gradeService.findByToken(gradeToken);
 
             if (grade == null) {
-                log.error("채점 정보를 찾을 수 없음 - grade token: {}", gradeToken);
+                log.error("[GRADE] 채점 정보를 찾을 수 없음 - Grade Token: {}", gradeToken);
                 return;
             }
+
+            log.debug("[GRADE] Grade 정보 조회 완료 - Problem ID: {}, 언어: {}",
+                    grade.getProblemId(), grade.getLanguageId());
 
             grade.setStartedAt(LocalDateTime.now());
             grade.setExecutionHost(getHostname());
 
+            log.info("[GRADE] 채점 상태 변경: PROCESS - Token: {}", gradeToken);
             gradeService.updateStatus(gradeToken, Status.PROCESS);
 
-            log.info("테스트케이스 찾는 중... token: {}", gradeToken);
+            log.info("[GRADE] 테스트케이스 조회 시작 - Problem ID: {}", grade.getProblemId());
             List<TestCase> testCases = gradeService.findTestCasesByLectureId(grade.getProblemId());
-            log.info("테스트케이스 조회 완료 token: {}", gradeToken);
+            log.info("[GRADE] 테스트케이스 조회 완료 - 총 {}개, Token: {}", testCases.size(), gradeToken);
 
             ExecutionResult commonResult = ExecutionResult.builder()
                     .status(Status.PROCESS)
@@ -105,11 +110,17 @@ public class GradeJob {
             // 1. 컴파일 준비 (1회만)
             com.PBL.lab.core.dto.CompilationContext compilationContext = null;
             try {
+                log.info("[GRADE] ===== 1단계: 코드 컴파일 시작 =====");
                 CodeExecutionRequest compileRequest = grade.buildCodeExecutionRequest(grade);
+                log.debug("[GRADE] CodeExecutionRequest 생성 완료 - 소스코드 길이: {} bytes",
+                        compileRequest.getSourceCode() != null ? compileRequest.getSourceCode().length() : 0);
+
                 compilationContext = dockerExecutionService.prepareCompilation(compileRequest);
-                log.info("코드 컴파일 완료 - grade token: {}, 소요 시간: {}ms", gradeToken, compilationContext.getCompileTime());
+
+                log.info("[GRADE] 코드 컴파일 완료 - Token: {}, 소요 시간: {}ms, 컨테이너 ID: {}",
+                        gradeToken, compilationContext.getCompileTime(), compilationContext.getContainerId());
             } catch (Exception e) {
-                log.error("코드 컴파일 실패 - grade token: {}", gradeToken, e);
+                log.error("[GRADE] 코드 컴파일 실패 - Token: {}", gradeToken, e);
                 commonResult.setStatus(Status.CE);
                 commonResult.setMessage("컴파일 실패: " + e.getMessage());
                 gradeService.updateResult(gradeToken, commonResult);
@@ -119,29 +130,37 @@ public class GradeJob {
 
             // 2. 각 테스트케이스 실행 (N회)
             try {
+                log.info("[GRADE] ===== 2단계: 테스트케이스 실행 시작 (총 {}개) =====", totalTestCases);
+
                 for (int i = 0; i < testCases.size(); i++) {
                     TestCase testCase = testCases.get(i);
-                    log.info("테스트케이스 {}/{} 실행 중 - grade token: {}", i + 1, totalTestCases, gradeToken);
+                    log.info("[GRADE] 테스트케이스 {}/{} 실행 시작 - Token: {}", i + 1, totalTestCases, gradeToken);
 
                     try {
                         // 컴파일된 코드로 실행 (빠름!)
+                        log.debug("[GRADE] executeWithCompiledCode 호출 - 입력 크기: {} bytes",
+                                testCase.getInput() != null ? testCase.getInput().length() : 0);
+
                         commonResult = dockerExecutionService.executeWithCompiledCode(
                                 compilationContext,
                                 testCase.getInput(),
-                                testCase.getExpectedOutput()
-                        );
+                                testCase.getExpectedOutput());
+
+                        log.debug("[GRADE] executeWithCompiledCode 완료 - 상태: {}, 종료 코드: {}",
+                                commonResult.getStatus(), commonResult.getExitCode());
 
                         if (commonResult.getStatus().equals(Status.AC)) {
                             passedTestCases++;
-                            log.info("테스트케이스 {}/{} 통과 - grade token: {}", i + 1, totalTestCases, gradeToken);
+                            log.info("[GRADE] ✅ 테스트케이스 {}/{} 통과 - Token: {}", i + 1, totalTestCases, gradeToken);
                             commonResult.setMessage("테스트케이스 " + (i + 1) + "/" + totalTestCases + " 통과");
                             if (totalTestCases != passedTestCases) {
                                 commonResult.setStatus(Status.PROCESS);
                             }
                             gradeService.updateResult(gradeToken, commonResult);
-                            gradeProgressService.updateTestCaseProgress(gradeToken, i, totalTestCases, Status.PROCESS.getName());
+                            gradeProgressService.updateTestCaseProgress(gradeToken, i, totalTestCases,
+                                    Status.PROCESS.getName());
                         } else {
-                            log.info("테스트케이스 {}/{} 실패 (상태: {}) - grade token: {}",
+                            log.info("[GRADE] ❌ 테스트케이스 {}/{} 실패 - 상태: {}, Token: {}",
                                     i + 1, totalTestCases, commonResult.getStatus().getName(), gradeToken);
 
                             // 오답일 때 입출력 정보를 Grade에 저장
@@ -155,13 +174,15 @@ public class GradeJob {
 
                             grade.setInputOutput(errorInputOutput);
 
-                            commonResult.setMessage("테스트케이스 " + (i + 1) + "/" + totalTestCases + " 실패: " + commonResult.getStatus().getName());
+                            commonResult.setMessage("테스트케이스 " + (i + 1) + "/" + totalTestCases + " 실패: "
+                                    + commonResult.getStatus().getName());
                             gradeService.updateResult(gradeToken, commonResult);
+                            log.info("[GRADE] 첫 번째 실패 테스트케이스로 채점 중단 - Token: {}", gradeToken);
                             break;
                         }
 
                     } catch (Exception e) {
-                        log.error("테스트케이스 {}/{} 실행 중 오류 발생 - grade token: {}",
+                        log.error("[GRADE] 테스트케이스 {}/{} 실행 중 오류 발생 - Token: {}",
                                 i + 1, totalTestCases, gradeToken, e);
                         commonResult.setMessage("테스트케이스 실행 중 오류 발생: " + e.getMessage());
                         commonResult.setStatus(Status.BOXERR);
@@ -175,28 +196,31 @@ public class GradeJob {
                     commonResult.setMessage("채점이 완료되었습니다!");
                     gradeService.updateResult(gradeToken, commonResult);
                     gradeProgressService.notifyGradingCompleted(gradeToken);
-                    log.info("코드 채점 작업 완료 - grade token: {}, 통과: {}/{}, 최종 상태: {}",
+                    log.info("[GRADE] ✅ 채점 성공 - Token: {}, 통과: {}/{}, 최종 상태: {}",
                             gradeToken, passedTestCases, totalTestCases, commonResult.getStatus().getName());
                 } else {
                     gradeService.updateResult(gradeToken, commonResult);
                     gradeProgressService.notifyGradingError(gradeToken);
-                    log.info("코드 채점 작업 실패 - grade token: {}, 통과: {}/{}, 최종 상태: {}",
+                    log.info("[GRADE] ❌ 채점 실패 - Token: {}, 통과: {}/{}, 최종 상태: {}",
                             gradeToken, passedTestCases, totalTestCases, commonResult.getStatus().getName());
                 }
             } finally {
                 // 3. 컨테이너 정리 (1회만)
+                log.info("[GRADE] ===== 3단계: 컨테이너 정리 시작 =====");
                 if (compilationContext != null) {
+                    log.debug("[GRADE] cleanupCompilation 호출 - 컨테이너 ID: {}", compilationContext.getContainerId());
                     dockerExecutionService.cleanupCompilation(compilationContext);
-                    log.info("컨테이너 정리 완료 - grade token: {}", gradeToken);
+                    log.info("[GRADE] 컨테이너 정리 완료 - Token: {}", gradeToken);
+                } else {
+                    log.warn("[GRADE] 정리할 컴파일 컨텍스트 없음 - Token: {}", gradeToken);
                 }
             }
 
         } catch (Exception e) {
-            log.error("코드 채점 작업 실패 - grade token: {}", gradeToken, e);
+            log.error("[GRADE] 코드 채점 작업 실패 - Token: {}", gradeToken, e);
             handleGradeFailure(gradeToken, e);
-        }
-        finally {
-            log.info("채점 종료 token: {}", gradeToken);
+        } finally {
+            log.info("[GRADE] ========== 채점 종료 - Token: {} ==========", gradeToken);
         }
     }
 
@@ -217,7 +241,8 @@ public class GradeJob {
     }
 
     private void sendCallback(Grade grade) {
-        if (grade.getConstraints().getCallbackUrl() != null && !grade.getConstraints().getCallbackUrl().trim().isEmpty()) {
+        if (grade.getConstraints().getCallbackUrl() != null
+                && !grade.getConstraints().getCallbackUrl().trim().isEmpty()) {
             try {
                 log.info("웹훅 콜백 전송 완료 - grade token: {}", grade.getToken());
 

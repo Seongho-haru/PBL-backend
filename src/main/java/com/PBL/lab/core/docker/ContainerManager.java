@@ -16,12 +16,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-
-import static java.nio.file.Files.createDirectories;
 
 /**
  * 컨테이너 관리자 - Docker 컨테이너 생명주기 및 운영 관리
@@ -58,6 +55,7 @@ public class ContainerManager {
      * @return 생성된 컨테이너 ID
      */
     public String createContainer(ContainerConfig config) {
+        log.info("[CONTAINER-LIFECYCLE] 컨테이너 생성 시작 - 이미지: {}", config.getImage());
         try {
             CreateContainerResponse response = dockerClient.createContainerCmd(config.getImage())
                     .withName(config.getName())
@@ -72,11 +70,11 @@ public class ContainerManager {
             String containerId = response.getId();
             activeContainers.put(containerId, new ContainerInfo(containerId, config, 0, 0));
 
-            log.debug("Created container: {} with image: {}", containerId, config.getImage());
+            log.info("[CONTAINER-LIFECYCLE] 컨테이너 생성 완료 - ID: {}, 이미지: {}", containerId, config.getImage());
             return containerId;
 
         } catch (Exception e) {
-            log.error("Failed to create container", e);
+            log.error("[CONTAINER-LIFECYCLE] 컨테이너 생성 실패", e);
             throw new RuntimeException("Container creation failed", e);
         }
     }
@@ -87,6 +85,7 @@ public class ContainerManager {
      * @param containerId 시작할 컨테이너 ID
      */
     public void startContainer(String containerId) {
+        log.info("[CONTAINER-LIFECYCLE] 컨테이너 시작 시작 - ID: {}", containerId);
         try {
             dockerClient.startContainerCmd(containerId).exec();
 
@@ -96,44 +95,47 @@ public class ContainerManager {
                 info.setStartTime(System.currentTimeMillis());
             }
 
-            log.debug("Started container: {}", containerId);
+            log.info("[CONTAINER-LIFECYCLE] 컨테이너 시작 완료 - ID: {}", containerId);
 
         } catch (Exception e) {
-            log.error("Failed to start container: {}", containerId, e);
+            log.error("[CONTAINER-LIFECYCLE] 컨테이너 시작 실패 - ID: {}", containerId, e);
             throw new RuntimeException("Container start failed", e);
         }
     }
 
     /**
      * 컨테이너 중지 - 실행 중인 컨테이너를 정상적으로 중지
-     * 
+     *
      * @param containerId 중지할 컨테이너 ID
      */
     public void stopContainer(String containerId) {
+        log.info("[CONTAINER-LIFECYCLE] 컨테이너 중지 시작 - ID: {}", containerId);
         try {
             dockerClient.stopContainerCmd(containerId)
                     .withTimeout(0) // 10초 타임아웃
                     .exec();
 
-            log.debug("Stopped container: {}", containerId);
+            log.info("[CONTAINER-LIFECYCLE] 컨테이너 중지 완료 - ID: {}", containerId);
 
         } catch (Exception e) {
-            log.warn("Failed to stop container gracefully: {}, forcing kill", containerId);
+            log.warn("[CONTAINER-LIFECYCLE] 컨테이너 정상 중지 실패, 강제 종료 시도 - ID: {}", containerId);
             // 정상 중지 실패 시 강제 종료 시도
             try {
                 dockerClient.killContainerCmd(containerId).exec();
+                log.info("[CONTAINER-LIFECYCLE] 컨테이너 강제 종료 완료 - ID: {}", containerId);
             } catch (Exception killException) {
-                log.error("Failed to kill container: {}", containerId, killException);
+                log.error("[CONTAINER-LIFECYCLE] 컨테이너 강제 종료 실패 - ID: {}", containerId, killException);
             }
         }
     }
 
     /**
      * 컨테이너 제거 - 컨테이너를 완전히 삭제하고 리소스 정리
-     * 
+     *
      * @param containerId 제거할 컨테이너 ID
      */
     public void removeContainer(String containerId) {
+        log.info("[CONTAINER-LIFECYCLE] 컨테이너 제거 시작 - ID: {}", containerId);
         try {
             dockerClient.removeContainerCmd(containerId)
                     .withForce(true) // 강제 제거
@@ -141,10 +143,10 @@ public class ContainerManager {
                     .exec();
 
             activeContainers.remove(containerId); // 추적 목록에서도 제거
-            log.debug("Removed container: {}", containerId);
+            log.info("[CONTAINER-LIFECYCLE] 컨테이너 제거 완료 - ID: {}", containerId);
 
         } catch (Exception e) {
-            log.error("Failed to remove container: {}", containerId, e);
+            log.error("[CONTAINER-LIFECYCLE] 컨테이너 제거 실패 - ID: {}", containerId, e);
         }
     }
 
@@ -280,7 +282,6 @@ public class ContainerManager {
         return activeContainers.size();
     }
 
-
     /**
      * 컨테이너 정보 추적 클래스 - 컨테이너의 메타데이터와 실행 시간 추적
      */
@@ -379,14 +380,13 @@ public class ContainerManager {
         // 이미지 확인 및 자동 pull
         ensureImageExists(image);
 
-        // 마운트 디렉토리 생성
-        String mountPath = workDir.toString();
+        // tmpfs 사용으로 호스트 디렉토리 생성 불필요
+        // 컨테이너 내부 /tmp/judge는 메모리 기반 tmpfs로 자동 생성됨
         String osName = System.getProperty("os.name", "linux").toLowerCase();
         String user = osName.contains("windows") ? "root" : "nobody:nogroup";
-        createDirectories(Paths.get(mountPath));
 
-        // 리소스 제한 설정 (동적)
-        com.github.dockerjava.api.model.HostConfig hostConfig = buildHostConfig(request, mountPath);
+        // 리소스 제한 설정 (동적, tmpfs 포함)
+        com.github.dockerjava.api.model.HostConfig hostConfig = buildHostConfig(request);
 
         // 컨테이너 설정 빌드
         ContainerConfig config = ContainerConfig.builder()
@@ -394,7 +394,7 @@ public class ContainerManager {
                 .name(containerName)
                 .workingDir("/tmp/judge")
                 .user(user)
-                .command(new String[] { "tail", "-f", "/dev/null" })
+                .command(new String[] { "sleep", "infinity" })
                 .environment(buildEnvironmentVariables(request))
                 .hostConfig(hostConfig)
                 .networkMode(determineNetworkMode(request))
@@ -433,9 +433,9 @@ public class ContainerManager {
      */
     private String determineNetworkMode(CodeExecutionRequest request) {
         if (request.getEnableNetwork() != null && request.getEnableNetwork()) {
-            return "bridge";  // 네트워크 허용
+            return "bridge"; // 네트워크 허용
         }
-        return "none";  // 네트워크 차단 (기본값, 보안)
+        return "none"; // 네트워크 차단 (기본값, 보안)
     }
 
     /**
@@ -445,14 +445,13 @@ public class ContainerManager {
      * - 메모리 제한: constraints.memoryLimit (KB 단위) → Bytes로 변환
      * - CPU 제한: constraints.timeLimit (초 단위) → CPU Quota로 변환
      * - 프로세스 수 제한: constraints.processLimit
+     * - tmpfs 볼륨: 메모리 기반 파일시스템으로 권한 문제 없이 안전한 실행 환경 제공
      *
      * @param request 코드 실행 요청 정보
-     * @param mountPath 마운트 경로
      * @return HostConfig 객체
      */
     private com.github.dockerjava.api.model.HostConfig buildHostConfig(
-            CodeExecutionRequest request,
-            String mountPath) {
+            CodeExecutionRequest request) {
 
         com.PBL.lab.core.dto.SecurityConstraints constraints = request.getConstraints();
 
@@ -479,15 +478,19 @@ public class ContainerManager {
         log.debug("리소스 제한 설정 - 메모리: {}MB, CPU Quota: {}, 프로세스: {}",
                 memoryBytes / 1024 / 1024, cpuQuota, pidsLimit);
 
+        // tmpfs 볼륨 사용 (호스트 파일시스템 바인드 대신)
+        // - 메모리 기반 파일 시스템으로 빠른 I/O
+        // - 컨테이너 삭제 시 자동 제거 (보안)
+        // - nobody 사용자 소유로 권한 문제 없음
+        java.util.Map<String, String> tmpfsMap = new java.util.HashMap<>();
+        tmpfsMap.put("/tmp/judge", "rw,size=100m,uid=65534,gid=65534");
+
         return com.github.dockerjava.api.model.HostConfig.newHostConfig()
                 .withMemory(memoryBytes)
                 .withCpuQuota(cpuQuota)
                 .withPidsLimit(pidsLimit)
-                .withBinds(new com.github.dockerjava.api.model.Bind(
-                        mountPath,
-                        new com.github.dockerjava.api.model.Volume("/tmp/judge"),
-                        com.github.dockerjava.api.model.AccessMode.rw))
-                .withSecurityOpts(List.of("no-new-privileges:true"));
+                .withTmpFs(tmpfsMap)  // tmpfs 볼륨 사용
+                .withSecurityOpts(List.of("seccomp=unconfined", "apparmor=unconfined"));
     }
 
     /**
@@ -529,10 +532,14 @@ public class ContainerManager {
      * @throws Exception 실행 중 오류 발생 시
      */
     public ExecResult executeScript(String containerId, String scriptPath, long timeoutSeconds) throws Exception {
+        log.info("[EXECUTE] 스크립트 실행 시작 - 컨테이너 ID: {}, 스크립트: {}, 타임아웃: {}초",
+                containerId, scriptPath, timeoutSeconds);
+
         // NPE 방지: os.name이 null인 경우 기본값 "linux" 사용
         String osName = System.getProperty("os.name", "linux").toLowerCase();
         String user = osName.contains("windows") ? "root" : "nobody:nogroup";
 
+        log.debug("[EXECUTE] Exec 명령 생성 중 - 사용자: {}, 작업 디렉토리: /tmp/judge", user);
         com.github.dockerjava.api.command.ExecCreateCmdResponse execResponse = dockerClient.execCreateCmd(containerId)
                 .withCmd("bash", scriptPath)
                 .withWorkingDir("/tmp/judge")
@@ -541,22 +548,147 @@ public class ContainerManager {
                 .withAttachStderr(true)
                 .exec();
 
+        log.debug("[EXECUTE] Exec 명령 생성 완료 - Exec ID: {}", execResponse.getId());
+
         java.io.ByteArrayOutputStream stdout = new java.io.ByteArrayOutputStream();
         java.io.ByteArrayOutputStream stderr = new java.io.ByteArrayOutputStream();
 
+        log.debug("[EXECUTE] 스크립트 실행 시작 - Exec ID: {}", execResponse.getId());
         boolean completed = dockerClient.execStartCmd(execResponse.getId())
                 .exec(new ExecStartResultCallback(stdout, stderr))
                 .awaitCompletion(timeoutSeconds, TimeUnit.SECONDS);
 
+        log.debug("[EXECUTE] 스크립트 실행 완료 여부: {}", completed);
+
         com.github.dockerjava.api.command.InspectExecResponse inspectExec = dockerClient
                 .inspectExecCmd(execResponse.getId()).exec();
         Integer exitCode = inspectExec.getExitCodeLong() != null ? inspectExec.getExitCodeLong().intValue() : null;
+
+        log.info("[EXECUTE] 스크립트 실행 완료 - 종료 코드: {}, 완료 여부: {}, stdout 크기: {}, stderr 크기: {}",
+                exitCode, completed, stdout.size(), stderr.size());
 
         return new ExecResult(
                 stdout.toString(java.nio.charset.StandardCharsets.UTF_8.name()),
                 stderr.toString(java.nio.charset.StandardCharsets.UTF_8.name()),
                 exitCode,
                 completed);
+    }
+
+    /**
+     * stdin을 스트림으로 전달하여 명령 실행
+     *
+     * 컨테이너 내부에서 stdin을 받는 명령을 실행합니다.
+     * tmpfs 볼륨 사용 시 파일을 생성하거나 stdin 데이터를 전달하는 데 사용됩니다.
+     *
+     * @param containerId    실행할 컨테이너 ID
+     * @param command        실행할 명령어 배열 (예: ["sh", "-c", "cat > file.txt"])
+     * @param stdin          표준 입력으로 전달할 데이터 (null 가능)
+     * @param timeoutSeconds 최대 실행 시간 (초)
+     * @return ExecResult 실행 결과 객체
+     * @throws Exception 실행 중 오류 발생 시
+     */
+    public ExecResult executeWithStdin(String containerId, String[] command,
+                                       String stdin, long timeoutSeconds) throws Exception {
+        log.info("[EXEC-STDIN] 명령 실행 시작 - 컨테이너 ID: {}, 명령: {}, stdin: {} bytes",
+                containerId.substring(0, Math.min(12, containerId.length())),
+                String.join(" ", command),
+                stdin != null ? stdin.length() : 0);
+
+        // NPE 방지: os.name이 null인 경우 기본값 "linux" 사용
+        String osName = System.getProperty("os.name", "linux").toLowerCase();
+        String user = osName.contains("windows") ? "root" : "nobody:nogroup";
+
+        // Exec 생성
+        com.github.dockerjava.api.command.ExecCreateCmdResponse execResponse = dockerClient
+                .execCreateCmd(containerId)
+                .withCmd(command)
+                .withWorkingDir("/tmp/judge")
+                .withUser(user)
+                .withAttachStdout(true)
+                .withAttachStderr(true)
+                .withAttachStdin(stdin != null && !stdin.isEmpty())
+                .exec();
+
+        java.io.ByteArrayOutputStream stdout = new java.io.ByteArrayOutputStream();
+        java.io.ByteArrayOutputStream stderr = new java.io.ByteArrayOutputStream();
+
+        // stdin 스트림 준비
+        try (java.io.InputStream stdinStream = stdin != null && !stdin.isEmpty()
+                ? new java.io.ByteArrayInputStream(stdin.getBytes(java.nio.charset.StandardCharsets.UTF_8))
+                : null) {
+
+            com.github.dockerjava.api.command.ExecStartCmd startCmd = dockerClient
+                    .execStartCmd(execResponse.getId())
+                    .withDetach(false);
+
+            if (stdinStream != null) {
+                startCmd.withStdIn(stdinStream);
+            }
+
+            boolean completed = startCmd.exec(new ExecStartResultCallback(stdout, stderr))
+                    .awaitCompletion(timeoutSeconds, TimeUnit.SECONDS);
+
+            com.github.dockerjava.api.command.InspectExecResponse inspectExec = dockerClient
+                    .inspectExecCmd(execResponse.getId()).exec();
+            Integer exitCode = inspectExec.getExitCodeLong() != null
+                    ? inspectExec.getExitCodeLong().intValue()
+                    : null;
+
+            log.info("[EXEC-STDIN] 명령 실행 완료 - 종료 코드: {}, 완료 여부: {}, stdout: {} bytes, stderr: {} bytes",
+                    exitCode, completed, stdout.size(), stderr.size());
+
+            return new ExecResult(
+                    stdout.toString(java.nio.charset.StandardCharsets.UTF_8.name()),
+                    stderr.toString(java.nio.charset.StandardCharsets.UTF_8.name()),
+                    exitCode,
+                    completed);
+        }
+    }
+
+    /**
+     * 컨테이너 내부에 파일 생성
+     *
+     * tmpfs 볼륨을 사용할 때 호스트 파일시스템 없이
+     * 컨테이너 내부에 직접 파일을 생성합니다.
+     *
+     * @param containerId 대상 컨테이너 ID
+     * @param filePath    생성할 파일의 경로 (컨테이너 내부 경로)
+     * @param content     파일 내용
+     * @param executable  실행 권한 부여 여부
+     * @throws Exception 파일 생성 실패 시
+     */
+    public void createFileInContainer(String containerId, String filePath,
+                                      String content, boolean executable) throws Exception {
+        log.debug("[CREATE-FILE] 파일 생성 시작 - 경로: {}, 크기: {} bytes, 실행권한: {}",
+                filePath, content != null ? content.length() : 0, executable);
+
+        // Base64 인코딩하여 특수문자 및 개행 문제 회피 (stdin EOF 문제 해결)
+        String fileContent = content != null ? content : "";
+        String base64Content = java.util.Base64.getEncoder().encodeToString(
+                fileContent.getBytes(java.nio.charset.StandardCharsets.UTF_8)
+        );
+
+        // base64 디코딩하여 파일 생성 (stdin 사용 안 함)
+        String createCmd = "echo '" + base64Content + "' | base64 -d > " + filePath;
+        if (executable) {
+            createCmd += " && chmod +x " + filePath;
+        }
+
+        ExecResult result = executeWithStdin(
+                containerId,
+                new String[]{"sh", "-c", createCmd},
+                null,  // stdin 사용 안 함 - base64 인코딩된 문자열을 명령어 인자로 전달
+                10
+        );
+
+        if (result.hasError()) {
+            log.error("[CREATE-FILE] 파일 생성 실패 - 경로: {}, stderr: {}",
+                    filePath, result.getStderr());
+            throw new RuntimeException("Failed to create file in container: " + filePath
+                    + ", error: " + result.getStderr());
+        }
+
+        log.debug("[CREATE-FILE] 파일 생성 완료 - 경로: {}", filePath);
     }
 
     /**
@@ -589,6 +721,18 @@ public class ContainerManager {
             } catch (java.io.IOException e) {
                 log.warn("Failed to write frame data", e);
             }
+        }
+
+        @Override
+        public void onComplete() {
+            super.onComplete();
+            log.debug("[EXEC-CALLBACK] Stream completed");
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            super.onError(throwable);
+            log.warn("[EXEC-CALLBACK] Stream error", throwable);
         }
     }
 }

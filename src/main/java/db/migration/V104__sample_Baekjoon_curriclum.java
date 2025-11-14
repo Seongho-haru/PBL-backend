@@ -69,9 +69,14 @@ public class V104__sample_Baekjoon_curriclum extends BaseJavaMigration {
                     curriculumStmt.setString(1, curriculum.getTitle());
                     curriculumStmt.setString(2, curriculum.getDescription());
                     curriculumStmt.setInt(3, curriculum.getDurationMinutes());
-                    curriculumStmt.setString(4, curriculum.getThumbnailImageUrl());
+                    // thumbnail_image_url 처리 - null 가능
+                    if (curriculum.getThumbnailImageUrl() != null && !curriculum.getThumbnailImageUrl().isEmpty()) {
+                        curriculumStmt.setString(4, curriculum.getThumbnailImageUrl());
+                    } else {
+                        curriculumStmt.setNull(4, java.sql.Types.VARCHAR);
+                    }
                     curriculumStmt.setString(5, curriculum.getCategory());
-                    curriculumStmt.setBoolean(6, true); // 백준 커리큘럼은 기본 공개
+                    curriculumStmt.setBoolean(6, curriculum.getIsPublic()); // 백준 커리큘럼은 기본 공개
                     curriculumStmt.setString(7, curriculum.getDifficulty());
                     curriculumStmt.setString(8, curriculum.getSummary());
                     curriculumStmt.setBigDecimal(9, java.math.BigDecimal.valueOf(0.0));

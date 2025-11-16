@@ -1,6 +1,7 @@
 package com.PBL.lab.grade.job;
 
 import com.PBL.lab.core.dto.CodeExecutionRequest;
+import com.PBL.lab.core.dto.CompilationContext;
 import com.PBL.lab.core.entity.ExecutionInputOutput;
 import com.PBL.lab.grade.entity.Grade;
 import com.PBL.lab.grade.service.*;
@@ -84,17 +85,14 @@ public class GradeJob {
             List<TestCase> testCases = gradeService.findTestCasesByLectureId(grade.getProblemId());
             log.info("[GRADE] 테스트케이스 조회 완료 - 총 {}개, Token: {}", testCases.size(), gradeToken);
 
-            ExecutionResult commonResult = ExecutionResult.builder()
-                    .status(Status.PROCESS)
-                    .message("")
-                    .build();
+
 
             if (testCases.isEmpty()) {
                 log.warn("테스트케이스가 없음 - grade token: {}", gradeToken);
-                commonResult.setStatus(Status.BOXERR);
-                commonResult.setMessage("No test cases found for this problem");
-                gradeService.updateResult(gradeToken, commonResult);
-                gradeProgressService.notifyGradingError(gradeToken);
+                grade.setStatus(Status.BOXERR);
+                grade.setMessage("No test cases found for this problem");
+                gradeService.updateResult(grade);
+                gradeProgressService.sendProgress(gradeToken);
                 return;
             }
 
@@ -103,12 +101,12 @@ public class GradeJob {
 
             log.info("총 {}개의 테스트케이스로 채점 시작 - grade token: {}", totalTestCases, gradeToken);
 
-            commonResult.setMessage("채점을 시작하겠습니다.");
-            gradeService.updateResult(gradeToken, commonResult);
-            gradeProgressService.notifyGradingStarted(gradeToken, totalTestCases);
+            grade.setMessage("채점을 시작하겠습니다.");
+            gradeService.updateResult(grade);
+            gradeProgressService.updateProgress(gradeToken, 0, totalTestCases);
 
             // 1. 컴파일 준비 (1회만)
-            com.PBL.lab.core.dto.CompilationContext compilationContext = null;
+            CompilationContext compilationContext = null;
             try {
                 log.info("[GRADE] ===== 1단계: 코드 컴파일 시작 =====");
                 CodeExecutionRequest compileRequest = grade.buildCodeExecutionRequest(grade);
@@ -121,16 +119,20 @@ public class GradeJob {
                         gradeToken, compilationContext.getCompileTime(), compilationContext.getContainerId());
             } catch (Exception e) {
                 log.error("[GRADE] 코드 컴파일 실패 - Token: {}", gradeToken, e);
-                commonResult.setStatus(Status.CE);
-                commonResult.setMessage("컴파일 실패: " + e.getMessage());
-                gradeService.updateResult(gradeToken, commonResult);
-                gradeProgressService.notifyGradingError(gradeToken);
+                grade.setStatus(Status.CE);
+                grade.setMessage("컴파일 실패: " + e.getMessage());
+                gradeService.updateResult(grade);
+                gradeProgressService.sendProgress(gradeToken);
                 return;
             }
 
             // 2. 각 테스트케이스 실행 (N회)
             try {
                 log.info("[GRADE] ===== 2단계: 테스트케이스 실행 시작 (총 {}개) =====", totalTestCases);
+                ExecutionResult commonResult = ExecutionResult.builder()
+                        .status(Status.PROCESS)
+                        .message("")
+                        .build();
 
                 for (int i = 0; i < testCases.size(); i++) {
                     TestCase testCase = testCases.get(i);
@@ -152,31 +154,38 @@ public class GradeJob {
                         if (commonResult.getStatus().equals(Status.AC)) {
                             passedTestCases++;
                             log.info("[GRADE] ✅ 테스트케이스 {}/{} 통과 - Token: {}", i + 1, totalTestCases, gradeToken);
-                            commonResult.setMessage("테스트케이스 " + (i + 1) + "/" + totalTestCases + " 통과");
+
+                            // 실행 성능 정보를 Grade에 저장 (최대값 사용)
+                            updateGradePerformanceMetrics(grade, commonResult);
+
+                            grade.setMessage("테스트케이스 " + (i + 1) + "/" + totalTestCases + " 통과");
                             if (totalTestCases != passedTestCases) {
-                                commonResult.setStatus(Status.PROCESS);
+                                grade.setStatus(Status.PROCESS);
                             }
-                            gradeService.updateResult(gradeToken, commonResult);
-                            gradeProgressService.updateTestCaseProgress(gradeToken, i, totalTestCases,
-                                    Status.PROCESS.getName());
+                            gradeService.updateResult(grade);
+                            gradeProgressService.updateProgress(gradeToken, i + 1, totalTestCases);
                         } else {
                             log.info("[GRADE] ❌ 테스트케이스 {}/{} 실패 - 상태: {}, Token: {}",
                                     i + 1, totalTestCases, commonResult.getStatus().getName(), gradeToken);
 
                             // 오답일 때 입출력 정보를 Grade에 저장
-                            ExecutionInputOutput errorInputOutput = new ExecutionInputOutput();
-                            errorInputOutput.setStdin(testCase.getInput());
-                            errorInputOutput.setExpectedOutput(testCase.getExpectedOutput());
-                            errorInputOutput.setStdout(commonResult.getStdout());
-                            errorInputOutput.setStderr(commonResult.getStderr());
-                            errorInputOutput.setCompileOutput(commonResult.getCompileOutput());
-                            errorInputOutput.setMessage(commonResult.getMessage());
+                            ExecutionInputOutput errorInputOutput = ExecutionInputOutput.builder()
+                                    .stdin(testCase.getInput())
+                                    .expectedOutput(testCase.getExpectedOutput())
+                                    .stdout(commonResult.getStdout())
+                                    .stderr(commonResult.getStderr())
+                                    .compileOutput(commonResult.getCompileOutput())
+                                    .message(commonResult.getMessage())
+                                    .build();
 
                             grade.setInputOutput(errorInputOutput);
 
-                            commonResult.setMessage("테스트케이스 " + (i + 1) + "/" + totalTestCases + " 실패: "
+                            // 실행 성능 정보를 Grade에 저장
+                            updateGradePerformanceMetrics(grade, commonResult);
+
+                            grade.setMessage("테스트케이스 " + (i + 1) + "/" + totalTestCases + " 실패: "
                                     + commonResult.getStatus().getName());
-                            gradeService.updateResult(gradeToken, commonResult);
+                            gradeService.updateResult(grade);
                             log.info("[GRADE] 첫 번째 실패 테스트케이스로 채점 중단 - Token: {}", gradeToken);
                             break;
                         }
@@ -184,25 +193,32 @@ public class GradeJob {
                     } catch (Exception e) {
                         log.error("[GRADE] 테스트케이스 {}/{} 실행 중 오류 발생 - Token: {}",
                                 i + 1, totalTestCases, gradeToken, e);
-                        commonResult.setMessage("테스트케이스 실행 중 오류 발생: " + e.getMessage());
-                        commonResult.setStatus(Status.BOXERR);
-                        gradeService.updateResult(gradeToken, commonResult);
-                        gradeProgressService.notifyGradingError(gradeToken);
+                        grade.setMessage("테스트케이스 실행 중 오류 발생: " + e.getMessage());
+                        grade.setStatus(Status.BOXERR);
+                        gradeService.updateResult(grade);
+                        gradeProgressService.sendProgress(gradeToken);
                         break;
                     }
                 }
 
                 if (commonResult.getStatus().equals(Status.AC)) {
-                    commonResult.setMessage("채점이 완료되었습니다!");
-                    gradeService.updateResult(gradeToken, commonResult);
-                    gradeProgressService.notifyGradingCompleted(gradeToken);
-                    log.info("[GRADE] ✅ 채점 성공 - Token: {}, 통과: {}/{}, 최종 상태: {}",
-                            gradeToken, passedTestCases, totalTestCases, commonResult.getStatus().getName());
+                    grade.setMessage("채점이 완료되었습니다!");
+                    grade.setStatus(Status.AC);
+                    grade.setFinishedAt(LocalDateTime.now());
+                    gradeService.updateResult(grade);
+                    gradeProgressService.updateProgress(gradeToken, totalTestCases, totalTestCases);
+                    log.info("[GRADE] ✅ 채점 성공 - Token: {}, 통과: {}/{}, 최종 상태: {}, Time: {}ms, Memory: {}KB",
+                            gradeToken, passedTestCases, totalTestCases, grade.getStatus().getName(),
+                            grade.getTime(), grade.getMemory());
                 } else {
-                    gradeService.updateResult(gradeToken, commonResult);
-                    gradeProgressService.notifyGradingError(gradeToken);
-                    log.info("[GRADE] ❌ 채점 실패 - Token: {}, 통과: {}/{}, 최종 상태: {}",
-                            gradeToken, passedTestCases, totalTestCases, commonResult.getStatus().getName());
+                    grade.setStatus(commonResult.getStatus());
+                    grade.setFinishedAt(LocalDateTime.now());
+                    gradeService.updateResult(grade);
+                    log.error("{} : {}", gradeToken, grade);
+                    gradeProgressService.sendProgress(gradeToken);
+                    log.info("[GRADE] ❌ 채점 실패 - Token: {}, 통과: {}/{}, 최종 상태: {}, Time: {}ms, Memory: {}KB",
+                            gradeToken, passedTestCases, totalTestCases, grade.getStatus().getName(),
+                            grade.getTime(), grade.getMemory());
                 }
             } finally {
                 // 3. 컨테이너 정리 (1회만)
@@ -218,25 +234,27 @@ public class GradeJob {
 
         } catch (Exception e) {
             log.error("[GRADE] 코드 채점 작업 실패 - Token: {}", gradeToken, e);
-            handleGradeFailure(gradeToken, e);
+            handleGradeFailure(grade, e);
         } finally {
             log.info("[GRADE] ========== 채점 종료 - Token: {} ==========", gradeToken);
         }
     }
 
-    private void handleGradeFailure(String gradeToken, Exception exception) {
+    private void handleGradeFailure(Grade grade, Exception exception) {
         try {
-            ExecutionResult errorResult = ExecutionResult.builder()
-                    .status(Status.BOXERR)
-                    .message("Internal grading error: " + exception.getMessage())
-                    .errorMessage(exception.getMessage())
-                    .build();
+            grade.setStatus(Status.BOXERR);
+            grade.setMessage(exception.getMessage());
+            grade.setInputOutput(
+                    ExecutionInputOutput.builder()
+                            .stderr(exception.getMessage())
+                            .build()
+            );
 
-            gradeService.updateResult(gradeToken, errorResult);
-            gradeProgressService.notifyGradingError(gradeToken);
+            gradeService.updateResult(grade);
+            gradeProgressService.sendProgress(grade.getToken());
 
         } catch (Exception e) {
-            log.error("채점 실패 처리 중 오류 발생 - grade token: {}", gradeToken, e);
+            log.error("채점 실패 처리 중 오류 발생 - grade token: {}", grade.getToken(), e);
         }
     }
 
@@ -257,6 +275,45 @@ public class GradeJob {
             return java.net.InetAddress.getLocalHost().getHostName();
         } catch (Exception e) {
             return "unknown";
+        }
+    }
+
+    /**
+     * ExecutionResult의 성능 정보를 Grade에 업데이트
+     *
+     * 여러 테스트케이스 중 worst-case 성능을 저장합니다:
+     * - Time: 최대값 (가장 느린 실행 시간)
+     * - Memory: 최대값 (가장 많이 사용한 메모리)
+     * - ExitCode, ExitSignal: 마지막 값
+     */
+    private void updateGradePerformanceMetrics(Grade grade, ExecutionResult result) {
+        // Time: 최대값 사용 (가장 느린 케이스)
+        if (result.getTime() != null) {
+            if (grade.getTime() == null || result.getTime().compareTo(grade.getTime()) > 0) {
+                grade.setTime(result.getTime());
+            }
+        }
+
+        // Wall Time: 최대값 사용
+        if (result.getWallTime() != null) {
+            if (grade.getWallTime() == null || result.getWallTime().compareTo(grade.getWallTime()) > 0) {
+                grade.setWallTime(result.getWallTime());
+            }
+        }
+
+        // Memory: 최대값 사용 (가장 많이 사용한 케이스)
+        if (result.getMemory() != null) {
+            if (grade.getMemory() == null || result.getMemory() > grade.getMemory()) {
+                grade.setMemory(result.getMemory());
+            }
+        }
+
+        // ExitCode, ExitSignal: 마지막 값 사용
+        if (result.getExitCode() != null) {
+            grade.setExitCode(result.getExitCode());
+        }
+        if (result.getExitSignal() != null) {
+            grade.setExitSignal(result.getExitSignal());
         }
     }
 }

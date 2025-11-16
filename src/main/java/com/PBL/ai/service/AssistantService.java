@@ -39,7 +39,7 @@ public class AssistantService {
         this.assisdent = AiServices.builder(Assisdent.class)
                 .streamingChatModel(streamingChatModel)
                 .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
-                .contentRetriever(ragconfig.lectureContentRetriever())
+//                .contentRetriever(ragconfig.lectureContentRetriever()) 
                 .tools(bookTools, submissionTools, lectureTools, curriculumTools, communityTools)
                 .build();
     }

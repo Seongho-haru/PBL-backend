@@ -3,6 +3,7 @@ package com.PBL.ai.service;
 import com.PBL.ai.config.Assisdent;
 import com.PBL.ai.config.RAGconfig;
 import com.PBL.ai.dto.GradingRequest;
+import com.PBL.ai.enums.CollectionType;
 import com.PBL.ai.tools.*;
 import com.PBL.lab.grade.entity.Grade;
 import com.PBL.lab.grade.service.GradeService;
@@ -39,7 +40,7 @@ public class AssistantService {
         this.assisdent = AiServices.builder(Assisdent.class)
                 .streamingChatModel(streamingChatModel)
                 .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
-//                .contentRetriever(ragconfig.lectureContentRetriever()) 
+                .contentRetriever(ragconfig.createRetriever(CollectionType.PYTHON))
                 .tools(bookTools, submissionTools, lectureTools, curriculumTools, communityTools)
                 .build();
     }

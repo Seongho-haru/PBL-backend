@@ -14,7 +14,6 @@ public class EmbeddingModelConfig {
     @Value("${langchain4j.chat-model.embedding-model-name}")
     private String modelName;
 
-    @Bean
     public EmbeddingModel  getEmbeddingModel () {
         return OpenAiEmbeddingModel.builder()
                 .apiKey(apiKey)

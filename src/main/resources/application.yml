@@ -52,7 +52,7 @@ langchain4j:
     embedding-model-name: text-embedding-3-small
   qdrant:
     host: localhost
-    port: 6333
+    port: 6334
 org:
   jobrunr:
     background-job-server:

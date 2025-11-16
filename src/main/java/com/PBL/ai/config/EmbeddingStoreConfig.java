@@ -19,7 +19,8 @@ public class EmbeddingStoreConfig {
         return QdrantEmbeddingStore.builder()
                 .host(host)
                 .port(port)
-                .collectionName(collectionName.name())
+                .collectionName(collectionName.getCollectionName())
+                .payloadTextKey("page_content")
                 .build();
     }
 }

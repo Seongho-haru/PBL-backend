@@ -5,4 +5,4 @@ INSERT INTO users (username, login_id, password) VALUES
     ('홍길동', 'honggd', 'test123'),
     ('조하늘', 'johnl', 'test123'),
     ('이태웅', 'leetw', 'test123'),
-    ('김민준', 'kimmj', 'test123'),
+    ('김민준', 'kimmj', 'test123');

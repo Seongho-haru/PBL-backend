@@ -178,33 +178,8 @@ public class GradeService {
      * @param token 채점 토큰
      * @param result 실행 결과
      */
-    public void updateResult(String token, ExecutionResult result) {
-        Grade grade = findByToken(token);
-
-        if (result.getErrorId() != null) {
-            // TODO: Core의 ExecutionInputOutputRepository 사용하도록 리팩토링 필요
-            // grade.setInputOutput(executionInputOutputRepository.findById(result.getErrorId()).orElse(null));
-        }
-        grade.setMessage(result.getMessage());
-
-        // 실행 결과 정보 설정
-        grade.setTime(result.getTime());
-        grade.setWallTime(result.getWallTime());
-        grade.setMemory(result.getMemory());
-        grade.setExitCode(result.getExitCode());
-        grade.setExitSignal(result.getExitSignal());
-        grade.setFinishedAt(LocalDateTime.now());
-
-        // 상태 설정
-        grade.setStatus(result.getStatus());
-
-        // 종결 상태인 경우 완료 시각 기록
-        if (result.getStatus().isTerminal()) {
-            grade.setFinishedAt(LocalDateTime.now());
-        }
-
+    public void updateResult(Grade grade) {
         gradeRepository.save(grade);
-        log.debug("Updated grade {} result with status {}", token, result.getStatus().getName());
     }
 
     /**

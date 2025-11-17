@@ -226,46 +226,30 @@ public class GradeController {
             @PathVariable String token,
             boolean base64_encoded,
             String fields) {
-        SseEmitter emitter = new SseEmitter(3600000L); // 1시간 타임아웃
-
         try {
-            // 채점이 존재하는지 확인
-            Grade grade = gradeService.findByToken(token);
+            // 채점이 존재하는지 확인 (존재하지 않으면 IllegalArgumentException 발생)
+            gradeService.findByToken(token);
 
-            // 실제 진행상황 업데이트를 위한 이벤트 리스너 등록
-            gradeProgressService.registerProgressListener(token, emitter);
-
-            // 연결 종료 시 정리
-            emitter.onCompletion(() -> {
-                log.info("SSE connection completed for grade: {}", token);
-                gradeProgressService.unregisterProgressListener(token);
-
-            });
-
-            emitter.onTimeout(() -> {
-                log.info("SSE connection timeout for grade: {}", token);
-                emitter.complete();
-                gradeProgressService.unregisterProgressListener(token);
-            });
-
-            emitter.onError((throwable) -> {
-                log.error("SSE connection error for grade: {}", token, throwable);
-                emitter.completeWithError(throwable);
-                gradeProgressService.unregisterProgressListener(token);
-            });
+            // SSE 연결 등록 및 Emitter 반환
+            // (내부적으로 onCompletion, onTimeout, onError 핸들러 설정됨)
+            return gradeProgressService.registerProgressListener(token);
 
         } catch (com.PBL.lab.core.exception.AccessDeniedException e) {
             log.error("Access denied for grade: {}", token);
+            SseEmitter emitter = new SseEmitter();
             emitter.completeWithError(new RuntimeException("Access denied: " + e.getMessage()));
+            return emitter;
         } catch (IllegalArgumentException e) {
             log.error("Grade not found: {}", token);
+            SseEmitter emitter = new SseEmitter();
             emitter.completeWithError(new RuntimeException("Grade not found: " + token));
+            return emitter;
         } catch (Exception e) {
             log.error("SSE connection setup failed for grade: {}", token, e);
+            SseEmitter emitter = new SseEmitter();
             emitter.completeWithError(e);
+            return emitter;
         }
-
-        return emitter;
     }
 
     /**

@@ -2,8 +2,7 @@ package com.PBL.lab.core.entity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 /**
  * Execution Input/Output Entity - 코드 실행 입출력 정보 엔티티
@@ -26,6 +25,9 @@ import lombok.EqualsAndHashCode;
 @Table(name = "input_output")
 @Data
 @EqualsAndHashCode
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ExecutionInputOutput {
 

@@ -5,7 +5,7 @@ plugins {
     id 'org.flywaydb.flyway' version '9.22.3'
 }
 
-group = 'com.PBL.lab.judge0'
+group = 'com.PBL.backend'
 version = '1.13.1'
 sourceCompatibility = '17'
 
@@ -19,9 +19,9 @@ repositories {
     mavenCentral()
 }
 flyway {
-    url = System.getenv('DB_URL') ?: 'jdbc:postgresql://localhost:5432/judge0'
-    user = System.getenv('DB_USERNAME') ?: 'judge0'
-    password = System.getenv('DB_PASSWORD') ?: 'judge0pass'
+    url = System.getenv('DB_URL') ?: 'jdbc:postgresql://localhost:5432/pbl_backend'
+    user = System.getenv('DB_USERNAME') ?: 'pbl_backend'
+    password = System.getenv('DB_PASSWORD') ?: 'pblpass'
     cleanDisabled = false
     // 필요시 schemas = ['public']
 }

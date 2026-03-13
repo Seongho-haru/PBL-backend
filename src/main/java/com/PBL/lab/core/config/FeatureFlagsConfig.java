@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
  * - 단계적 기능 롤아웃
  */
 @Component
-@ConfigurationProperties(prefix = "judge0.features")
+@ConfigurationProperties(prefix = "pbl.features")
 @Getter
 @Setter
 public class FeatureFlagsConfig {

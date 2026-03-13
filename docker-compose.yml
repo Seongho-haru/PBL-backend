@@ -34,8 +34,8 @@ services:
   #   restart: unless-stopped
   #   environment:
   #     - SPRING_PROFILES_ACTIVE=production
-  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/judge0
-  #     - SPRING_DATASOURCE_USERNAME=judge0
+  #     - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/pbl_backend
+  #     - SPRING_DATASOURCE_USERNAME=pbl_backend
   #     - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
   #     - SPRING_REDIS_HOST=redis
   #     - SPRING_REDIS_PORT=6379
@@ -63,20 +63,20 @@ services:
   # PostgreSQL Database
   db:
     image: postgres:16.2-alpine
-    container_name: judge0-db
+    container_name: pbl-db
     restart: unless-stopped
     environment:
-      - POSTGRES_DB=judge0
-      - POSTGRES_USER=judge0
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-judge0pass}
+      - POSTGRES_DB=pbl_backend
+      - POSTGRES_USER=pbl_backend
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-pblpass}
       - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
     volumes:
-      - judge0_postgres_data:/var/lib/postgresql/data
+      - pbl_postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     <<: *default-logging
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U judge0 -d judge0"]
+      test: ["CMD-SHELL", "pg_isready -U pbl_backend -d pbl_backend"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -84,7 +84,7 @@ services:
   # Redis Cache and Queue
   redis:
     image: redis:7.2.4-alpine
-    container_name: redis
+    container_name: pbl-redis
     restart: unless-stopped
     command: >
       redis-server
@@ -94,7 +94,7 @@ services:
       --maxmemory 256mb
       --maxmemory-policy allkeys-lru
     volumes:
-      - redis_data:/data
+      - pbl_redis_data:/data
       - ./redis.conf:/usr/local/etc/redis/redis.conf
     ports:
       - "6379:6379"
@@ -108,7 +108,7 @@ services:
     # Qdrant Vector Database
   qdrant:
     image: qdrant/qdrant:latest
-    container_name: qdrant
+    container_name: pbl-qdrant
     ports:
       - "6333:6333" # HTTP API
       - "6334:6334" # gRPC API
@@ -121,7 +121,7 @@ services:
   # MinIO Object Storage
   minio:
     image: minio/minio:latest
-    container_name: minio
+    container_name: pbl-minio
     restart: unless-stopped
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
@@ -140,9 +140,9 @@ services:
       retries: 3
 
 volumes:
-  judge0_postgres_data:
+  pbl_postgres_data:
     driver: local
-  redis_data:
+  pbl_redis_data:
     driver: local
   qdrant-storage:
     driver: local

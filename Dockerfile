@@ -1,4 +1,4 @@
-# Multi-stage build for Judge0 Spring Boot application
+# Multi-stage build for PBL-Backend application
 # Build stage: Debian 기반, multi-arch
 FROM gradle:8.5-jdk17 AS builder
 
@@ -28,11 +28,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
  && rm -rf /var/lib/apt/lists/*
 
-# Create judge0 user
-RUN useradd -m -u 1000 -s /bin/bash judge0
+# Create runtime user
+RUN useradd -m -u 1000 -s /bin/bash pbl
 
-# Set up sudo for judge0 user (needed for Docker operations)
-RUN echo "judge0 ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/judge0
+# Set up sudo for the runtime user (needed for Docker operations)
+RUN echo "pbl ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/pbl
 
 # Set working directory
 WORKDIR /app
@@ -45,8 +45,8 @@ COPY --from=builder /app/build/libs/*.jar app.jar
 
 # Create necessary directories
 RUN mkdir -p /app/logs /app/tmp && \
-    chown -R judge0:judge0 /app
-USER judge0
+    chown -R pbl:pbl /app
+USER pbl
 
 # Expose port
 EXPOSE 2358
@@ -70,5 +70,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     vim \
     htop \
  && rm -rf /var/lib/apt/lists/*
-USER judge0
+USER pbl
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.profiles.active=development -jar app.jar"]

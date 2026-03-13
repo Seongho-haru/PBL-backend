@@ -29,7 +29,7 @@ import java.math.BigDecimal;
  * - 공정한 리소스 분배
  */
 @Component
-@ConfigurationProperties(prefix = "judge0.execution")
+@ConfigurationProperties(prefix = "pbl.execution")
 @Getter
 @Setter
 public class ExecutionLimitsConfig {

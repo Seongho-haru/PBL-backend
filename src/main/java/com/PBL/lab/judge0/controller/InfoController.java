@@ -111,17 +111,17 @@ public class InfoController {
 
     /**
      * GET /about
-     * Get information about Judge0
+     * Get information about the PBL backend
      */
     @GetMapping("/about")
     public ResponseEntity<Map<String, Object>> about() {
         Map<String, Object> response = Map.of(
-            "name", "Judge0 Spring",
+            "name", "PBL-Backend",
             "version", "1.13.1",
-            "description", "Judge0 is a robust and scalable open-source online code execution system",
-            "homepage", "https://judge0.com",
-            "source_code", "https://github.com/judge0/judge0-spring",
-            "maintainer", "Judge0 Spring Team",
+            "description", "Backend platform for the PBL learning service with integrated code execution.",
+            "homepage", "https://github.com/Seongho-haru/PBL-backend",
+            "source_code", "https://github.com/Seongho-haru/PBL-backend",
+            "maintainer", "PBL Team",
             "license", "MIT License",
             "platform", "Java Spring Boot",
             "original", Map.of(
@@ -142,6 +142,7 @@ public class InfoController {
     @GetMapping("/version")
     public ResponseEntity<Map<String, Object>> version() {
         Map<String, Object> response = Map.of(
+            "name", "PBL-Backend",
             "version", "1.13.1",
             "commit", getCommitHash(),
             "build_date", getBuildDate(),

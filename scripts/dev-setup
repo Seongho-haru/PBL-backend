@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Judge0 Spring Boot Development Setup Script
+# PBL-Backend Development Setup Script
 
 set -e
 
-echo "Judge0 Spring Boot Development Setup"
+echo "PBL-Backend Development Setup"
 echo "==================================="
 
 # Function to check if command exists
@@ -54,12 +54,6 @@ echo "Setting up development environment..."
 mkdir -p logs
 mkdir -p tmp
 
-# Copy configuration
-if [ ! -f "judge0.conf" ]; then
-    echo "📋 Creating judge0.conf..."
-    cp judge0.conf.example judge0.conf 2>/dev/null || true
-fi
-
 # Start dependencies
 echo "🚀 Starting dependencies (PostgreSQL, Redis)..."
 docker-compose up -d db redis
@@ -70,7 +64,7 @@ sleep 10
 
 # Check database connection
 echo "🔍 Checking database connection..."
-while ! docker-compose exec -T db pg_isready -U judge0 -d judge0 >/dev/null 2>&1; do
+while ! docker-compose exec -T db pg_isready -U pbl_backend -d pbl_backend >/dev/null 2>&1; do
     echo "   Waiting for database..."
     sleep 2
 done
@@ -95,7 +89,7 @@ echo "Next steps:"
 echo "  1. Start the application: ./scripts/server"
 echo "  2. Open browser: http://localhost:2358/health"
 echo "  3. JobRunr Dashboard: http://localhost:8081"
-echo "  4. View logs: tail -f logs/judge0-spring.log"
+echo "  4. View logs: tail -f logs/pbl-backend.log"
 echo ""
 echo "API Examples:"
 echo "  curl http://localhost:2358/languages"

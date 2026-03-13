@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# Judge0 Spring Boot Workers Script
+# PBL-Backend Workers Script
 # This script is maintained for compatibility with original Judge0
 # In Spring Boot version, workers are managed by JobRunr automatically
 
 set -e
 
-echo "Judge0 Spring Boot Workers"
+echo "PBL-Backend Workers"
 echo "=========================="
-echo "In Judge0 Spring Boot, workers are automatically managed by JobRunr."
+echo "In PBL-Backend, workers are automatically managed by JobRunr."
 echo "Worker configuration can be set via environment variables:"
 echo ""
 echo "  WORKER_COUNT=${WORKER_COUNT:-4}"
@@ -21,7 +21,7 @@ echo ""
 
 # If the main application is not running, show instructions
 if ! curl -s http://localhost:2358/health > /dev/null 2>&1; then
-    echo "Judge0 Spring Boot application is not running."
+    echo "PBL-Backend application is not running."
     echo "Start the application first with: ./scripts/server"
     exit 1
 fi
@@ -31,4 +31,4 @@ curl -s http://localhost:2358/workers | jq . 2>/dev/null || curl -s http://local
 
 echo ""
 echo "Workers are running as part of the main application."
-echo "Use 'docker-compose logs -f judge0-api' to view worker logs."
+echo "Use 'docker-compose logs -f pbl-backend' to view worker logs."

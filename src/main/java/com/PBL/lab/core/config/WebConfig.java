@@ -24,22 +24,22 @@ import java.util.List;
 @Slf4j
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${judge0.cors.allowed-origins:}")
+    @Value("${pbl.cors.allowed-origins:}")
     private String allowedOrigins;
 
-    @Value("${judge0.cors.disallowed-origins:}")
+    @Value("${pbl.cors.disallowed-origins:}")
     private String disallowedOrigins;
 
-    @Value("${judge0.cors.allowed-ips:}")
+    @Value("${pbl.cors.allowed-ips:}")
     private String allowedIps;
 
-    @Value("${judge0.cors.disallowed-ips:}")
+    @Value("${pbl.cors.disallowed-ips:}")
     private String disallowedIps;
 
-    @Value("${judge0.web.request-timeout:30}")
+    @Value("${pbl.web.request-timeout:30}")
     private Integer requestTimeoutSeconds;
 
-    @Value("${judge0.web.connection-timeout:10}")
+    @Value("${pbl.web.connection-timeout:10}")
     private Integer connectionTimeoutSeconds;
 
     /**

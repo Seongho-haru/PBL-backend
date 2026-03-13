@@ -23,7 +23,7 @@ import java.util.List;
  * 6. Compiler Options - 컴파일러 옵션 제한
  */
 @Component
-@ConfigurationProperties(prefix = "judge0.system")
+@ConfigurationProperties(prefix = "pbl.system")
 @Getter
 @Setter
 public class SystemConfig {
@@ -41,7 +41,7 @@ public class SystemConfig {
      * 유지보수 모드 시 표시할 메시지
      * - 유지보수 모드가 활성화되었을 때 클라이언트에게 보여줄 안내 메시지
      */
-    private String maintenanceMessage = "Judge0 is currently in maintenance.";
+    private String maintenanceMessage = "PBL-Backend is currently in maintenance.";
 
     // ========== Queue Configuration ==========
 

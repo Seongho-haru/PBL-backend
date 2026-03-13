@@ -115,7 +115,8 @@ public abstract class BaseWebhookService<T extends WebhookCallbackEntity, R> {
                 // HTTP 헤더 설정
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.set("User-Agent", "Judge0-Spring/1.13.1");
+                headers.set("User-Agent", "PBL-Backend/1.13.1");
+                headers.set("X-PBL-Token", entity.getToken());
                 headers.set("X-Judge0-Token", entity.getToken());
 
                 HttpEntity<String> requestEntity = new HttpEntity<>(jsonPayload, headers);

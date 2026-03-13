@@ -349,7 +349,7 @@ ERROR o.f.c.i.c.DbMigrate : Migration of schema "public" to version "103" failed
    ```
 3. 로그 확인:
    ```bash
-   tail -f logs/judge0-spring.log
+   tail -f logs/pbl-backend.log
    ```
 
 ### 문제: HTTP API 타임아웃

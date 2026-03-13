@@ -259,7 +259,7 @@ public class ContainerManager {
             for (Container container : containers) {
                 // Judge0 실행 컨테이너인지 확인
                 if (container.getNames() != null &&
-                        container.getNames()[0].contains("judge0-execution-")) {
+                        container.getNames()[0].contains("pbl-exec-")) {
 
                     long containerAge = currentTime - (container.getCreated() * 1000);
                     if (containerAge > TimeUnit.HOURS.toMillis(1)) { // 1시간 이상 된 컨테이너
@@ -375,7 +375,7 @@ public class ContainerManager {
     public String createExecutionContainer(Language language, Path workDir, CodeExecutionRequest request)
             throws java.io.IOException {
         String image = language.getEffectiveDockerImage();
-        String containerName = "judge0-exec-" + java.util.UUID.randomUUID().toString().substring(0, 8);
+        String containerName = "pbl-exec-" + java.util.UUID.randomUUID().toString().substring(0, 8);
 
         // 이미지 확인 및 자동 pull
         ensureImageExists(image);

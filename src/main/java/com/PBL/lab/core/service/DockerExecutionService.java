@@ -60,10 +60,10 @@ public class DockerExecutionService {
     private final DockerClient dockerClient; // Docker API 클라이언트 (컨테이너 제어)
     private final ContainerManager containerManager; // 컨테이너 관리 서비스 (온디맨드 생성/삭제)
 
-    @Value("${judge0.docker-execution.container-timeout:30000}")
+    @Value("${pbl.docker-execution.container-timeout:30000}")
     private long containerAcquireTimeout; // 컨테이너 획득 대기 시간 (밀리초)
 
-    @Value("${judge0.docker-execution.cleanup-async:true}")
+    @Value("${pbl.docker-execution.cleanup-async:true}")
     private boolean asyncCleanup; // 비동기 정리 작업 사용 여부
 
     /**
@@ -400,8 +400,8 @@ public class DockerExecutionService {
      */
     private Path createWorkDirectory() throws IOException {
         String tmpDir = System.getProperty("java.io.tmpdir");
-        String dirName = "judge0-exec-" + UUID.randomUUID().toString().substring(0, 8);
-        Path workDir = Paths.get(tmpDir, "judge0", dirName);
+        String dirName = "pbl-exec-" + UUID.randomUUID().toString().substring(0, 8);
+        Path workDir = Paths.get(tmpDir, "pbl", dirName);
         Files.createDirectories(workDir);
 
         // OS별 권한 설정

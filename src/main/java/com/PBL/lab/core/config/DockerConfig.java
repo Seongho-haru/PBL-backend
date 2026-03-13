@@ -35,25 +35,25 @@ import java.time.Duration;
 public class DockerConfig {
 
     // Docker 설정값들 - application.yml에서 주입받는 Docker 관련 구성 파라미터
-    @Value("${judge0.docker.host:unix:///var/run/docker.sock}")
+    @Value("${pbl.docker.host:unix:///var/run/docker.sock}")
     private String dockerHost; // Docker 데몬 호스트 주소 (기본: Unix 소켓)
 
-    @Value("${judge0.docker.registry-url:docker.io}")
+    @Value("${pbl.docker.registry-url:docker.io}")
     private String registryUrl; // Docker 레지스트리 URL (기본: Docker Hub)
 
-    @Value("${judge0.docker.max-concurrent-containers:10}")
+    @Value("${pbl.docker.max-concurrent-containers:10}")
     private Integer maxConcurrentContainers; // 최대 동시 실행 컨테이너 수
 
-    @Value("${judge0.docker.container-timeout:300}")
+    @Value("${pbl.docker.container-timeout:300}")
     private Integer containerTimeoutSeconds; // 컨테이너 타임아웃 (초)
 
-    @Value("${judge0.docker.api-version:}")
+    @Value("${pbl.docker.api-version:}")
     private String apiVersion; // Docker API 버전 (빈 문자열 시 자동 감지)
 
-    @Value("${judge0.docker.tls-verify:false}")
+    @Value("${pbl.docker.tls-verify:false}")
     private Boolean tlsVerify; // TLS 인증서 검증 여부
 
-    @Value("${judge0.docker.cert-path:}")
+    @Value("${pbl.docker.cert-path:}")
     private String certPath; // TLS 인증서 경로
 
     /**

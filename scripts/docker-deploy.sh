@@ -101,9 +101,9 @@ setup_env_file() {
     echo ""
     
     # DB 비밀번호
-    read -sp "PostgreSQL 비밀번호 (기본값: judge0pass): " DB_PASSWORD
+    read -sp "PostgreSQL 비밀번호 (기본값: pblpass): " DB_PASSWORD
     echo ""
-    DB_PASSWORD=${DB_PASSWORD:-judge0pass}
+    DB_PASSWORD=${DB_PASSWORD:-pblpass}
     
     # Spring Profile
     read -p "Spring Profile (development/production, 기본값: development): " SPRING_PROFILE
@@ -257,7 +257,7 @@ case "$1" in
     docker-compose up -d --build pbl-backend
     ;;
   backup-db)
-    docker-compose exec postgres pg_dump -U judge0 judge0 > backup_$(date +%Y%m%d_%H%M%S).sql
+    docker-compose exec db pg_dump -U pbl_backend pbl_backend > backup_$(date +%Y%m%d_%H%M%S).sql
     echo "Backup saved: backup_$(date +%Y%m%d_%H%M%S).sql"
     ;;
   shell)
@@ -282,7 +282,7 @@ case "$1" in
     echo "예시:"
     echo "  $0 start"
     echo "  $0 logs pbl-backend"
-    echo "  $0 restart postgres"
+    echo "  $0 restart db"
     exit 1
 esac
 MANAGE_EOF
@@ -317,7 +317,7 @@ print_final_info() {
     echo ""
     echo "📌 문제 해결:"
     echo "  • 로그 확인:       ./manage.sh logs pbl-backend"
-    echo "  • DB 로그:         ./manage.sh logs postgres"
+    echo "  • DB 로그:         ./manage.sh logs db"
     echo "  • 컨테이너 상태:   ./manage.sh status"
     echo ""
 }

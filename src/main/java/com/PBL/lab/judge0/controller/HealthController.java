@@ -74,9 +74,10 @@ public class HealthController {
     public ResponseEntity<Map<String, Object>> health() {
         try {
             Map<String, Object> response = Map.of(
+                "application", "PBL-Backend",
                 "status", "healthy",
                 "timestamp", LocalDateTime.now(),
-                "version", "1.13.1-spring-simplified",
+                "version", "1.13.1",
                 "uptime", getUptime(),
                 "execution_mode", "one-time-containers"
             );

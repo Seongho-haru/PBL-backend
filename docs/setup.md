@@ -5,12 +5,9 @@
 ### 1. 환경 변수 설정
 
 ```bash
-# .env.example 파일을 복사하여 .env 파일 생성
-cp .env.example .env
-
-# .env 파일을 열어서 다음 값들을 설정:
-# - DB_PASSWORD: PostgreSQL 데이터베이스 비밀번호
-# - 기타 필요한 환경 변수들
+# 필요한 경우 .env 파일을 직접 생성
+# - POSTGRES_PASSWORD: PostgreSQL 데이터베이스 비밀번호
+# - OPENAI_API_KEY 등 추가 환경 변수
 ```
 
 ### 2. 데이터베이스 설정
@@ -18,10 +15,10 @@ cp .env.example .env
 PostgreSQL 데이터베이스가 설치되어 있어야 합니다.
 
 ```sql
--- PostgreSQL에서 judge0 데이터베이스 생성
-CREATE DATABASE judge0;
-CREATE USER judge0 WITH PASSWORD 'your_password_here';
-GRANT ALL PRIVILEGES ON DATABASE judge0 TO judge0;
+-- PostgreSQL에서 pbl_backend 데이터베이스 생성
+CREATE DATABASE pbl_backend;
+CREATE USER pbl_backend WITH PASSWORD 'your_password_here';
+GRANT ALL PRIVILEGES ON DATABASE pbl_backend TO pbl_backend;
 ```
 
 ### 3. 애플리케이션 실행
@@ -32,14 +29,12 @@ GRANT ALL PRIVILEGES ON DATABASE judge0 TO judge0;
 
 # 또는 JAR 파일로 실행
 ./gradlew build
-java -jar build/libs/judge0-spring-1.13.1.jar
+java -jar build/libs/pbl-backend-1.13.1.jar
 ```
 
 ## 📁 환경 설정 파일
 
-- **`.env.example`**: 환경변수 템플릿 파일 (Git에 포함)
 - **`.env`**: 실제 환경변수 파일 (Git에서 제외)
-- **`application-local.yml`**: 로컬 개발용 설정 파일
 - **`application.yml`**: 기본 설정 파일
 
 ## 🔧 주요 환경 변수
@@ -48,8 +43,8 @@ java -jar build/libs/judge0-spring-1.13.1.jar
 | ------------- | --------------------------- | --------------------- |
 | `DB_HOST`     | localhost                   | 데이터베이스 호스트   |
 | `DB_PORT`     | 5432                        | 데이터베이스 포트     |
-| `DB_NAME`     | judge0                      | 데이터베이스 이름     |
-| `DB_USERNAME` | judge0                      | 데이터베이스 사용자명 |
+| `DB_NAME`     | pbl_backend                 | 데이터베이스 이름     |
+| `DB_USERNAME` | pbl_backend                 | 데이터베이스 사용자명 |
 | `DB_PASSWORD` | secret                      | 데이터베이스 비밀번호 |
 | `SERVER_PORT` | 2358                        | 서버 포트             |
 | `DOCKER_HOST` | unix:///var/run/docker.sock | Docker 호스트         |
@@ -66,7 +61,7 @@ docker ps
 
 ## 📝 로그 확인
 
-애플리케이션 로그는 `logs/judge0-spring.log` 파일에 저장됩니다.
+애플리케이션 로그는 `logs/pbl-backend.log` 파일에 저장됩니다.
 
 ## 🔍 문제 해결
 

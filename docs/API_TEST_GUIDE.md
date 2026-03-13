@@ -12,7 +12,7 @@
 
 1. Postman 실행
 2. **Import** 버튼 클릭
-3. `PBL_API_Test_Collection.postman_collection.json` 파일 선택
+3. `tests/postman/PBL_API_Test_Collection.postman_collection.json` 파일 선택
 4. **Import** 완료
 
 ### 2. 환경 설정 확인

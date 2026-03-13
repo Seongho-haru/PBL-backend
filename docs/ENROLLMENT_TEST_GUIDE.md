@@ -12,7 +12,7 @@
 
 1. Postman 실행
 2. **Import** 버튼 클릭
-3. `PBL_Enrollment_Management.postman_collection.json` 파일 선택
+3. `tests/postman/PBL_Enrollment_Management.postman_collection.json` 파일 선택
 4. **Import** 완료
 
 ### 2. 환경 설정 확인
@@ -238,9 +238,3 @@ Collection을 import하면 다음 변수들이 자동으로 설정됩니다:
 
 - ✅ 수강 신청/취소 기능 정상 작동
 - ✅ 진도 관리 기능 정상 작동
-- ✅ 조회 기능 정상 작동
-- ✅ 통계 기능 정상 작동
-- ✅ 권한 체크 정상 작동
-- ✅ 에러 처리 정상 작동
-
-**총 14개 테스트 케이스 모두 통과**하면 수강 관리 모듈이 정상적으로 구현된 것입니다!

@@ -1,12 +1,14 @@
 #!/bin/bash
 
-# Judge0 Spring Boot Server Start Script
+# PBL-Backend Server Start Script
 
 set -e
 
-# Source configuration if available
-if [ -f "./judge0.conf" ]; then
-    source ./judge0.conf
+# Source environment file if available
+if [ -f "./.env" ]; then
+    set -a
+    source ./.env
+    set +a
 fi
 
 # Default values
@@ -14,18 +16,18 @@ PORT=${PORT:-2358}
 SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-development}
 JAVA_OPTS=${JAVA_OPTS:-"-Xmx1g -Xms512m"}
 
-echo "Starting Judge0 Spring Boot Server..."
+echo "Starting PBL-Backend Server..."
 echo "Port: $PORT"
 echo "Profile: $SPRING_PROFILES_ACTIVE"
 echo "Java Options: $JAVA_OPTS"
 
 # Check if JAR file exists
-JAR_FILE=$(find . -name "judge0-spring*.jar" | head -1)
+JAR_FILE=$(find . -name "pbl-backend*.jar" | head -1)
 
 if [ -z "$JAR_FILE" ]; then
     echo "Building application..."
     ./gradlew build -x test
-    JAR_FILE=$(find build/libs -name "judge0-spring*.jar" | head -1)
+    JAR_FILE=$(find build/libs -name "pbl-backend*.jar" | head -1)
 fi
 
 if [ -z "$JAR_FILE" ]; then
